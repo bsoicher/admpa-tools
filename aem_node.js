@@ -4,77 +4,76 @@
 
 /* global $ */
 
-
 /**
  * AEM node object
  * @param {String} url location
- * @param {AEM_Node} peer previously loaded peer
+ * @param {AEM_Node} alt Connect with alt node
  * @constructor
  */
-function AEM_Node (url, peer) {
-
+function AEM_Node (url, alt) {
   // Validate URL
-  if (!/^https:\/\/www\.canada\.ca\/(en|fr)\/[^\.]+\.html$/i.test(url)) {
+  if (!/^https:\/\/www\.canada\.ca\/(en|fr)\/[^.]+\.html$/i.test(url)) {
     throw new Error('Invalid node URL')
   }
+
+  this.url = url
 
   // Extract language from URL
   this.language = /canada.ca\/fr\//i.test(url) ? 'fr' : 'en'
 
-  this.url = url
-  this.loaded = false
-
-  // Interlink peers
-  if (peer instanceof AEM_Node) {
-    this._peer = peer
+  // Interlink node and alternate node
+  if (alt instanceof AEM_Node) {
+    this.alt = alt
   }
 
-  this.load()
-}
-
-AEM_Node.prototype.load = function () {
   var i = this
 
   $.ajax({
-    url: this.url.replace('.html', '/_jcr_content.json'),
-    success: function (json) {
-      i._data = json
-      i.loaded = true
 
-      // If peer has not been created yet
-      if (!i._peer && json.gcAltLanguagePeer) {
-        i._peer = new AEM_Node(json.gcAltLanguagePeer.replace('/content/canadasite/', 'https://www.canada.ca/'), i)
+    // URL of JSON node data
+    url: this.url.replace('.html', '/_jcr_content.json'),
+
+    // Process json response
+    success: function (json) {
+      // Basic node information
+      i.title = json['jcr:title'] || null
+      i.desc = json['gcDescription'] || null
+      i.keywords = json['gcKeywords'] || null
+      i.thumb = json['gcOGImage'] || null
+
+      // Convert date strings to objects
+      i.created = new Date(json['jcr:created'])
+      i.modified = json['jcr:lastModified'] ? new Date(json['jcr:lastModified']) : null
+      i.published = new Date(json['gcLastPublished'])
+      i.expires = new Date(json['gcDateExpired'])
+
+      // Create and link alternate node if it has not been created
+      if (!i.alt && json['gcAltLanguagePeer']) {
+        i.alt = new AEM_Node(json['gcAltLanguagePeer'].replace('/content/canadasite/', 'https://www.canada.ca/'), i)
       }
+    },
+
+    // Log if AJAX error occured
+    error: function (jqXHR, textStatus, ex) {
+      console.log(textStatus + ',' + ex + ',' + jqXHR.responseText)
     }
   })
+
 }
 
-var keymap = {
-  'jcr:title': 'title',
-  'gcDescription': 'description',
-  'gcKeywords': 'keywords',
-  'gcOGImage': 'thumbnail',
-  'jcr:created': 'created',
-  'jcr:lastModified': 'modified',
-  'gcLastPublished': 'published',
-  'gcDateExpired': 'expired',
+
+
+AEM_Node.prototype.children = function () {
+
+
+
 }
 
-AEM_Node.prototype.json = function () {
 
-  var obj = {}
+var test = new AEM_Node('https://www.canada.ca/fr/ministere-defense-nationale/test/feuille-derable/ops/2019/05/07-roumaine.html')
 
-  if (this.loaded) {
-    for (var key in keymap) {
-      obj[keymap[key] + '-' + this.language] = this._data[key]
-    }
-  }
+console.log(test);
 
-  if (this._peer && this._peer.loaded) {
-    for (var key in keymap) {
-      obj[keymap[key] + '-' + this._peer.language] = this._peer._data[key]
-    }
-  }
-
-  return obj
-}
+setTimeout(function(){
+  console.log(test) 
+},200)
