@@ -62,6 +62,33 @@ function AEM_Node (url, alt) {
 }
 
 
+AEM_Node.prototype.toJson = function() {
+
+  if ( this.alt ) {
+
+
+  }
+
+
+
+}
+
+function prepare_node( jcr_content ) {
+
+  if (jcr_content['jcr:primaryType'] === 'cq:PageContent') {
+
+  }
+
+  var json = {}
+
+  json['date'] = node.published
+  json['thumb'] = node.thumb
+
+  json['title-' + node.language] = node.title
+  json['desc-' + node.language] = node.desc
+  json['keywords' + node.language] = node.keywords
+  
+}
 
 AEM_Node.prototype.children = function () {
 
@@ -70,10 +97,27 @@ AEM_Node.prototype.children = function () {
 }
 
 
-var test = new AEM_Node('https://www.canada.ca/fr/ministere-defense-nationale/test/feuille-derable/ops/2019/05/07-roumaine.html')
+//var test = new AEM_Node('https://www.canada.ca/fr/ministere-defense-nationale/test/feuille-derable/ops/2019/05/07-roumaine.html')
 
-console.log(test);
+//console.log(test);
 
-setTimeout(function(){
-  console.log(test) 
-},200)
+
+var xml2js = require('xml2js')
+
+var base_url = 'https://www.canada.ca/en/department-national-defence/test/maple-leaf'
+
+
+$.ajax({
+  url: base_url + '.sitemap.xml',
+  success: function (xml) {
+    var test = $(xml).find('url').map(function() {
+      return this.innerHTML
+    });
+
+    console.log(test)
+
+
+
+    console.log( $.parseXML('<?xml version="1.0" encoding="UTF-8"?>' + xml) )
+  }
+})
