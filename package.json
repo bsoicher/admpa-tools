@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/bsoicher/AEM-Feed#readme",
   "dependencies": {
+    "axios": "^0.18.0",
     "jquery": "^3.4.1",
     "xml2js": "^0.4.19"
   }

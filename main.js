@@ -1,14 +1,9 @@
 
 
-var https = require('https')
-var parse = require('xml2js').parseString
+var aem = require('./aem')
 
 
-var xml = "<root>Hello xml2js!</root>"
+aem.nodemap(function(list){
 
-var r = https.request('https://www.canada.ca/en/department-national-defence/test/maple-leaf.sitemap.xml');
-
-r.on('request', function (res) {
-    console.log(res)
+    console.log(list)
 })
-
