@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-        <meta charset="UTF-8">
-        <title>AEM Feed compiler</title>
+        <meta charset="utf-8">
+        <title>AEM Feed Compiler</title>
     </head>
-    <body>
-
+    <body id="body">
         <script src="jquery.js"></script>
+        <script src="download.js"></script>
         <script src="aem.js"></script>
 
+
+        <button onclick="download(JSON.stringify(DATA),'maple.json','text/json')">Download</button>
     </body>
 </html>
