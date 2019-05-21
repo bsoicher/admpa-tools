@@ -6,10 +6,15 @@
     </head>
     <body id="body">
         <script src="jquery.js"></script>
+        <script src="jquery.ajaxq.js"></script>
         <script src="download.js"></script>
         <script src="aem.js"></script>
 
+        <button onclick="loadList()">Start</button>
+        <button onclick="download(JSON.stringify(DATA),'maple.json','text/json')" disabled>Download</button>
 
-        <button onclick="download(JSON.stringify(DATA),'maple.json','text/json')">Download</button>
+        <pre id="preview"></pre>
+
+        </table>
     </body>
 </html>
