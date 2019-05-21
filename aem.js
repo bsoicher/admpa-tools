@@ -1,17 +1,17 @@
 
 /* global $ */
 
-var baseURL = 'https://www.canada.ca/en/department-national-defence'
+var root = 'https://www.canada.ca/en/department-national-defence/test/maple-leaf'
 
 /**
  * Get node structure
  * @param {Function} callback
  */
-function nodeMap(callback) {
+function get_list(callback) {
 
   var a = $.ajax({
     // Site map url
-    url: baseURL + '.sitemap.xml',
+    url: root + '.sitemap.xml',
 
     // Response will be json once converted
     dataType: 'json',
@@ -22,17 +22,17 @@ function nodeMap(callback) {
       // Parse XML
       var xml = $.parseXML(data)
 
-      // Create array of URLs
+      // Create array of paths, ignores nodes without YYYY/MM structure
       var list = $(xml).find('loc').map(function () {
-        return this.innerHTML
+        return /\d{4}\/\d{2}\//.test(this.innerHTML) ? this.innerHTML : null
       }).get()
 
       // Convert back to string
       return JSON.stringify(list)
     },
 
-    success: function (xml) {
-      console.log(xml)
+    error: function () {
+      window.alert('Failed to load sitemap')
     }
   })
 
@@ -41,7 +41,8 @@ function nodeMap(callback) {
   }
 }
 
-$(function(){
-  nodeMap(baseURL)
+$(function () {
+  get_list(function(list){
+    console.log(list)
+  })
 })
-
