@@ -36,10 +36,10 @@ function list_articles() {
     // Add sitemap extension to root URL
     url: root + '.sitemap.xml',
 
-    // Response will be json once converted
+    // Response will be JSON once converted
     dataType: 'json',
 
-    // Convert XML response to JSON
+    // Convert XML response to JSON array
     dataFilter: function (data) {
       // Parse XML
       var xml = $.parseXML(data)
@@ -59,7 +59,7 @@ function list_articles() {
       console.log('Found %d articles', list.length)
     },
 
-    // Log if an error occured
+    // Log if an error if failed
     error: function () {
       data = []
       console.log('Failed to load sitemap')
