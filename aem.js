@@ -7,11 +7,6 @@
  */
 var root = 'https://www.canada.ca/en/department-national-defence/test/maple-leaf/'
 
-/**
- * URL structure of an aticle node (YYYY/MM/article.html)
- * @var {String}
- */
-var match = /\/\d{4}\/\d{2}\/[^.]*\.html$/i
 
 /**
  * Global object to hold downloaded data
@@ -22,6 +17,13 @@ var data = []
 function updatePreview() {
   $('#preview').text(JSON.stringify(data, null, 2))
 }
+
+
+/**
+ * URL structure to match an aticle node (YYYY/MM/article.html)
+ * @var {RegExp}
+ */
+var structure = /\/\d{4}\/\d{2}\/[^.]*\.html$/i
 
 /**
  * Load article list
@@ -46,10 +48,10 @@ function list_articles() {
 
       // Extract URLs, ignores nodes that dont match structure
       var list = $(xml).find('loc').map(function () {
-        return match.test(this.innerHTML) ? this.innerHTML : null
+        return structure.test(this.innerHTML) ? this.innerHTML : null
       }).get()
 
-      // Convert back to string
+      // Must return as string
       return JSON.stringify(list)
     },
 
