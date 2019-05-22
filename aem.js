@@ -5,19 +5,13 @@
  * URL of the root node
  * @var {String} ROOT URL
  */
-var root = 'https://www.canada.ca/en/department-national-defence/test/maple-leaf/'
-
+var root = 'https://www.canada.ca/en/department-national-defence'
 
 /**
  * Global object to hold downloaded data
  * @var {Object} DATA
  */
 var data = []
-
-function updatePreview() {
-  $('#preview').text(JSON.stringify(data, null, 2))
-}
-
 
 /**
  * URL structure to match an aticle node (YYYY/MM/article.html)
@@ -27,12 +21,9 @@ var structure = /\/\d{4}\/\d{2}\/[^.]*\.html$/i
 
 /**
  * Load article list
- * @param {Function} callback
  * @returns {jqXHR}
  */
-function list_articles() {
-  console.log('Loading sitemap')
-
+function loadList () {
   return $.get({
 
     // Add sitemap extension to root URL
@@ -55,16 +46,18 @@ function list_articles() {
       return JSON.stringify(list)
     },
 
-    // Populate global object if succeeded
+    // Populate data list with objects
     success: function (list) {
-      data = list
-      console.log('Found %d articles', list.length)
+      list.forEach(function (url) {
+        data.push({ url: url })
+      })
+
+      data = data.slice(1, 50)
     },
 
-    // Log if an error if failed
+    // Log if failed
     error: function () {
       data = []
-      console.log('Failed to load sitemap')
     }
   })
 }
@@ -72,47 +65,90 @@ function list_articles() {
 /**
  * Load node metadata
  * @param {String} url Node URL
+ * @param {Number} index location in data array
  * @return {Object}
  */
-function loadNode(url) {
+function loadNode (index) {
+  var url = data[index].url || false
+  var alt = data[index].alt || false
+
+  if (url) {
+    // Loading primary
+    delete data[index].url
+  } else if (alt) {
+    // Loading alternative
+    delete data[index].alt
+  } else {
+    // Nothing to load
+    return false
+  }
 
   // Extract language from URL
-  var lang = /canada.ca\/fr\//i.test(url) ? 'fr' : 'en'
+  var lang = /canada.ca\/fr\//i.test(url || alt) ? 'fr' : 'en'
 
-  return $.ajax({
+  return $.get({
 
     // URL of JSON node data
-    url: url.replace('.html', '/_jcr_content.json'),
+    url: (url || alt).replace('.html', '/_jcr_content.json'),
 
-    // Process json response
-    success: function (json) {
-      // Basic node information
-var i ={}
-      //DATA[url] = {)
-        
-        
-        //title = json['jcr:title'] || null
-      i.desc = json['gcDescription'] || null
-      i.keywords = json['gcKeywords'] || null
-      i.thumb = json['gcOGImage'] || null
+    // Filter and format JSON response
+    dataFilter: function (data) {
+      data = JSON.parse(data)
 
-      // Convert date strings to objects
-      i.created = new Date(json['jcr:created'])
-      i.modified = json['jcr:lastModified'] ? new Date(json['jcr:lastModified']) : null
-      i.published = new Date(json['gcLastPublished'])
-      i.expires = new Date(json['gcDateExpired'])
+      // Remap object keys
+      var obj = {}
+      obj['title-' + lang] = '<a href="' + (url || alt) + '">' + utf8.encode(data['jcr:title']) + '</a>'
+      obj['desc-' + lang] = utf8.encode(data['gcDescription'])
+      obj['keywords-' + lang] = utf8.encode(data['gcKeywords'])
+      obj['published'] = data['gcLastPublished']
+      obj['thumb'] = data['gcOGImage']
 
-      i.alt = json['gcAltLanguagePeer']
-      
+      if (!alt) {
+        obj['alt'] = data['gcAltLanguagePeer'].replace('/content/canadasite/', 'https://www.canada.ca/')
+      }
+
+      // Must return as string
+      return JSON.stringify(obj)
     },
 
-    // Log if AJAX error occured
+    // Populate global object
+    success: function (json) {
+      $.extend(data[index], json)
+    },
+
+    // Remove if an error occured
     error: function (jqXHR, textStatus, ex) {
-      console.log(textStatus + ',' + ex + ',' + jqXHR.responseText)
+      console.warn('Failed to load: %s', url || alt)
+      delete data[index]
     }
   })
 }
 
 
 
+function loadNodes () {
 
+  // If loading too many requests, wait
+  for (var x = 0; x < data.length; x++) {
+    if (data[x].url) {
+      return loadNode(x)
+    }
+  }
+
+  for (var x = 0; x < data.length; x++) {
+    if (data[x].alt) {
+      return loadNode(x)
+    }
+  }
+
+  clearInterval(interval)
+  console.log(data)
+}
+
+var interval = null
+
+function start() {
+  loadList().done(function () {
+    interval = setInterval(loadNodes, 100)
+  })
+}

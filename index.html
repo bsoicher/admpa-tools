@@ -5,13 +5,13 @@
         <title>AEM Feed Compiler</title>
     </head>
     <body id="body">
+        <script src="utf8.js"></script>
         <script src="jquery.js"></script>
-        <script src="jquery.ajaxq.js"></script>
         <script src="download.js"></script>
         <script src="aem.js"></script>
 
-        <button onclick="list_articles()">Start</button>
-        <button onclick="download(JSON.stringify(DATA),'maple.json','text/json')" disabled>Download</button>
+        <button onclick="start()">Start</button>
+        <button onclick="download(JSON.stringify(data,null,2),'maple.json','text/plain;charset=UTF-8;')">Download</button>
 
         <pre id="preview"></pre>
 
