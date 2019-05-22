@@ -11,7 +11,7 @@
         <script src="aem.js"></script>
 
         <button onclick="start()">Start</button>
-        <button onclick="download(JSON.stringify(data,null,2),'maple.json','text/plain;charset=UTF-8;')">Download</button>
+        <button onclick="download(JSON.stringify({data:data},null,2),'maple.json','text/plain;charset=UTF-8;')">Download</button>
 
         <pre id="preview"></pre>
 
