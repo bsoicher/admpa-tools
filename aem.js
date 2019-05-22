@@ -5,7 +5,7 @@
  * URL of the root node
  * @var {String} ROOT URL
  */
-var root = 'https://www.canada.ca/en/department-national-defence'
+var root = 'https://www.canada.ca/en/department-national-defence/test/maple-leaf'
 
 /**
  * Global object to hold downloaded data
@@ -18,6 +18,8 @@ var data = []
  * @var {RegExp}
  */
 var structure = /\/\d{4}\/\d{2}\/[^.]*\.html$/i
+
+var completed = 0
 
 /**
  * Load article list
@@ -52,7 +54,8 @@ function loadList () {
         data.push({ url: url })
       })
 
-      data = data.slice(1, 50)
+      //data = data.slice(1, 50)
+      $('#total').text(data.length * 2)
     },
 
     // Log if failed
@@ -114,6 +117,8 @@ function loadNode (index) {
     // Populate global object
     success: function (json) {
       $.extend(data[index], json)
+      completed++
+      $('#done').text(completed)
     },
 
     // Remove if an error occured
