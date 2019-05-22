@@ -28,7 +28,9 @@ function updatePreview() {
  * @param {Function} callback
  * @returns {jqXHR}
  */
-function loadList() {
+function list_articles() {
+  console.log('Loading sitemap')
+
   return $.get({
 
     // Add sitemap extension to root URL
@@ -42,7 +44,7 @@ function loadList() {
       // Parse XML
       var xml = $.parseXML(data)
 
-      // List URLs, ignores nodes that dont match structure
+      // Extract URLs, ignores nodes that dont match structure
       var list = $(xml).find('loc').map(function () {
         return match.test(this.innerHTML) ? this.innerHTML : null
       }).get()
@@ -51,15 +53,16 @@ function loadList() {
       return JSON.stringify(list)
     },
 
+    // Populate global object if succeeded
     success: function (list) {
       data = list
-      $('#preview').text(JSON.stringify(data, null, 2))
+      console.log('Found %d articles', list.length)
     },
 
     // Log if an error occured
-    error: function (e) {
+    error: function () {
       data = []
-      updatePreview()
+      console.log('Failed to load sitemap')
     }
   })
 }
@@ -107,6 +110,7 @@ var i ={}
     }
   })
 }
+
 
 
 
