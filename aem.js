@@ -57,7 +57,7 @@ function loadList () {
         data.push({ url: url })
       })
 
-      //data = data.slice(1, 50)
+      //data = data.slice(1, 20)
       $('#total').text(data.length * 2)
     },
 
@@ -106,7 +106,7 @@ function loadNode (index) {
       obj['title-' + lang] = '<a href="' + (url || alt) + '">' + utf8.encode(data['jcr:title']) + '</a>'
       obj['desc-' + lang] = utf8.encode(data['gcDescription'])
       obj['keywords-' + lang] = utf8.encode(data['gcKeywords'])
-      obj['published'] = new Date(data['gcLastPublished']).toISOString().substring(0, 10)
+      obj['published'] = data['gcLastPublished'] ? new Date(data['gcLastPublished']).toISOString().substring(0, 10) : null
       obj['thumb'] = data['gcOGImage']
 
       if (!alt) {
