@@ -28,7 +28,7 @@ var completed = 0
 function loadList () {
   // Clear any previous data
   data = []
-  
+
   return $.get({
 
     // Add sitemap extension to root URL
@@ -106,7 +106,7 @@ function loadNode (index) {
       obj['title-' + lang] = '<a href="' + (url || alt) + '">' + utf8.encode(data['jcr:title']) + '</a>'
       obj['desc-' + lang] = utf8.encode(data['gcDescription'])
       obj['keywords-' + lang] = utf8.encode(data['gcKeywords'])
-      obj['published'] = data['gcLastPublished']
+      obj['published'] = new Date(data['gcLastPublished']).toISOString()
       obj['thumb'] = data['gcOGImage']
 
       if (!alt) {
