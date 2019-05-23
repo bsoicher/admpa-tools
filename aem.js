@@ -107,7 +107,7 @@ function loadNode (index) {
       obj['desc-' + lang] = utf8.encode(data['gcDescription'])
       obj['keywords-' + lang] = utf8.encode(data['gcKeywords'])
       obj['published'] = data['gcLastPublished'] ? new Date(data['gcLastPublished']).toISOString().substring(0, 10) : null
-      obj['thumb'] = data['gcOGImage']
+      obj['thumb'] = '<img src="' + data['gcOGImage'] + '" width="100%"/>'
 
       if (!alt) {
         obj['alt'] = data['gcAltLanguagePeer'].replace('/content/canadasite/', 'https://www.canada.ca/')
