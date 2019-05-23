@@ -26,6 +26,9 @@ var completed = 0
  * @returns {jqXHR}
  */
 function loadList () {
+  // Clear any previous data
+  data = []
+  
   return $.get({
 
     // Add sitemap extension to root URL
