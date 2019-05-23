@@ -106,7 +106,7 @@ function loadNode (index) {
       obj['title-' + lang] = '<a href="' + (url || alt) + '">' + utf8.encode(data['jcr:title']) + '</a>'
       obj['desc-' + lang] = utf8.encode(data['gcDescription'])
       obj['keywords-' + lang] = utf8.encode(data['gcKeywords'])
-      obj['published'] = new Date(data['gcLastPublished']).toISOString()
+      obj['published'] = new Date(data['gcLastPublished']).toISOString().substring(0, 10)
       obj['thumb'] = data['gcOGImage']
 
       if (!alt) {
