@@ -50,6 +50,11 @@ function loadLegacy () {
       list.forEach(function (obj) {
         // Fix rare unicode characters in URL
         obj['thumb'] = utf8.encode(obj['thumb'])
+
+        // Fix date format
+        var iso = new Date(obj['published']).toISOString()
+        obj['published'] = iso.substr(0, 10) + '<span class="hidden">' + iso.substr(11) + '</span>'
+
         data.push(obj)
       })
 
@@ -147,8 +152,10 @@ function loadNode (index) {
       obj['title-' + lang] = '<a href="' + (url || alt) + '">' + utf8.encode(data['jcr:title']) + '</a>'
       obj['desc-' + lang] = utf8.encode(data['gcDescription'])
       obj['keywords-' + lang] = utf8.encode(data['gcKeywords'])
-      obj['published'] = data['gcLastPublished'] ? new Date(data['gcLastPublished']).toISOString().substring(0, 10) : null
       obj['thumb'] = '<img src="' + data['gcOGImage'] + '" width="100%"/>'
+
+      var iso = new Date(data['gcIssued']).toISOString()
+      obj['published'] = iso.substr(0, 10) + '<span class="hidden">' + iso.substr(11) + '</span>'
 
       if (!alt) {
         obj['alt'] = data['gcAltLanguagePeer'].replace('/content/canadasite/', 'https://www.canada.ca/')
