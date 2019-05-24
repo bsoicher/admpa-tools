@@ -53,7 +53,7 @@ function loadLegacy () {
 
         // Fix date format
         var iso = new Date(obj['published']).toISOString()
-        obj['published'] = iso.substr(0, 10) + '<span class="hidden">' + iso.substr(11) + '</span>'
+        obj['published'] = iso.substr(0, 10) + '<span class="hidden">' + iso.substr(10) + '</span>'
 
         data.push(obj)
       })
@@ -155,7 +155,7 @@ function loadNode (index) {
       obj['thumb'] = '<img src="' + data['gcOGImage'] + '" width="100%"/>'
 
       var iso = new Date(data['gcIssued']).toISOString()
-      obj['published'] = iso.substr(0, 10) + '<span class="hidden">' + iso.substr(11) + '</span>'
+      obj['published'] = iso.substr(0, 10) + '<span class="hidden">' + iso.substr(10) + '</span>'
 
       if (!alt) {
         obj['alt'] = data['gcAltLanguagePeer'].replace('/content/canadasite/', 'https://www.canada.ca/')
