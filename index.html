@@ -5,16 +5,16 @@
         <title>AEM Feed Compiler</title>
     </head>
     <body id="body">
+
+        <button onclick="start()">Start</button>
+        <button onclick="save()">Download</button>
+
+        <pre id="log"></pre>
+
         <script src="utf8.js"></script>
         <script src="jquery.js"></script>
         <script src="download.js"></script>
         <script src="aem.js"></script>
 
-        <button onclick="start()">Start</button>
-        <button onclick="download(JSON.stringify({data:data},null,2),'maple.json','text/plain;charset=UTF-8;')">Download</button>
-
-        <p>Progress <span id="done">0</span>/<span id="total">0</span></p>
-
-        </table>
     </body>
 </html>

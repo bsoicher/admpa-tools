@@ -1,5 +1,5 @@
 
-/* global $ */
+/* global $, utf8 */
 
 /**
  * URL of the root node
@@ -22,12 +22,54 @@ var structure = /\/\d{4}\/\d{2}\/[^.]*\.html$/i
 var completed = 0
 
 /**
+ * Element used to log what is happening
+ * @var {jQuery}
+ */
+var $log = $('#log')
+
+/**
+ * Load legacy article objects
+ * @returns {jqXHR}
+ */
+function loadLegacy () {
+  $log.append('Loading legacy articles...<br>')
+
+  return $.get({
+
+    // Add sitemap extension to root URL
+    url: 'https://ml-fd.caf-fac.ca/feed/feed.php',
+
+    // Could take a while
+    timeout: 0,
+
+    // Response is JSON
+    dataType: 'json',
+
+    // Merge with data list
+    success: function (list) {
+      list.forEach(function (obj) {
+        // Fix rare unicode characters in URL
+        obj['thumb'] = utf8.encode(obj['thumb'])
+        data.push(obj)
+      })
+
+      $log.append('Loaded ' + list.length + ' articles<br><br>')
+    }
+  })
+}
+
+/**
+ * Save number of new articles
+ * @var {Number}
+ */
+var newCount = 0
+
+/**
  * Load article list
  * @returns {jqXHR}
  */
 function loadList () {
-  // Clear any previous data
-  data = []
+  $log.append('Searching for new articles...<br>')
 
   return $.get({
 
@@ -56,9 +98,8 @@ function loadList () {
       list.forEach(function (url) {
         data.push({ url: url })
       })
-
-      //data = data.slice(1, 20)
-      $('#total').text(data.length * 2)
+      newCount = list.length
+      $log.append('Found ' + list.length + ' articles<br><br>')
     },
 
     // Log if failed
@@ -143,11 +184,15 @@ function loadNodes () {
     }
   }
 
+  
+
   for (var x = 0; x < data.length; x++) {
     if (data[x].alt) {
       return loadNode(x)
     }
   }
+
+  $log.append('Done<br>')
 
   clearInterval(interval)
   console.log(data)
@@ -156,7 +201,19 @@ function loadNodes () {
 var interval = null
 
 function start() {
-  loadList().done(function () {
-    interval = setInterval(loadNodes, 100)
+  data = []
+  completed = 0
+  $log.empty()
+  loadLegacy().done(function(){
+    loadList().done(function () {
+      $log.append('Loading metadata (<span id="done">0</span>/<span id="total">' + (newCount * 2) + '</span>)...<br><br>')
+      interval = setInterval(loadNodes, 100)
+    })
   })
+}
+
+function save() {
+  download(JSON.stringify({
+    data: data
+  }, null, 2), 'maple.json', 'text/plain;charset=UTF-8;')
 }
