@@ -85,18 +85,7 @@ function loadList () {
     dataType: 'json',
 
     // Convert XML response to JSON array
-    dataFilter: function (data) {
-      // Parse XML
-      var xml = $.parseXML(data)
-
-      // Extract URLs, ignores nodes that dont match structure
-      var list = $(xml).find('loc').map(function () {
-        return structure.test(this.innerHTML) ? this.innerHTML : null
-      }).get()
-
-      // Must return as string
-      return JSON.stringify(list)
-    },
+    dataFilter: sitemap_to_json,
 
     // Populate data list with objects
     success: function (list) {
