@@ -26,34 +26,20 @@ function get_url_language(url) {
 
 }
 
-/**
- * Defines how an article URL is structured
- * @var {RegExp}
- */
-var match_article = /\/\d{4}\/\d{2}\/[^.]*\.html$/i
 
-/**
- * Test if a url matches an article path structure
- * @param {String} url URL to test
- * @returns {Boolean}
- */
-function is_article(url) {
-    match_article.test(url)
-}
 
 /**
  * Converts XML sitemap into JSON
  * @param {String} xml XML string
  * @returns {String}
  */
-function filter_xml(xml) {
-
+function filter_xml (xml) {
   // Use jQuery to convert XML to DOM structure
-  xml = jQuery(jQuery.parseXML(data))
+  xml = jQuery(jQuery.parseXML(xml))
 
   // Extract URLs, ignores non articles
   var list = xml.find('loc').map(function () {
-    return is_article(this.innerHTML) ? this.innerHTML : null
+    return /\/\d{4}\/\d{2}\/[^.]*\.html$/i.test(this.innerHTML) ? this.innerHTML : null
   }).get()
 
   // Convert back to string
@@ -64,8 +50,7 @@ function filter_xml(xml) {
  * Converts jcr:content data into JSON
  * @param {String} json 
  */
-function filter_jcr(json) {
-
+function filter_jcr (json) {
   // Parse JSON string
   json = JSON.parse(json)
 

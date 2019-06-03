@@ -1,69 +1,65 @@
+/**
+ * Handles loading lots of URLs and saving the data
+ */
 
+/* global jQuery */
 
-function DownloadQueue(concurrent) {
-
+function DownloadQueue (concurrent) {
   /**
    * Max requests running in parallel
    * @var {Number}
    */
-  this.concurrent = concurrent || 5;
+  this.concurrent = concurrent || 5
 
   /**
    * Requests in progress
    * @var {Number}
    */
-  this.active = 0;
+  this.active = 0
 
   /**
-   * URLs to be downloaded
+   * Ajax request configs
    * @var {Object[]}
    */
-  this.tasks = [];
+  this.tasks = []
 
-
-  //this.timer = setInterval(this._run, 500)
-
+  /**
+   * Store downloaded data
+   * @var {Object}
+   */
+  this.data = {}
 }
 
 DownloadQueue.prototype = {
 
-  _run: function() {
-
-    if (this.active >= this.concurrenct || !this.tasks.length) {
+  /**
+   * Run task or nothing if it is busy
+   */
+  _run: function () {
+    if (this.active === this.concurrent || !this.tasks.length) {
       return
     }
 
-    this.tasks.shift().call(null)
-
     this.active++
-
+    (this.tasks.shift())()
     this._run()
   },
 
-  isEmpty: function() {
-    return Boolean(this.tasks.length)
-  },
+  /**
+   * Add an ajax request to the queue
+   * @param {String|Object} config ajax config
+   */
+  push: function (config) {
+    var queue = this
 
-  push: function(url) {
-
-    var i = this
-    this.tasks.push(function() {
-      jQuery.get(url).done(function(){
-        i
+    this.tasks.push(function () {
+      jQuery.get(config).done(function (data) {
+        queue.data[this.url] = data
+        queue.active--
+        queue._run()
       })
     })
 
     this._run()
   }
 }
-
-var queue = new DownloadQueue()
-
-queue.push('https://www.canada.ca/en/department-national-defence/test/maple-leaf/ops/2019/05/_jcr_content.json')
-queue.push('https://www.canada.ca/en/department-national-defence/test/maple-leaf/ops/2019/05/_jcr_content.json')
-queue.push('https://www.canada.ca/en/department-national-defence/test/maple-leaf/ops/2019/05/_jcr_content.json')
-queue.push('https://www.canada.ca/en/department-national-defence/test/maple-leaf/ops/2019/05/_jcr_content.json')
-queue.push('https://www.canada.ca/en/department-national-defence/test/maple-leaf/ops/2019/05/_jcr_content.json')
-queue.push('https://www.canada.ca/en/department-national-defence/test/maple-leaf/ops/2019/05/_jcr_content.json')
-queue.push('https://www.canada.ca/en/department-national-defence/test/maple-leaf/ops/2019/05/_jcr_content.json')
-queue.push('https://www.canada.ca/en/department-national-defence/test/maple-leaf/ops/2019/05/_jcr_content.json')
