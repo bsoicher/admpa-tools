@@ -18,10 +18,22 @@ var loading = []
 
 var queue = new DownloadQueue()
 
+var cache = {}
+
 $.ajaxSetup({
-  // Prevent caching
-  beforeSend: function (xhr, config) {
-    config.url += (config.url.indexOf('?') !== -1 ? '&' : '?') + 'random=' + Math.random()
+  // Prevent browser caching
+  cache: false,
+  // Prevent repeating requests
+  beforeSend: function () {
+    var url = this.url.replace(/\?_=\d+/, '')
+    if (cache.hasOwnProperty(url)) {
+      return false
+    }
+    cache[url] = true
+  },
+  // Save response data
+  success: function (data) {
+    cache[this.url.replace(/\?_=\d+/, '')] = data
   },
   // Log ajax errors
   error: function (xhr, status) {
@@ -34,6 +46,9 @@ var sitemap = $.when(
   $.get(root_en + '.sitemap.xml'),
   $.get(root_fr + '.sitemap.xml')
 ).done(function (en, fr) {
+
+    console.log(cache)
+
   // Filter out non articles and convert to an array
   var urls = $(en[0], fr[0]).find('loc').map(function () {
     return format.test(this.innerHTML) ? this.innerHTML : null
@@ -43,9 +58,6 @@ var sitemap = $.when(
 })
 
 
-queue.bind('done', function () {
-    console.log('queue finished')
-})
 
 
 
