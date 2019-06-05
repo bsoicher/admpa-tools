@@ -3,7 +3,7 @@
  * Loads
  */
 
-/* global $ */
+/* global async, $ */
 
 var wordpress_feed = 'https://ml-fd.caf-fac.ca/feed/feed.php'
 
@@ -13,58 +13,31 @@ var rootFR = 'https://www.canada.ca/fr/ministere-defense-nationale/test/feuille-
 
 var format = /\/\d{4}\/\d{2}\/[^.]*\.html$/i
 
-var urls = []
-var loading = []
+// Prevent browser caching
+$.ajaxSetup({ cache: false })
 
-var queue = new DownloadQueue()
-
-/**
- * Ajax response cache {url:data}
- * @var {Object}
- */
-var cache = {}
-
-$.ajaxSetup({
-  // Prevent browser caching
-  cache: false,
-  // Prevent repeat requests
-  beforeSend: function () {
-    var url = this.url.replace(/\?_=\d+/, '')
-    if (cache.hasOwnProperty(url)) {
-      return false
-    }
-    cache[url] = true
-  },
-  // Save response data
-  success: function (data) {
-    cache[this.url.replace(/\?_=\d+/, '')] = data
-  },
-  // Remove cache on error
-  error: function () {
-    delete cache[this.url.replace(/\?_=\d+/, '')]
+// Create an AJAX task
+function load (url) {
+  return function (cb) {
+    $.get(url).done(function (data) {
+      data.url = this.url.replace(/[?&]_=\d+/, '')
+      cb(null, data)
+    })
   }
-})
+}
 
-$.when(
-  // English and French sitemaps
-  $.get(rootEN + '.sitemap.xml'),
-  $.get(rootFR + '.sitemap.xml')
-).done(function (en, fr) {
+async.parallel([
+  // Load sitemaps
+  load(rootEN + '.sitemap.xml'),
+  load(rootFR + '.sitemap.xml')
+]).then(function (maps) {
 
-    console.log(cache)
+  var tasks = $(maps[0], maps[1]).find('loc').map(function () {
+    return format.test(this.innerHTML) ? load(this.innerHTML.replace('.html', '/_jcr_content.json')) : null
+  }).get()
 
-  // Filter out non articles and convert to an array
-  var urls = $(en[0], fr[0]).find('loc').map(function () {
-    return format.test(this.innerHTML) ? this.innerHTML : null
-  }).get().forEach(function (val) {
-    queue.push(val.replace('.html', '/_jcr_content.json'))
+  // Load metadata
+  async.parallelLimit(tasks, 2).then(function (data) {
+    console.log(data)
   })
 })
-
-
-
-
-
-// Load wordpress feed
-//var wordpress = $.get('https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php')
-
