@@ -114,9 +114,14 @@ function prepare (node) {
 
   obj['img'] = node['gcOGImage'] ? '<img src="' + node['gcOGImage'] + '"/>' : ''
   obj['title-' + lang] = '<a href="' + nodeURL(node['_url']) + '">' + utf8.encode(node['jcr:title']) + '</a>'
-  obj['desc-' + lang] = utf8.encode(node['gcDescription'] || '')
   obj['key-' + lang] = utf8.encode(node['gcKeywords'] || '')
 
+  if (node['gcDescription'].length > 140) {
+    node['gcDescription'] = node['gcDescription'].substr(0, 140) + '...'
+  }
+
+  obj['desc-' + lang] = utf8.encode(node['gcDescription'] || '')
+  
   if (typeof node['_peer'] !== 'object') return obj
   $.extend(obj, prepare(node['_peer']))
 
