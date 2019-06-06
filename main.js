@@ -9,10 +9,16 @@ var wordpress_feed = 'https://ml-fd.caf-fac.ca/feed/feed.php'
 
 // Root AEM nodes
 
+//var rootEN = 'https://www.canada.ca/en/department-national-defence/test/maple-leaf'
+//var rootFR = 'https://www.canada.ca/fr/ministere-defense-nationale/test/feuille-derable'
 var rootEN = 'https://www.canada.ca/en/department-national-defence'
 var rootFR = 'https://www.canada.ca/fr/ministere-defense-nationale'
 
 var format = /\/\d{4}\/\d{2}\/[^.]*\.html$/i
+
+var loaded = -1
+var total = 0
+var start = new Date().getTime()
 
 // Prevent browser caching
 $.ajaxSetup({ cache: false })
@@ -35,6 +41,11 @@ function nodeURL (node) {
   return node.replace('/_jcr_content.json', '.html').replace('.sitemap.xml', '.html')
 }
 
+function progress() {
+  $('#log').text(loaded + ' of ' + total + ' nodes loaded')
+  loaded++
+}
+
 /**
  * Create AJAX task(s) from URL(s)
  * @param {String|String[]} url URL(s) to download
@@ -46,6 +57,7 @@ function taskify (url) {
       $.get(url).done(function (data) {
         data['_url'] = url
         cb(null, data)
+        progress()
       })
     }
   } else {
@@ -115,6 +127,10 @@ function prepare (node) {
 }
 
 function main() {
+  start = new Date().getTime()
+  loaded = 0
+  $('#log').text('Loading Sitemaps...')
+
   // Begin downloads
   async.parallel(taskify([
     // Load sitemaps
@@ -126,9 +142,15 @@ function main() {
       return format.test(this.innerHTML) ? metaURL(this.innerHTML) : null
     }).get()
 
+    total = nodes.length
+
     // Load metadata, process it and trigger download
     async.parallelLimit(taskify(nodes), 5).then(function (meta) {
+      $('#log').text('Processing data...')
       download(JSON.stringify({ data: peer(meta).map(prepare) }, null, 2), 'maple.json', 'text/plain;charset=UTF-8;')
+      $('#log').text('Completed in ' + ((new Date().getTime() - start) / 1000) + ' seconds')
     })
   })
 }
+
+
