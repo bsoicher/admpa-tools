@@ -1,54 +1,72 @@
 
-
-/* global async, download, EventEmitter, jQuery, utf8 */
-
-// Prevent browser caching
-
-
-var root = 'en/department-national-defence/test/maple-leaf'
-
-
-AEM_Node.prototype = {
-
-  
-
-}
-
-// Instance of EventEmitter
-var AEM = new EventEmitter()
+/* global async, jQuery */
 
 /**
- * AEM domain name
- * @var {String}
+ * AEM functions
+ * @var {Object}
  */
-AEM.domain = 'https://www.canada.ca/'
+var AEM = {
 
-/**
- * Preload nodes
- * @param {String} node Node path
- * @param {String} match Load children matching pattern
- */
-AEM.preload = function (node, match) {
+  /**
+   * AEM domain name
+   * @var {String}
+   */
+  domain: 'https://www.canada.ca/',
 
-  jQuery.get(this.domain + node + '/_jcr_content.json').done(function (jcr) {
+  /**
+   * Node URL extensions
+   * @var {Object}
+   */
+  ext: {
+    meta: '/_jcr_content.json',
+    map: '.sitemap.xml',
+    doc: '.html'
+  },
 
-  })
+  /**
+   * Async queue for ajax calls, caches requests
+   * @var {QueueObject}
+   */
+  _queue: async.queue(function (url, cb) {
+    jQuery.get({ url: url, cache: false }).done(cb)
+  }, 5),
 
+  /**
+   * Turn a URL into a node path
+   * @param {String} url Node URL
+   * @returns {String}
+   */
+  normalize: function (url) {
+    return url.replace(this.domain, '').replace(/^(\/content\/canadasite\/|\/)/, '').replace(/(\.[^/.]+|\/)$/, '')
+  },
+
+  /**
+   * Get node metadata
+   * @param {String} path Node path
+   * @param {Function} cb Callback
+   */
+  meta: function (path, cb) {
+    return this._queue.push(this.domain + path + this.ext.meta, cb)
+  },
+
+  /**
+   * Get list of child nodes
+   * @param {String} path Node path
+   * @param {Function} cb Callback
+   */
+  children: function (path, cb) {
+    return this._queue.push(this.domain + path + this.ext.map, function (xml) {
+      cb(jQuery(xml).find('loc:not(:first)').map(function () {
+        return AEM.normalize(this.innerHTML)
+      }).get())
+    })
+  },
+
+  /**
+   * Add callback when queue finishes
+   * @param {Function} cb Callback
+   */
+  done: function (cb) {
+    this._queue.drain(cb)
+  }
 }
-
-
-
-/**
- * Check if a node is already loaded
- * @returns {Boolean}
- */
-AEM.isCached = function (node) {
-  return node in this.cache
-}
-
-AEM.on('progress', function(){
-  console.log(123)
-})
-
-AEM.test()
-
