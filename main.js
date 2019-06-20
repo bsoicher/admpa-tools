@@ -1,7 +1,7 @@
 
 /* global AEM, download, jQuery, utf8 */
 
-var root = 'en/department-national-defence/test/maple-leaf'
+var root = 'en/department-national-defence'
 
 var data = { en: [], fr: [] }
 
@@ -11,7 +11,7 @@ var data = { en: [], fr: [] }
  * @returns {Boolean}
  */
 function isArticle (node) {
-  return /\/\d{4}\/\d{2}\/[^/]+$/i.test(node)
+  return /\/2019\/\d{2}\/[^/]+$/i.test(node)
 }
 
 /**
@@ -25,7 +25,7 @@ function prepare (node, meta) {
     category(node),
     meta['gcOGImage'] ? '<img src="' + meta['gcOGImage'] + '"/>' : '',
     '<a href="/' + node + '.html">' + utf8.encode(meta['jcr:title']) + '</a>',
-    utf8.encode(meta['gcKeywords'] || ''),
+    utf8.encode(meta['gcKeywords'] || '').replace(/,(\S)/g, ', $1'),
     utf8.encode(meta['gcDescription'] || ''),
     date.substr(0, 10) + '<em class="hidden">' + date.substr(10) + '</em>'
   ])
@@ -55,25 +55,28 @@ function category (node) {
  * Save en and fr JSON files
  */
 function save () {
+  log('Done')
   for (var lang in data) {
     download(JSON.stringify({ data: data[lang] }, null, 2), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
   }
+}
+
+function log (str) {
+  jQuery('#log').append(str + '<br/>')
 }
 
 /**
  * Run the tool
  */
 function start () {
-  AEM.meta(root, function (meta) {
-    AEM.children(root, function (nodes) {
-      AEM.children(AEM.normalize(meta['gcAltLanguagePeer']), function (nodes2) {
-        nodes.concat(nodes2).filter(isArticle).forEach(function (node) {
-          AEM.meta(node, function (meta) {
-            prepare(node, meta)
-          })
-        })
-        AEM.done(save)
+  log('Loading sitemaps...')
+  AEM.children(root, function (nodes) {
+    log('Loading metadata...')
+    nodes.filter(isArticle).forEach(function (node) {
+      AEM.meta(node, function (meta) {
+        prepare(node, meta)
       })
     })
+    AEM.done(save)
   })
 }

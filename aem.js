@@ -55,10 +55,19 @@ var AEM = {
    * @param {Function} cb Callback
    */
   children: function (path, cb) {
-    return this._queue.push(this.domain + path + this.ext.map, function (xml) {
-      cb(jQuery(xml).find('loc:not(:first)').map(function () {
-        return AEM.normalize(this.innerHTML)
-      }).get())
+    this.meta(path, function (meta) {
+      async.parallel([
+        function (cb) {
+          jQuery.get({ url: AEM.domain + path + AEM.ext.map, cache: false }).done(cb)
+        },
+        function (cb) {
+          jQuery.get({ url: AEM.domain + AEM.normalize(meta['gcAltLanguagePeer']) + AEM.ext.map, cache: false }).done(cb)
+        }
+      ], function (xml) {
+        cb(jQuery(xml).find('loc:not(:first)').map(function () {
+          return AEM.normalize(this.innerHTML)
+        }).get())
+      })
     })
   },
 
