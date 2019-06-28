@@ -72,11 +72,16 @@ function start () {
   log('Loading sitemaps...')
   AEM.children(root, function (nodes) {
     log('Loading metadata...')
-    nodes.filter(isArticle).forEach(function (node) {
+
+    nodes = nodes.filter(isArticle)
+    
+    console.log(nodes)
+
+    /*.forEach(function (node) {
       AEM.meta(node, function (meta) {
         prepare(node, meta)
       })
-    })
-    AEM.done(save)
+    })*/
+    //AEM.done(save)
   })
 }
