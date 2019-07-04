@@ -1,7 +1,7 @@
 
 /* global AEM, download, jQuery, utf8 */
 
-var root = 'en/department-national-defence'
+var root = 'en/department-national-defence/test/maple-leaf'
 
 var data = { en: [], fr: [] }
 
@@ -55,10 +55,12 @@ function category (node) {
  * Save en and fr JSON files
  */
 function save () {
-  log('Done')
-  for (var lang in data) {
-    download(JSON.stringify({ data: data[lang] }, null, 2), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
-  }
+  setTimeout(function () {
+    log('Done')
+    for (var lang in data) {
+      download(JSON.stringify({ data: data[lang] }, null, 2), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+    }
+  }, 1500)
 }
 
 function log (str) {
@@ -70,6 +72,7 @@ function log (str) {
  */
 function start () {
   log('Loading sitemaps...')
+
   AEM.children(root, function (nodes) {
     log('Loading metadata...')
 
@@ -77,11 +80,12 @@ function start () {
     
     console.log(nodes)
 
-    /*.forEach(function (node) {
+    nodes.forEach(function (node) {
       AEM.meta(node, function (meta) {
         prepare(node, meta)
       })
-    })*/
-    //AEM.done(save)
+    })
+
+    AEM.done(save)
   })
 }
