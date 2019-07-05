@@ -1,7 +1,7 @@
 
 /* global AEM, download, jQuery, utf8 */
 
-var root = 'en/department-national-defence/test/maple-leaf'
+var root = 'en/department-national-defence/maple-leaf'
 
 var data = { en: [], fr: [] }
 
@@ -60,7 +60,7 @@ function save () {
     for (var lang in data) {
       download(JSON.stringify({ data: data[lang] }, null, 2), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
     }
-  }, 1500)
+  }, 5000)
 }
 
 function log (str) {
@@ -71,6 +71,12 @@ function log (str) {
  * Run the tool
  */
 function start () {
+
+  jQuery.get('https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php').done(function (json) {
+    data['en'] = data['en'].concat(json['en'])
+    data['fr'] = data['fr'].concat(json['fr'])
+  })
+
   log('Loading sitemaps...')
 
   AEM.children(root, function (nodes) {
