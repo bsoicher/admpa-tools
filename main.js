@@ -1,18 +1,5 @@
 
-/* global AEM, download, jQuery, utf8 */
-
-var root = 'en/department-national-defence/maple-leaf'
-
-var data = { en: [], fr: [] }
-
-/**
- * Determine if node is an article
- * @param {String} node Node path
- * @returns {Boolean}
- */
-function isArticle (node) {
-  return /\/2019\/\d{2}\/[^/]+$/i.test(node)
-}
+/* global AEM, download, jQuery, utf8, async */
 
 /**
  * Process a node into final format
@@ -32,12 +19,32 @@ function prepare (node, meta) {
 }
 
 /**
- * Determine nodes category
- * @param {String} node Node path
+ * Create a task containting an AJAX request
+ * @param {String} url Document to load
+ * @returns {Function}
+ */
+function get (url) {
+  return function (cb) {
+    jQuery.get({
+      url: url,
+      cache: false,
+      success: function (res) {
+        cb(null, res)
+      },
+      error: function (e) {
+        cb(e, null)
+      }
+    })
+  }
+}
+
+/**
+ * Determine category of URL
+ * @param {String} url Node url
  * @returns {String}
  */
-function category (node) {
-  switch (/(\w+)\/\d{4}\/\d{2}\/[^/]+$/.exec(node).pop()) {
+function category (url) {
+  switch (/(\w+)\/\d{4}\/\d{2}\/[^/]+$/.exec(url).pop()) {
     case 'navy':
     case 'marine':
       return 'rcn'
@@ -52,46 +59,52 @@ function category (node) {
 }
 
 /**
- * Save en and fr JSON files
- */
-function save () {
-  setTimeout(function () {
-    log('Done')
-    for (var lang in data) {
-      download(JSON.stringify({ data: data[lang] }, null, 2), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
-    }
-  }, 5000)
-}
-
-function log (str) {
-  jQuery('#log').append(str + '<br/>')
-}
-
-/**
  * Run the tool
  */
 function start () {
 
-  jQuery.get('https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php').done(function (json) {
-    data['en'] = data['en'].concat(json['en'])
-    data['fr'] = data['fr'].concat(json['fr'])
-  })
+  // Perform functions in sequence
+  async.waterfall([
 
-  log('Loading sitemaps...')
-
-  AEM.children(root, function (nodes) {
-    log('Loading metadata...')
-
-    nodes = nodes.filter(isArticle)
-    
-    console.log(nodes)
-
-    nodes.forEach(function (node) {
-      AEM.meta(node, function (meta) {
-        prepare(node, meta)
+    // Load WordPress export and sitemaps
+    function (cb) {
+      async.parallel([
+        get('https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php'),
+        get('https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml'),
+        get('https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml')
+      ], function (err, res) {
+        cb(err, res[0], res[1], res[2])
       })
-    })
+    },
 
-    AEM.done(save)
+    // Parse sitemaps
+    function (data, en, fr, cb) {
+      var nodes = jQuery([en, fr]).find('loc').map(function () {
+        return this.innerHTML
+      }).get().filter(function (url) {
+        return /\/2019\/\d{2}\/[^/]+$/i.test(url)
+      })
+
+      cb(null, data, nodes)
+    },
+
+    // Download all metadata
+    function (data, nodes, cb) {
+      async.parallelLimit(nodes.map(function (url) {
+        return get(url.replace('.html', '/_jcr_content.json'))
+      }), 5, function (err, meta) {
+        cb(err, data, meta)
+      })
+    },
+
+    // Process metadata
+    function (data, meta, cb) {
+      console.log(meta)
+    }
+
+  ], function (e, data) {
+    for (var lang in data) {
+      download(JSON.stringify({ data: data[lang] }, null, 2), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+    }
   })
 }
