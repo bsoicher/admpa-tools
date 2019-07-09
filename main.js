@@ -1,41 +1,12 @@
 
-/* global AEM, download, jQuery, utf8, async */
-
-/**
- * Process a node into final format
- * @param {String} node Node path
- * @param {Object} meta Node metadata
- */
-function prepare (node, meta) {
-  var date = new Date(meta['gcModifiedOverride'] || meta['gcIssued'] || meta['gcLastPublished']).toISOString()
-  data[meta['jcr:language']].push([
-    category(node),
-    meta['gcOGImage'] ? '<img src="' + meta['gcOGImage'] + '"/>' : '',
-    '<a href="/' + node + '.html">' + utf8.encode(meta['jcr:title']) + '</a>',
-    utf8.encode(meta['gcKeywords'] || '').replace(/,(\S)/g, ', $1'),
-    utf8.encode(meta['gcDescription'] || ''),
-    date.substr(0, 10) + '<em class="hidden">' + date.substr(10) + '</em>'
-  ])
-}
+/* global download, jQuery, utf8, async */
 
 /**
  * Create a task containting an AJAX request
- * @param {String|Array} url Document to load
+ * @param {String} url Document to load
  * @returns {Function}
  */
 function get (url) {
-
-  // Handle arguments as array
-  if (arguments.length > 1) {
-    url = Array.from(arguments)
-  }
-
-  if (Array.isArray(url)) {
-    return url.map(function (val) {
-      get(val)
-    })
-  }
-
   return function (cb) {
     jQuery.get({
       url: url,
@@ -66,6 +37,10 @@ function category (url) {
   return 'ml'
 }
 
+function log (str) {
+  jQuery('#log').append(str + '<br/>')
+}
+
 /**
  * Run the tool
  */
@@ -74,25 +49,25 @@ function start () {
   // Perform functions in sequence
   async.waterfall([
 
-    // Load WordPress export and sitemaps
     function (cb) {
-      async.parallel(get(
-        'https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php',
-        'https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml',
-        'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml'
-      ), function (err, res) {
-        cb(err, res[0], res[1], res[2])
+      log('Loading WordPress articles and sitemaps...')
+
+      async.parallel([
+        get('https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php'),
+        get('https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml'),
+        get('https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml')
+      ], function (err, res) {
+        cb(err, res[0], [res[1], res[2]])
       })
     },
 
-    // Parse sitemaps
-    function (data, en, fr, cb) {
-      var nodes = jQuery([en, fr]).find('loc').map(function () {
+    function (data, xml, cb) {
+      log('Processing sitemaps...')
+
+      var nodes = jQuery(xml).find('loc').map(function () {
         return this.innerHTML
       }).get().filter(function (url) {
-        return /\/2019\/\d{2}\/[^/]+$/i.test(url)
-      }).map(function (url) {
-        return url.replace('.html', '/_jcr_content.json')
+        return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
       })
 
       cb(null, data, nodes)
@@ -100,21 +75,44 @@ function start () {
 
     // Download all metadata
     function (data, nodes, cb) {
-      console.log(nodes)
-      console.log(get.apply(null, nodes))
-      async.parallelLimit(get(nodes), 5, function (err, meta) {
+      log('Downloading metadata...')
+
+      var tasks = {}
+      nodes.forEach(function (url) {
+        tasks[url] = get(url.replace('.html', '/_jcr_content.json'))
+      })
+
+      async.parallelLimit(tasks, 5, function (err, meta) {
         cb(err, data, meta)
       })
     },
 
     // Process metadata
     function (data, meta, cb) {
-      console.log(meta)
+      log('Processing metadata...')
+
+      Object.keys(meta).forEach(function (url) {
+        var o = meta[url]
+        var date = new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString()
+
+        data[o['jcr:language']].push([
+          category(url),
+          o['gcOGImage'] ? '<img src="' + o['gcOGImage'] + '"/>' : '',
+          '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
+          utf8.encode(o['gcDescription'] || ''),
+          utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1'),
+          date.substr(0, 10) + '<em class="hidden">' + date.substr(10, 9) + '</em>'
+        ])
+      })
+
+      cb(null, data)
     }
 
   ], function (e, data) {
+    log('Done')
+
     for (var lang in data) {
-      download(JSON.stringify({ data: data[lang] }, null, 2), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+      download(JSON.stringify({ data: data[lang] }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
     }
   })
 }
