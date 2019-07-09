@@ -20,20 +20,28 @@ function prepare (node, meta) {
 
 /**
  * Create a task containting an AJAX request
- * @param {String} url Document to load
+ * @param {String|Array} url Document to load
  * @returns {Function}
  */
 function get (url) {
+
+  // Handle arguments as array
+  if (arguments.length > 1) {
+    url = Array.from(arguments)
+  }
+
+  if (Array.isArray(url)) {
+    return url.map(function (val) {
+      get(val)
+    })
+  }
+
   return function (cb) {
     jQuery.get({
       url: url,
       cache: false,
-      success: function (res) {
-        cb(null, res)
-      },
-      error: function (e) {
-        cb(e, null)
-      }
+      success: function (res) { cb(null, res) },
+      error: function (e) { cb(e, null) }
     })
   }
 }
@@ -68,11 +76,11 @@ function start () {
 
     // Load WordPress export and sitemaps
     function (cb) {
-      async.parallel([
-        get('https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php'),
-        get('https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml'),
-        get('https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml')
-      ], function (err, res) {
+      async.parallel(get(
+        'https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php',
+        'https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml',
+        'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml'
+      ), function (err, res) {
         cb(err, res[0], res[1], res[2])
       })
     },
@@ -83,6 +91,8 @@ function start () {
         return this.innerHTML
       }).get().filter(function (url) {
         return /\/2019\/\d{2}\/[^/]+$/i.test(url)
+      }).map(function (url) {
+        return url.replace('.html', '/_jcr_content.json')
       })
 
       cb(null, data, nodes)
@@ -90,9 +100,9 @@ function start () {
 
     // Download all metadata
     function (data, nodes, cb) {
-      async.parallelLimit(nodes.map(function (url) {
-        return get(url.replace('.html', '/_jcr_content.json'))
-      }), 5, function (err, meta) {
+      console.log(nodes)
+      console.log(get.apply(null, nodes))
+      async.parallelLimit(get(nodes), 5, function (err, meta) {
         cb(err, data, meta)
       })
     },
