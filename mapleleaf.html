@@ -55,14 +55,13 @@
             jQuery('#log').append(str + '<br/>')
         }
 
-        /**
-         * Run the tool
-         */
+        // Start loading info
         function start() {
 
             // Perform functions in sequence
             async.waterfall([
 
+                // Load WordPress export and AEM sitemaps
                 function (cb) {
                     log('Loading WordPress articles and sitemaps...')
 
@@ -75,6 +74,7 @@
                     })
                 },
 
+                // Turn XML sitemaps into JSON, filtering out URLs that dont match the format
                 function (data, xml, cb) {
                     log('Processing sitemaps...')
 
@@ -87,7 +87,7 @@
                     cb(null, data, nodes)
                 },
 
-                // Download all metadata
+                // Download metadata
                 function (data, nodes, cb) {
                     log('Downloading metadata...')
 
