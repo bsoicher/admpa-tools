@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>AEM Feed Compiler</title>
+    <title>National Defence video gallery</title>
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -37,22 +37,6 @@
             })
         }
 
-        // Determine the article category based on the URL
-        function category(url) {
-            switch (/(\w+)\/\d{4}\/\d{2}\/[^/]+$/.exec(url).pop()) {
-                case 'navy':
-                case 'marine':
-                    return 'rcn'
-                case 'army':
-                case 'armee':
-                    return 'ca'
-                case 'rcaf':
-                case 'arc':
-                    return 'rcaf'
-            }
-            return 'ml'
-        }
-
         function log(str) {
             jQuery('#log').append(str + '<br/>')
         }
@@ -63,34 +47,33 @@
             // Perform functions in sequence
             async.waterfall([
 
-                // Load WordPress export and AEM sitemaps
+                // Load AEM sitemaps
                 function (cb) {
-                    log('Loading WordPress articles and sitemaps...')
+                    log('Loading sitemaps...')
 
                     async.parallel([
-                        get('https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php'),
-                        get('https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml'),
-                        get('https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml')
+                        get('https://www.canada.ca/en/department-national-defence/corporate/video.sitemap.xml'),
+                        get('https://www.canada.ca/fr/ministere-defense-nationale/organisation/video.sitemap.xml')
                     ], function (err, res) {
-                        cb(err, res[0], [res[1], res[2]])
+                        cb(err, res)
                     })
                 },
 
                 // Turn XML sitemaps into JSON, filtering out URLs that dont match the format
-                function (data, xml, cb) {
+                function (xml, cb) {
                     log('Processing sitemaps...')
 
                     var nodes = jQuery(xml).find('loc').map(function () {
                         return this.innerHTML
-                    }).get().filter(function (url) {
-                        return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
+                    }).get().slice(1).filter(function (url) {
+                        return url
                     })
 
-                    cb(null, data, nodes)
+                    cb(null, nodes)
                 },
 
                 // Download metadata
-                function (data, nodes, cb) {
+                function (nodes, cb) {
                     log('Downloading metadata...')
 
                     var tasks = {}
@@ -99,26 +82,30 @@
                     })
 
                     async.parallelLimit(tasks, 5, function (err, meta) {
-                        cb(err, data, meta)
+                        cb(err, meta)
                     })
                 },
 
                 // Process metadata
-                function (data, meta, cb) {
+                function (meta, cb) {
                     log('Processing metadata...')
+                    data = {en:[], fr:[]}
 
                     Object.keys(meta).forEach(function (url) {
-                        var o = meta[url]
-                        var date = new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString()
+                        try {
+                            var o = meta[url]
+                            var date = new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString()
 
-                        data[o['jcr:language']].push([
-                            category(url),
-                            o['gcOGImage'] ? '<img src="' + o['gcOGImage'] + '"/>' : '',
-                            '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
-                            utf8.encode(o['gcDescription'] || ''),
-                            utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1'),
-                            date.substr(0, 10) + '<em class="hidden">' + date.substr(10, 9) + '</em>'
-                        ])
+                            data[o['jcr:language']].push([
+                                o['gcOGImage'] ? '<img src="' + o['gcOGImage'] + '"/>' : '',
+                                '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
+                                utf8.encode(o['gcDescription'] || ''),
+                                utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1'),
+                                date.substr(0, 10) + '<em class="hidden">' + date.substr(10, 9) + '</em>'
+                            ])
+                        } catch (e) {
+                            console.log(url)
+                        }
                     })
 
                     cb(null, data)
@@ -128,7 +115,7 @@
                 log('Done')
 
                 for (var lang in data) {
-                    download(JSON.stringify({ data: data[lang] }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                    download(JSON.stringify({ data: data[lang] }, null, null), lang + '.json', 'text/plain;charset=UTF-8;')
                 }
             })
         }
