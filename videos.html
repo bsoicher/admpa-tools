@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>National Defence video gallery</title>
+    <title>Video gallery feed compiler</title>
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -25,8 +25,8 @@
         // Generate an AJAX task to be completed
         function get(url) {
             return async.retryable({
-                times: 5,
-                interval: 10000
+                times: 2,
+                interval: 60000
             }, function (cb) {
                 jQuery.get({
                     url: url,
