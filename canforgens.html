@@ -31,6 +31,7 @@
                 jQuery.get({
                     url: url,
                     cache: false,
+                    dataType: 'JSONP',
                     success: function (res) {cb(null, res) },
                     error: function (e) { cb(e, null) }
                 })
