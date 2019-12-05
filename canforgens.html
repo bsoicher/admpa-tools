@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>National Defence video gallery</title>
+    <title>CANFORGENS feed compiler</title>
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -25,8 +25,8 @@
         // Generate an AJAX task to be completed
         function get(url) {
             return async.retryable({
-                times: 5,
-                interval: 15000
+                times: 1,
+                //interval: 15000
             }, function (cb) {
                 jQuery.get({
                     url: url,
@@ -47,14 +47,15 @@
             // Perform functions in sequence
             async.waterfall([
 
-                // Load AEM sitemaps
+                // Get list of years
                 function (cb) {
-                    log('Loading sitemaps...')
+                    log('Getting years...') 
 
                     async.parallel([
-                        get('https://www.canada.ca/en/department-national-defence/corporate/video.sitemap.xml'),
-                        get('https://www.canada.ca/fr/ministere-defense-nationale/organisation/video.sitemap.xml')
+                        get('http://vcds.mil.ca/apps/canforgens/default-eng.asp'),
                     ], function (err, res) {
+
+                        console.log(res)
                         cb(err, res)
                     })
                 },
@@ -70,53 +71,10 @@
                     })
 
                     cb(null, nodes)
-                },
-
-                // Download metadata
-                function (nodes, cb) {
-                    log('Downloading metadata...')
-
-                    var tasks = {}
-                    nodes.forEach(function (url) {
-                        tasks[url] = get(url.replace('.html', '/_jcr_content.json'))
-                    })
-
-                    async.parallelLimit(tasks, 5, function (err, meta) {
-                        cb(err, meta)
-                    })
-                },
-
-                // Process metadata
-                function (meta, cb) {
-                    log('Processing metadata...')
-                    data = {en:[], fr:[]}
-
-                    Object.keys(meta).forEach(function (url) {
-                        try {
-                            var o = meta[url]
-                            var date = new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString()
-
-                            data[o['jcr:language']].push([
-                                o['gcOGImage'] ? '<img src="' + o['gcOGImage'] + '"/>' : '',
-                                '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
-                                utf8.encode(o['gcDescription'] || ''),
-                                utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1'),
-                                date.substr(0, 10) + '<em class="hidden">' + date.substr(10, 9) + '</em>'
-                            ])
-                        } catch (e) {
-                            console.log(url)
-                        }
-                    })
-
-                    cb(null, data)
                 }
 
             ], function (e, data) {
                 log('Done')
-
-                for (var lang in data) {
-                    download(JSON.stringify({ data: data[lang] }, null, null), lang + '.json', 'text/plain;charset=UTF-8;')
-                }
             })
         }
 
