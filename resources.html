@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>CAF Mobile App Resources</title>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+
+<body id="body">
+
+    <main></main>
+
+    <script>
+
+       
+        function toHTML(json) {
+
+            var html = ''
+
+            json.sections.forEach(function(section){
+                html += '<section><div class="form-row"><div class="col">Title: '
+                    
+                html += '<input type="text" class="form-control" value="' + section.title.en + '"/>'
+                html += '<input type="text" class="form-control" value="' + section.title.fr + '"/></div><div class="col">Desc:'
+                html += '<input type="text" class="form-control" value="' + section.description.en + '"/>'
+                
+                html += '<input type="text" class="form-control" value="' + section.description.fr + '"/>'
+                html += '</div></div></section>'
+            })
+
+           
+            $('main').html(html)
+
+        }
+
+    
+
+        jQuery.get({
+            url: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/resources.json',
+            cache: false
+        }).done(function(data) {
+
+            toHTML(data)
+        })
+     
+    </script>
+
+</body>
+
+</html>

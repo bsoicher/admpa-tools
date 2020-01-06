@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Maple Leaf > Image Gallery Generator</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js"></script>
+
+    <style>
+        .table>tbody>tr>td:last-child {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body id="body">
+
+    <div class="container mb-5">
+        <h1 class="h4 mt-5">Maple Leaf Tools <small class="text-muted">> Image Gallery Generator</small></h1>
+        <p>Use this page to generate the HTML of an image gallery.</p><p>Images must first be published to canada.ca DAM in the folder ( <code>dam/dnd-mdn/images/maple-leaf/articles/</code> )</p>
+
+
+        <div class="mt-4">
+ 
+                <h2 class="h6">Usage</h2>
+                <ul>
+                    <li>Drag rows up or down to re-order images</li>
+                    <li>Removed a row by clicking the X on right side of the row</li>
+                </ul>
+            </div>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Image URL</th>
+                    <th>Description</th>
+                    <th>Alternate text</th>
+                    <th width="5px">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+            </tbody>
+        </table>
+
+        <button id="add" type="button" class="btn btn-primary">Add Row</button>
+        <button id="save" type="button" class="btn btn-primary float-right">Generate HTML</button>
+
+        <h2 class="h4 mt-4">Result</h2>
+        <textarea id="code" class="form-control" rows="5" readonly></textarea>
+
+        <button class="btn btn-primary" data-clipboard-action="copy" data-clipboard-target="#code">
+                Copy to clipboard
+        </button>
+
+    </div>
+
+    <script>
+
+        var clip = new ClipboardJS('.btn');
+
+        var baseURL = 'https://www.canada.ca/content/dam/dnd-mdn/images/maple-leaf/articles/'
+
+        // Enable dragging to reorder table rows
+        $('#tbody').sortable()
+
+        // Add blank row
+        $('#add').click(function () {
+            $('#tbody').append(row)
+        })
+
+        // Handle remove row event
+        $(document).on('click', 'button.close', function () {
+            $(this).parent().parent().remove()
+        })
+        
+        // Clear field validation if changed
+        $(document).on('paste blur change keyup input', 'textarea', function () {
+            $(this).removeClass('is-valid is-invalid')
+        })
+
+        // Validate a URL field
+        function validate_image() {
+            var i = $(this)
+
+            // Remove whitespace
+            i.val(i.val().replace(/\s/g,''))
+
+            // If empty, dont send ajax
+            if (!i.val()) {
+                i.removeClass('is-valid').addClass('is-invalid')
+                return;
+            }
+
+            // Try loading image metadata
+            $.ajax({
+                url: baseURL + i.val() + '/_jcr_content.json',
+                success: function() {
+                    i.removeClass('is-invalid').addClass('is-valid')
+                },
+                error: function() {
+                    i.removeClass('is-valid').addClass('is-invalid')
+                }
+            })
+        }
+
+        // Validate a text field
+        function validate_text() {
+            var i = $(this)
+
+            // Remove whitespace
+            i.val($.trim(i.val()))
+
+            // Make sure there is content
+            if (i.val().length > 3) {
+                i.removeClass('is-invalid').addClass('is-valid')
+            } else {
+                i.removeClass('is-valid').addClass('is-invalid')
+            }
+        }
+
+        function generate() {
+            var html = "<section class=\"wb-lbx lbx-gal\">\n\t<h4>Image gallery</h4>\n\t<ul class=\"list-inline\">"
+            
+            $('#tbody tr').each(function() {
+                var e = $(this)
+
+                var img  = baseURL + (e.find('.url').val() || "")
+                var alt  = $('<span>' + e.find('.alt').val() + '</span>').text().replace(/"/g, '&quot;')
+                var desc = $('<span>' + e.find('.desc').val() + '</span>').text().replace(/"/g, '&quot;')
+
+                html += "\n\t\t<li>\n\t\t\t<a href=\"" + img + "\" title=\"" + desc + "\">"
+                html += "\n\t\t\t\t<img src=\"" + img + "\" alt=\"" + alt + "\" class=\"img-responsive thumbnail\">\n\t\t\t</a>\n\t\t</li>"
+            })
+
+            return html + "\n\t</ul>\n</section>"
+        }
+
+        var row = '<tr>'
+        row += '<td><textarea class="form-control url" rows="3"></textarea></td>'
+        row += '<td><textarea class="form-control desc" rows="3"></textarea></td>'
+        row += '<td><textarea class="form-control alt" rows="3"></textarea></td>'
+
+        row += '<td><button type="button" class="close align-middle" aria-label="Close" title="Remove"><span aria-hidden="true">&times;</span></button></td>'
+        row += '</tr>'
+
+
+
+        $('#save').click(function () {
+            $('.desc,.alt').each(validate_text)
+            $('.url').each(validate_image)
+            $('#code').text(generate)
+        })
+
+
+    </script>
+
+</body>
+
+</html>
