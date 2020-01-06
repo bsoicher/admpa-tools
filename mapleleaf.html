@@ -68,7 +68,7 @@
                     log('Loading WordPress articles and sitemaps...')
 
                     async.parallel([
-                        get('https://ml-fd-staging.caf-fac.ca/wp-content/themes/canada/migrate.php'),
+                        get('https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php'),
                         get('https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml'),
                         get('https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml')
                     ], function (err, res) {
@@ -113,7 +113,7 @@
 
                         data[o['jcr:language']].push([
                             category(url),
-                            o['gcOGImage'] ? '<img src="' + o['gcOGImage'] + '"/>' : '',
+                            o['gcOGImage'] ? '<img src="' + utf8.encode(o['gcOGImage']) + '"/>' : '',
                             '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
                             utf8.encode(o['gcDescription'] || ''),
                             utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1'),
