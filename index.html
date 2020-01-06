@@ -3,55 +3,39 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>CAF Mobile App Resources</title>
+    <title>ADMPA Web Tools</title>
 
-    <!-- Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-
+    <!-- Style -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
 </head>
 
-<body id="body">
-
-    <main></main>
-
-    <script>
-
-       
-        function toHTML(json) {
-
-            var html = ''
-
-            json.sections.forEach(function(section){
-                html += '<section><div class="form-row"><div class="col">Title: '
-                    
-                html += '<input type="text" class="form-control" value="' + section.title.en + '"/>'
-                html += '<input type="text" class="form-control" value="' + section.title.fr + '"/></div><div class="col">Desc:'
-                html += '<input type="text" class="form-control" value="' + section.description.en + '"/>'
-                
-                html += '<input type="text" class="form-control" value="' + section.description.fr + '"/>'
-                html += '</div></div></section>'
-            })
-
-           
-            $('main').html(html)
-
-        }
-
-    
-
-        jQuery.get({
-            url: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/resources.json',
-            cache: false
-        }).done(function(data) {
-
-            toHTML(data)
-        })
-     
-    </script>
-
+<body>
+    <main>
+        <div class="container mb-5">
+            <h1 class="h4 mt-5">ADMPA Web Tools <small class="text-muted">> Image Gallery Generator</small></h1>
+            <p>Use this page to generate the HTML of an image gallery.</p>
+            
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th width="25%">Name</th>
+                        <th width="75%">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Image Gallery</td>
+                        <td>rgaerqg qreg qergqrge</td>
+                    </tr>
+                    <tr>
+                        <td>Image Gallery</td>
+                        <td>rgaerqg qreg qergqrge</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
 </body>
 
 </html>
