@@ -3,22 +3,40 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>AEM Feed Compiler</title>
+    <meta name="robots" content="noindex" />
+    <title>Maple Leaf - Feed</title>
+
+    <!-- Style -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.0.1/async.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+
 </head>
 
 <body id="body">
+    <main>
+        <div class="container mb-5">
+            <h1 class="h4 mt-5">
+                <a href="index.html">ADMPA Web Tools</a>
+                <small class="text-muted">> Maple Leaf Feed</small>
+            </h1>
+            <p>Compiles a list of Maple Leaf pages, merges content from Wordpress articles and AEM pages.</p>
+            <p>Usage: JSON files will be downloaded once complete.</p>
+    
+            <button class="btn btn-primary" onclick="start()">Run</button> 
+           
+            <!-- Viewable log -->
+            <h2 class="h5 mt-4">Status</h2>
+            <div class="card card-body bg-light">
+                <pre id="log"></pre>
+            </div>
 
-    <!-- Actions -->
-    <button onclick="start()">Run</button>
-
-    <!-- Viewable log -->
-    <pre id="log"></pre>
+        </div>
+    </main>
 
     <script>
 
@@ -31,7 +49,7 @@
                 jQuery.get({
                     url: url,
                     cache: false,
-                    success: function (res) {cb(null, res) },
+                    success: function (res) { cb(null, res) },
                     error: function (e) { cb(e, null) }
                 })
             })
@@ -53,7 +71,17 @@
             return 'ml'
         }
 
+        // Truncate text, hiding the rest
+        function truncate(str, limit) {
+            if (str.length < limit) return utf8.encode(str)
+
+            limit = str.substr(0, limit).lastIndexOf(' ') || limit;
+
+            return utf8.encode(str.substr(0, limit) + '…') + '<em class="hidden">' + utf8.encode(str.substr(limit)) + '</em>'
+        }
+
         function log(str) {
+            var now = new Date();
             jQuery('#log').append(str + '<br/>')
         }
 
@@ -78,6 +106,14 @@
 
                 // Turn XML sitemaps into JSON, filtering out URLs that dont match the format
                 function (data, xml, cb) {
+                    log('Processing WordPress export...')
+
+                    for (var lang in data) {
+                        data[lang].forEach(function (o, i) {
+                            data[lang][i][3] = truncate(utf8.decode(data[lang][i][3]), 140)
+                        })
+                    }
+
                     log('Processing sitemaps...')
 
                     var nodes = jQuery(xml).find('loc').map(function () {
@@ -115,8 +151,8 @@
                             category(url),
                             o['gcOGImage'] ? '<img src="' + utf8.encode(o['gcOGImage']) + '"/>' : '',
                             '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
-                            utf8.encode(o['gcDescription'] || ''),
-                            utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1'),
+                            o['gcDescription'] ? truncate(o['gcDescription'], 140) : '',
+                            o['gcKeywords'] ? utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1') : '',
                             date.substr(0, 10) + '<em class="hidden">' + date.substr(10, 9) + '</em>'
                         ])
                     })
