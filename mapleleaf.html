@@ -7,7 +7,7 @@
     <title>Maple Leaf - Feed</title>
 
     <!-- Style -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -32,7 +32,7 @@
             <!-- Viewable log -->
             <h2 class="h5 mt-4">Status</h2>
             <div class="card card-body bg-light">
-                <pre id="log"></pre>
+                <pre id="log" class="mb-0">Click "Run" to begin</pre>
             </div>
 
         </div>
@@ -81,12 +81,13 @@
         }
 
         function log(str) {
-            var now = new Date();
             jQuery('#log').append(str + '<br/>')
         }
 
         // Start loading info
         function start() {
+
+            $('#log').empty()
 
             // Perform functions in sequence
             async.waterfall([
