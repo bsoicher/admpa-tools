@@ -25,6 +25,9 @@
                 <small class="text-muted">> Maple Leaf Feed</small>
             </h1>
             <p>Compiles a list of Maple Leaf pages, merges content from Wordpress articles and AEM pages.</p>
+
+            <p>Upload the resulting files to the DAM folder: <code><a href="https://author-canada-prod.adobecqms.net/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a></p>
+
             <p>Usage: JSON files will be downloaded once complete.</p>
     
             <button class="btn btn-primary" onclick="start()">Run</button> 
@@ -81,20 +84,20 @@
         }
 
         function log(str) {
-            jQuery('#log').append(str + '<br/>')
+            jQuery('#log').append(str)
         }
 
         // Start loading info
         function start() {
 
-            $('#log').empty()
+            jQuery('#log').empty()
 
             // Perform functions in sequence
             async.waterfall([
 
                 // Load WordPress export and AEM sitemaps
                 function (cb) {
-                    log('Loading WordPress articles and sitemaps...')
+                    log('Downloading WordPress export and AEM sitemaps...<br />')
 
                     async.parallel([
                         get('https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php'),
@@ -107,7 +110,7 @@
 
                 // Turn XML sitemaps into JSON, filtering out URLs that dont match the format
                 function (data, xml, cb) {
-                    log('Processing WordPress export...')
+                    log('Processing WordPress export (' + data.en.length + ' posts)...<br/>')
 
                     for (var lang in data) {
                         data[lang].forEach(function (o, i) {
@@ -115,7 +118,7 @@
                         })
                     }
 
-                    log('Processing sitemaps...')
+                    log('Processing AEM sitemaps ')
 
                     var nodes = jQuery(xml).find('loc').map(function () {
                         return this.innerHTML
@@ -123,12 +126,14 @@
                         return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
                     })
 
+                    log('(' + nodes.length + ' nodes)...<br />')
+
                     cb(null, data, nodes)
                 },
 
                 // Download metadata
                 function (data, nodes, cb) {
-                    log('Downloading metadata...')
+                    log('Downloading metadata...<br />')
 
                     var tasks = {}
                     nodes.forEach(function (url) {
@@ -142,7 +147,7 @@
 
                 // Process metadata
                 function (data, meta, cb) {
-                    log('Processing metadata...')
+                    log('Processing metadata...<br />')
 
                     Object.keys(meta).forEach(function (url) {
                         var o = meta[url]
