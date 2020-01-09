@@ -11,7 +11,7 @@
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.0.1/async.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.1.0/async.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
 
@@ -26,16 +26,16 @@
             </h1>
             <p>Compiles a list of Maple Leaf pages, merges content from Wordpress articles and AEM pages.</p>
 
-            <p>Upload the resulting files to the DAM folder: <code><a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a></p>
+            <p>Upload the resulting files to the DAM folder:
+                <code><a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a>
+            </p>
 
             <p>Usage: JSON files will be downloaded once complete.</p>
-    
-            <button class="btn btn-primary" onclick="start()">Run</button> 
-           
-            <!-- Viewable log -->
+
+            <button class="btn btn-primary" onclick="start()">Run</button>
+
             <h2 class="h5">Status</h2>
             <div class="card card-body bg-light shadow-sm">
-                
                 <pre id="log" class="mb-0">Click "Run" to begin</pre>
             </div>
 
@@ -43,6 +43,22 @@
     </main>
 
     <script>
+
+        // Configure data sources
+        var config = {
+            'wp': 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php',
+            'aem_en': 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json',
+            'aem_fr': 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-fr.json',
+            'map_en': 'https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml',
+            'map_fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml'
+        }
+
+        // Manage displaying progress log
+        var log = {
+            e: jQuery('#log'),
+            clear: function () { this.e.empty() },
+            write: function (str) { this.e.append(str) }
+        }
 
         // Generate an AJAX task to be completed
         function get(url) {
@@ -84,26 +100,22 @@
             return utf8.encode(str.substr(0, limit) + '…') + '<em class="hidden">' + utf8.encode(str.substr(limit)) + '</em>'
         }
 
-        function log(str) {
-            jQuery('#log').append(str)
-        }
 
         // Start loading info
         function start() {
-
-            jQuery('#log').empty()
+            log.clear()
 
             // Perform functions in sequence
             async.waterfall([
 
                 // Load WordPress export and AEM sitemaps
                 function (cb) {
-                    log('Downloading WordPress export and AEM sitemaps...<br />')
+                    log.write('Downloading WordPress export and AEM sitemaps...<br />')
 
                     async.parallel([
-                        get('https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php'),
-                        get('https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml'),
-                        get('https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml')
+                        get(config.wp),
+                        get(config.map_en),
+                        get(config.map_fr)
                     ], function (err, res) {
                         cb(err, res[0], [res[1], res[2]])
                     })
@@ -111,7 +123,7 @@
 
                 // Turn XML sitemaps into JSON, filtering out URLs that dont match the format
                 function (data, xml, cb) {
-                    log('Processing WordPress export (' + data.en.length + ' posts)...<br/>')
+                    log.write('Processing WordPress export (' + data.en.length + ' posts)...<br/>')
 
                     for (var lang in data) {
                         data[lang].forEach(function (o, i) {
@@ -119,7 +131,7 @@
                         })
                     }
 
-                    log('Processing AEM sitemaps ')
+                    log.write('Processing AEM sitemaps ')
 
                     var nodes = jQuery(xml).find('loc').map(function () {
                         return this.innerHTML
@@ -127,14 +139,14 @@
                         return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
                     })
 
-                    log('(' + nodes.length + ' nodes)...<br />')
+                    log.write('(' + nodes.length + ' nodes)...<br />')
 
                     cb(null, data, nodes)
                 },
 
                 // Download metadata
                 function (data, nodes, cb) {
-                    log('Downloading metadata...<br />')
+                    log.write('Downloading metadata...<br />')
 
                     var tasks = {}
                     nodes.forEach(function (url) {
@@ -148,7 +160,7 @@
 
                 // Process metadata
                 function (data, meta, cb) {
-                    log('Processing metadata...<br />')
+                    log.write('Processing metadata...<br />')
 
                     Object.keys(meta).forEach(function (url) {
                         var o = meta[url]
@@ -164,19 +176,19 @@
                         ])
                     })
 
-                    
+
 
                     cb(null, data)
                 }
 
             ], function (e, data) {
-                log('Done')
+                log.write('Done')
 
                 var timestamp = new Date().toISOString()
 
                 for (var lang in data) {
-                    download(JSON.stringify({ 
-                        generated: timestamp,
+                    download(JSON.stringify({
+                        _generated: timestamp,
                         data: data[lang]
                     }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
                 }
