@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="robots" content="noindex" />
-    <title>Maple Leaf - Feed</title>
+    <title>Maple Leaf > Feed</title>
 
     <!-- Style -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
@@ -23,11 +23,11 @@
         <div class="container mb-5">
             <h1 class="h4 mt-5">
                 <a href="../index.html">ADMPA Web Tools</a>
-                <small class="text-muted">> Maple Leaf Feed</small>
+                <small class="text-muted">> Maple Leaf > Feed</small>
             </h1>
             <p>Compiles a list of Maple Leaf pages, merges content from Wordpress articles and AEM pages.</p>
 
-            <p>Status: <span id="updated">Loading...</span></p>
+            <p>Status<br />maple-en.json: <span id="updated">Loading...</span></p>
 
             <p>Upload the resulting files to the DAM folder:
                 <code><a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a>
@@ -47,7 +47,6 @@
 
     <script>
 
-       
         // Configure data sources
         var config = {
             'wp': 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php',
@@ -57,11 +56,18 @@
             'map_fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml'
         }
 
+    
         // Manage displaying progress log
         var log = {
             e: jQuery('#log'),
             clear: function () { this.e.empty() },
             write: function (str) { this.e.append(str) }
+        }
+
+
+        var updated = {
+            e: jQuery('#updated')
+
         }
 
         // Generate an AJAX task to be completed
@@ -79,17 +85,16 @@
             })
         }
 
-        jQuery(function(){
-
-            jQuery.get({
+        
+        jQuery.get({
             url: config.aem_en + '/_jcr_content.json',
             cache: false,
             success: function(res) {
-                jQuery('#updated').html( 'Updated <abbr class="text-primary" title="' + res['jcr:lastModified'] + '">' + jQuery.timeago( new Date(res['jcr:lastModified']) ) + '</abbr> by <span class="text-primary">' + res['jcr:lastModifiedBy'] + '</span>' )
+                jQuery('#updated').html( 'updated <abbr class="text-primary" title="' + res['jcr:lastModified'] + '">' + jQuery.timeago( new Date(res['jcr:lastModified']) ) + '</abbr> by <span class="text-primary">' + res['jcr:lastModifiedBy'] + '</span>' )
             },
             error: function() { jQuery('#updated').text('unknown') }
         })
-        })
+       
        
 
       
