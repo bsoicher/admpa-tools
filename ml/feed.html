@@ -11,6 +11,7 @@
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.1.0/async.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
@@ -25,6 +26,8 @@
                 <small class="text-muted">> Maple Leaf Feed</small>
             </h1>
             <p>Compiles a list of Maple Leaf pages, merges content from Wordpress articles and AEM pages.</p>
+
+            <p>Status: <span id="updated">Loading...</span></p>
 
             <p>Upload the resulting files to the DAM folder:
                 <code><a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a>
@@ -44,6 +47,7 @@
 
     <script>
 
+       
         // Configure data sources
         var config = {
             'wp': 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php',
@@ -74,6 +78,22 @@
                 })
             })
         }
+
+        jQuery(function(){
+
+            jQuery.get({
+            url: config.aem_en + '/_jcr_content.json',
+            cache: false,
+            success: function(res) {
+                jQuery('#updated').html( 'Updated <abbr class="text-primary" title="' + res['jcr:lastModified'] + '">' + jQuery.timeago( new Date(res['jcr:lastModified']) ) + '</abbr> by <span class="text-primary">' + res['jcr:lastModifiedBy'] + '</span>' )
+            },
+            error: function() { jQuery('#updated').text('unknown') }
+        })
+        })
+       
+
+      
+
 
         // Determine the article category based on the URL
         function category(url) {
@@ -187,10 +207,7 @@
                 var timestamp = new Date().toISOString()
 
                 for (var lang in data) {
-                    download(JSON.stringify({
-                        _generated: timestamp,
-                        data: data[lang]
-                    }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                    download(JSON.stringify({ data: data[lang] }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
                 }
             })
         }
