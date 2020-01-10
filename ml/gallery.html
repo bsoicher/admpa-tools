@@ -12,7 +12,6 @@
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js"></script>
 
@@ -40,7 +39,16 @@
                     <li>Drag rows up or down to re-order images</li>
                     <li>Removed a row by clicking the X on right side of the row</li>
                 </ul>
+
+                <h2 class="h6">Options</h2>
+                <ul>
+                    <li>Display as single image <input type="checkbox" id="single" checked="checked"></li>
+                </ul>
+               
+
             </div>
+
+            
 
         <table class="table table-striped">
             <thead>
@@ -130,8 +138,12 @@
         }
 
         function generate() {
-            var html = "<section class=\"wb-lbx lbx-gal\">\n\t<h4>Image gallery</h4>\n\t<ul class=\"list-inline\">"
             
+            var type = $('#single').is(':checked') ? 'lbx-hide-gal' : 'lbx-gal'
+            var html = "<section class=\"wb-lbx " + type + "\">\n\t<h4>Image gallery</h4>\n\t<ul class=\"list-inline\">"
+            
+        
+
             $('#tbody tr').each(function() {
                 var e = $(this)
 

@@ -8,18 +8,22 @@
     <!-- Styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css">
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.1.0/async.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js"></script>
 
     <style>
         .table>tbody>tr>td:last-child {
             vertical-align: middle;
+        }
+
+        img {
+            width: 150px
         }
     </style>
 </head>
@@ -31,24 +35,26 @@
             <a href="../index.html">ADMPA Web Tools</a>
             <small class="text-muted">> Maple Leaf > Carousel</small>
         </h1>
-        <p>Use this page to generate the HTML of an image gallery.</p><p>Images must first be published to canada.ca DAM in the folder ( <code>dam/dnd-mdn/images/maple-leaf/articles/</code> )</p>
+        <p>Use this page to generate the HTML of an image gallery.</p>
+        <p>Images must first be published to canada.ca DAM in the folder (
+            <code>dam/dnd-mdn/images/maple-leaf/articles/</code> )</p>
 
 
         <div class="mt-4">
- 
-                <h2 class="h6">Usage</h2>
-                <ul>
-                    <li>Drag rows up or down to re-order images</li>
-                    <li>Removed a row by clicking the X on right side of the row</li>
-                </ul>
-            </div>
+
+            <h2 class="h6">Usage</h2>
+            <ul>
+                <li>Drag rows up or down to re-order images</li>
+                <li>Removed a row by clicking the X on right side of the row</li>
+            </ul>
+        </div>
 
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Image URL</th>
-                    <th>Description</th>
-                    <th>Alternate text</th>
+                    <th width="150px">Image</th>
+                    <th>English</th>
+                    <th>French</th>
                     <th width="5px">&nbsp;</th>
                 </tr>
             </thead>
@@ -62,46 +68,58 @@
         <h2 class="h4 mt-4">Result</h2>
         <textarea id="code" class="form-control" rows="5" readonly></textarea>
 
-        <button class="btn btn-primary mt-3" data-clipboard-action="copy" data-clipboard-target="#code">Copy to clipboard</button>
+        <button class="btn btn-secondary mt-3" data-clipboard-action="copy" data-clipboard-target="#code">Copy to
+            clipboard</button>
 
     </div>
 
     <script>
 
+        // Configure data sources
         var config = {
-            'en': 'https://www.canada.ca/en/department-national-defence/maple-leaf.html',
-            'fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.html',
-            'img': 'https://www.canada.ca//content/dam/dnd-mdn/images/maple-leaf/slide-{x}.jpg'
+            'en': 'https://www.canada.ca/en/department-national-defence/maple-leaf/03-08-women.html',
+            'fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable/03-08-femmes.html'
         }
 
-        // Generate an AJAX task to be completed
-        function get(url) {
-            return async.retryable({
-                times: 5,
-                interval: 10000
-            }, function (cb) {
-                jQuery.get({
-                    url: url,
-                    cache: false,
-                    success: function (res) { cb(null, res) },
-                    error: function (e) { cb(e, null) }
-                })
-            })
+        // Extract carousel data from document
+        function extract(html) {
+            return $(html).find('.content-slider li').map(function () {
+                var e = $(this)
+                return {
+                    'src': e.find('img').attr('src'),
+                    'title': $.trim(e.find('.quote').text())
+                }
+            }).get()
         }
 
-        async.parallel([
-            get(config.en),
-            get(config.fr),
-        ], function (err, res) {
+        // Load existing carousel content
+        $.when(
+            $.get({ url: config.en, cache: false }),
+            $.get({ url: config.fr, cache: false })
+        ).done(function (en, fr) {
+            en = extract(en[0])
+            fr = extract(fr[0])
 
-         
-            var en = jQuery(res[0]).find('.content-slider ul')
-            var fr = jQuery(res[1]).find('.content-slider ul')
+            if (en.length != fr.length) console.log('Carousels dont match')
 
-            console.log(en.html())
-            console.log(fr.html())
-            
+            for (var x = 0; x < en.length; x++) {
+                add_row(en[x].src, en[x].title, fr[x].title)
+            }
+
+        }).fail(function () {
+            console.log('Failed to load')
         })
+
+        // Add a row to the table
+        function add_row(url, en, fr) {
+            $('#tbody').append('<tr><td class="align-middle"><img class="border" src="' + url + '"/></td><td><textarea class="form-control" rows="3">' + en + '</textarea></td><td><textarea class="form-control" rows="3">' + fr + '</textarea></td><td><button type="button" class="close align-middle" aria-label="Close" title="Remove"><span aria-hidden="true">&times;</span></button></td></tr>')
+        }
+
+       
+
+
+
+
 
 
         var clip = new ClipboardJS('.btn');
@@ -120,36 +138,12 @@
         $(document).on('click', 'button.close', function () {
             $(this).parent().parent().remove()
         })
-        
+
         // Clear field validation if changed
         $(document).on('paste blur change keyup input', 'textarea', function () {
             $(this).removeClass('is-valid is-invalid')
         })
 
-        // Validate a URL field
-        function validate_image() {
-            var i = $(this)
-
-            // Remove whitespace
-            i.val(i.val().replace(/\s/g,''))
-
-            // If empty, dont send ajax
-            if (!i.val()) {
-                i.removeClass('is-valid').addClass('is-invalid')
-                return;
-            }
-
-            // Try loading image metadata
-            $.ajax({
-                url: baseURL + i.val() + '/_jcr_content.json',
-                success: function() {
-                    i.removeClass('is-invalid').addClass('is-valid')
-                },
-                error: function() {
-                    i.removeClass('is-valid').addClass('is-invalid')
-                }
-            })
-        }
 
         // Validate a text field
         function validate_text() {
@@ -168,12 +162,12 @@
 
         function generate() {
             var html = "<section class=\"wb-lbx lbx-gal\">\n\t<h4>Image gallery</h4>\n\t<ul class=\"list-inline\">"
-            
-            $('#tbody tr').each(function() {
+
+            $('#tbody tr').each(function () {
                 var e = $(this)
 
-                var img  = baseURL + (e.find('.url').val() || "")
-                var alt  = $('<span>' + e.find('.alt').val() + '</span>').text().replace(/"/g, '&quot;')
+                var img = baseURL + (e.find('.url').val() || "")
+                var alt = $('<span>' + e.find('.alt').val() + '</span>').text().replace(/"/g, '&quot;')
                 var desc = $('<span>' + e.find('.desc').val() + '</span>').text().replace(/"/g, '&quot;')
 
                 html += "\n\t\t<li>\n\t\t\t<a href=\"" + img + "\" title=\"" + desc + "\">"
@@ -183,13 +177,6 @@
             return html + "\n\t</ul>\n</section>"
         }
 
-        var row = '<tr>'
-        row += '<td><textarea class="form-control url" rows="3"></textarea></td>'
-        row += '<td><textarea class="form-control desc" rows="3"></textarea></td>'
-        row += '<td><textarea class="form-control alt" rows="3"></textarea></td>'
-
-        row += '<td><button type="button" class="close align-middle" aria-label="Close" title="Remove"><span aria-hidden="true">&times;</span></button></td>'
-        row += '</tr>'
 
 
 
