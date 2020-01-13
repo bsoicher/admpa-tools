@@ -56,7 +56,7 @@
             'map_fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml'
         }
 
-    
+
         // Manage displaying progress log
         var log = {
             e: jQuery('#log'),
@@ -68,6 +68,20 @@
         var updated = {
             e: jQuery('#updated')
 
+        }
+
+        // Get the last modified information as promise
+        function last_updated(url) {
+            var d = jQuery.Deferred();
+
+            $.get({
+                url: url + '/_jcr_content.json',
+                cache: false,
+                success: function (res) { d.resolve(res['jcr:lastModified']) },
+                error: function (e) { d.reject(null) }
+            });
+
+            return d.promise();
         }
 
         // Generate an AJAX task to be completed
@@ -85,19 +99,22 @@
             })
         }
 
-        
-        jQuery.get({
+        last_updated(config.aem_en).done(function (date) {
+            jQuery('#updated').html('updated <abbr class="text-primary" title="' + date + '">' + jQuery.timeago(new Date(date)) + '</abbr>')
+        })
+
+        /*jQuery.get({
             url: config.aem_en + '/_jcr_content.json',
             cache: false,
-            success: function(res) {
-                jQuery('#updated').html( 'updated <abbr class="text-primary" title="' + res['jcr:lastModified'] + '">' + jQuery.timeago( new Date(res['jcr:lastModified']) ) + '</abbr> by <span class="text-primary">' + res['jcr:lastModifiedBy'] + '</span>' )
+            success: function (res) {
+                jQuery('#updated').html('updated <abbr class="text-primary" title="' + res['jcr:lastModified'] + '">' + jQuery.timeago(new Date(res['jcr:lastModified'])) + '</abbr> by <span class="text-primary">' + res['jcr:lastModifiedBy'] + '</span>')
             },
-            error: function() { jQuery('#updated').text('unknown') }
-        })
-       
-       
+            error: function () { jQuery('#updated').text('unknown') }
+        })*/
 
-      
+
+
+
 
 
         // Determine the article category based on the URL
