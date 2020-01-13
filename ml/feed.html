@@ -56,7 +56,6 @@
             'map_fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml'
         }
 
-
         // Manage displaying progress log
         var log = {
             e: jQuery('#log'),
@@ -64,15 +63,9 @@
             write: function (str) { this.e.append(str) }
         }
 
-
-        var updated = {
-            e: jQuery('#updated')
-
-        }
-
-        // Get the last modified information as promise
-        function last_updated(url) {
-            var d = jQuery.Deferred();
+        // Last modified date as promise
+        function last_modified(url) {
+            var d = $.Deferred();
 
             $.get({
                 url: url + '/_jcr_content.json',
@@ -83,6 +76,11 @@
 
             return d.promise();
         }
+
+        // Display the last modified info
+        last_modified(config.aem_en).done(function (date) {
+            jQuery('#updated').html('updated <abbr class="text-primary" title="' + date + '">' + jQuery.timeago(new Date(date)) + '</abbr>')
+        })
 
         // Generate an AJAX task to be completed
         function get(url) {
@@ -98,24 +96,6 @@
                 })
             })
         }
-
-        last_updated(config.aem_en).done(function (date) {
-            jQuery('#updated').html('updated <abbr class="text-primary" title="' + date + '">' + jQuery.timeago(new Date(date)) + '</abbr>')
-        })
-
-        /*jQuery.get({
-            url: config.aem_en + '/_jcr_content.json',
-            cache: false,
-            success: function (res) {
-                jQuery('#updated').html('updated <abbr class="text-primary" title="' + res['jcr:lastModified'] + '">' + jQuery.timeago(new Date(res['jcr:lastModified'])) + '</abbr> by <span class="text-primary">' + res['jcr:lastModifiedBy'] + '</span>')
-            },
-            error: function () { jQuery('#updated').text('unknown') }
-        })*/
-
-
-
-
-
 
         // Determine the article category based on the URL
         function category(url) {
