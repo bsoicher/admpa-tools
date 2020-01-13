@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Maple Leaf > Carousel</title>
+    <title>Maple Leaf &gt; Carousel</title>
 
     <!-- Styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
@@ -30,10 +30,10 @@
 
 <body id="body">
 
-    <div class="container mb-5">
+    <div class="container">
         <h1 class="h4 mt-5">
             <a href="../index.html">ADMPA Web Tools</a>
-            <small class="text-muted">> Maple Leaf > Carousel</small>
+            <small class="text-muted">&gt; Maple Leaf &gt; Carousel</small>
         </h1>
         <p>Use this page to generate the HTML of an image gallery.</p>
         <p>Images must first be published to canada.ca DAM in the folder (
@@ -65,11 +65,23 @@
         <button id="add" type="button" class="btn btn-primary">Add Row</button>
         <button id="save" type="button" class="btn btn-primary float-right">Generate HTML</button>
 
-        <h2 class="h4 mt-4">Result</h2>
-        <textarea id="code" class="form-control" rows="5" readonly></textarea>
 
-        <button class="btn btn-secondary mt-3" data-clipboard-action="copy" data-clipboard-target="#code">Copy to
-            clipboard</button>
+        <div class="card-group mt-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h6 card-title float-left">English HTML</h3>
+                    <button class="btn btn-link float-right pt-0" data-clipboard-action="copy" data-clipboard-target="#code_en">Copy</button>
+                    <textarea id="code_en" class="form-control" rows="4" readonly></textarea>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h6 card-title float-left">French HTML</h3>
+                    <button class="btn btn-link float-right pt-0" data-clipboard-action="copy" data-clipboard-target="#code_fr">Copy</button>
+                    <textarea id="code_fr" class="form-control" rows="4" readonly></textarea>
+                </div>
+            </div>
+        </div>
 
     </div>
 
@@ -115,7 +127,7 @@
             $('#tbody').append('<tr><td class="align-middle"><img class="border" src="' + url + '"/></td><td><textarea class="form-control" rows="3">' + en + '</textarea></td><td><textarea class="form-control" rows="3">' + fr + '</textarea></td><td><button type="button" class="close align-middle" aria-label="Close" title="Remove"><span aria-hidden="true">&times;</span></button></td></tr>')
         }
 
-       
+
 
 
 
