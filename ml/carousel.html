@@ -3,6 +3,10 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <meta name="author" content="Ben Soicher">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Maple Leaf &gt; Carousel</title>
 
     <!-- Styles -->
@@ -24,6 +28,12 @@
 
         img {
             width: 150px
+        }
+
+        textarea.border-0{
+            height:100px;
+            resize: none;
+           
         }
     </style>
 </head>
@@ -49,9 +59,6 @@
             </ul>
         </div>
 
-        <h2>Quick Links</h2>
-        <ul id="links"></ul>
-
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -71,19 +78,24 @@
 
         <div class="card-group mt-4 mb-4">
             <div class="card">
-                <div class="card-body">
-                    <h3 class="h6 card-title float-left">English HTML</h3>
-                    <button class="btn btn-link float-right pt-0 aem-edit" data-config="en">Open in AEM</button>
-                    <button class="btn btn-link float-right pt-0" data-clipboard-action="copy" data-clipboard-target="#code_en">Copy</button>
-                    <textarea id="code_en" class="form-control" rows="4" readonly></textarea>
+
+                <div class="card-header bg-transparent">
+                    English
+                    <button class="btn btn-link float-right py-0 aem-edit" data-config="en">Open in AEM</button>
+                    <button class="btn btn-link float-right py-0" data-clipboard-action="copy" data-clipboard-target="#code_en">Copy</button>
+                </div>
+                <div class="card-body p-0">
+                    <textarea id="code_en" class="form-control rounded-0 border-0" rows="4" readonly>ase few </textarea>
                 </div>
             </div>
             <div class="card">
-                <div class="card-body">
-                    <h3 class="h6 card-title float-left">French HTML</h3>
-                    <button class="btn btn-link float-right pt-0 aem-edit" data-config="fr">Open in AEM</button>
-                    <button class="btn btn-link float-right pt-0" data-clipboard-action="copy" data-clipboard-target="#code_fr">Copy</button>
-                    <textarea id="code_fr" class="form-control" rows="4" readonly></textarea>
+                <div class="card-header bg-transparent">
+                    French
+                    <button class="btn btn-link float-right py-0 aem-edit" data-config="fr">Open in AEM</button>
+                    <button class="btn btn-link float-right py-0" data-clipboard-action="copy" data-clipboard-target="#code_fr">Copy</button>
+                </div>
+                <div class="card-body p-0">
+                    <pre id="code_fr" class="form-control rounded-0 border-0">ase few </textarea>
                 </div>
             </div>
         </div>
