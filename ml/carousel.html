@@ -49,6 +49,9 @@
             </ul>
         </div>
 
+        <h2>Quick Links</h2>
+        <ul id="links"></ul>
+
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -70,6 +73,7 @@
             <div class="card">
                 <div class="card-body">
                     <h3 class="h6 card-title float-left">English HTML</h3>
+                    <button class="btn btn-link float-right pt-0 aem-edit" data-config="en">Open in AEM</button>
                     <button class="btn btn-link float-right pt-0" data-clipboard-action="copy" data-clipboard-target="#code_en">Copy</button>
                     <textarea id="code_en" class="form-control" rows="4" readonly></textarea>
                 </div>
@@ -77,6 +81,7 @@
             <div class="card">
                 <div class="card-body">
                     <h3 class="h6 card-title float-left">French HTML</h3>
+                    <button class="btn btn-link float-right pt-0 aem-edit" data-config="fr">Open in AEM</button>
                     <button class="btn btn-link float-right pt-0" data-clipboard-action="copy" data-clipboard-target="#code_fr">Copy</button>
                     <textarea id="code_fr" class="form-control" rows="4" readonly></textarea>
                 </div>
@@ -128,9 +133,18 @@
         }
 
 
+        $(document).on('click', 'button.aem-edit', function () {
+            
+            console.log(123)
+            
+            var id = $(this).data('config')
 
 
+            console.log(id)
+            window.open( 'https://author-canada-prod.adobecqms.net/editor.html/content/canadasite/' + config[id].substr(22), '_blank'); 
+        })
 
+      
 
 
 
