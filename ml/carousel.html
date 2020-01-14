@@ -26,13 +26,13 @@
         }
 
         img {
-            width: 150px
+            width: 200px
         }
 
-        textarea.border-0{
-            height:100px;
-            resize: none;
-           
+
+
+        #result pre {
+            height: 125px;
         }
     </style>
 </head>
@@ -72,41 +72,41 @@
         </table>
 
         <button id="add" type="button" class="btn btn-primary">Add Row</button>
-        <button id="save" type="button" class="btn btn-primary float-right">Generate HTML</button>
 
 
-        <div class="card-group mt-4 mb-4">
-            <div class="card">
 
-                <div class="card-header bg-transparent">
-                    English
-                    <button class="btn btn-link float-right py-0 aem-edit" data-config="en">Open in AEM</button>
-                    <button class="btn btn-link float-right py-0" data-clipboard-action="copy" data-clipboard-target="#code_en">Copy</button>
-                </div>
-                <div class="card-body p-0">
-                    <textarea id="code_en" class="form-control rounded-0 border-0" rows="4" readonly>ase few </textarea>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header bg-transparent">
-                    French
-                    <button class="btn btn-link float-right py-0 aem-edit" data-config="fr">Open in AEM</button>
-                    <button class="btn btn-link float-right py-0" data-clipboard-action="copy" data-clipboard-target="#code_fr">Copy</button>
-                </div>
-                <div class="card-body p-0">
-                    <pre id="code_fr" class="form-control rounded-0 border-0">ase few </textarea>
-                </div>
-            </div>
-        </div>
 
+        <h3 class="h5 mt-5 mb-3">Next Steps</h3>
+        <table class="table border mb-5">
+            <tr>
+                <td width="100px">English</td>
+                <td>
+                    <a href="https://www.canada.ca/en/department-national-defence/maple-leaf.html" target="_blank">
+                        <code>/en/department-national-defence/maple-leaf.html</code>
+                    </a>
+                </td>
+                <td width="225px"><a href="javascript:copy('en')">Save HTML to clipboard</a></td>
+                <td width="150px"><a href="javascript:edit('en')">Edit in AEM</a></td>
+            </tr>
+            <tr>
+                <td>French</td>
+                <td>
+                    <a href="https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.html" target="_blank">
+                        <code>/fr/ministere-defense-nationale/feuille-derable.html</code>
+                    </a>
+                </td>
+                <td><a href="javascript:copy('fr')">Save HTML to clipboard</a></td>
+                <td><a href="javascript:edit('fr')">Edit in AEM</a></td>
+            </tr>
+        </table>
     </div>
 
     <script>
 
         // Configure data sources
         var config = {
-            'en': 'https://www.canada.ca/en/department-national-defence/maple-leaf/03-08-women.html',
-            'fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable/03-08-femmes.html'
+            'en': 'https://www.canada.ca/en/department-national-defence/maple-leaf.html',
+            'fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.html'
         }
 
         // Extract carousel data from document
@@ -145,21 +145,21 @@
 
 
         $(document).on('click', 'button.aem-edit', function () {
-            
+
             console.log(123)
-            
+
             var id = $(this).data('config')
 
 
             console.log(id)
-            window.open( 'https://author-canada-prod.adobecqms.net/editor.html/content/canadasite/' + config[id].substr(22), '_blank'); 
+            window.open('https://author-canada-prod.adobecqms.net/editor.html/content/canadasite/' + config[id].substr(22), '_blank');
         })
 
-      
 
 
 
-        var clip = new ClipboardJS('.btn');
+
+
 
         var baseURL = 'https://www.canada.ca/content/dam/dnd-mdn/images/maple-leaf/articles/'
 
@@ -182,6 +182,26 @@
         })
 
 
+        var cb = new ClipboardJS('.btn');
+
+        cb.on('success', function (e) {
+
+            $(e.trigger).addClass('btn-success').delay(2000).removeClass('btn-success', 2000)
+
+            e.clearSelection();
+        });
+
+        cb.on('error', function (e) {
+            $(e.trigger).switchClass('btn-link', "btn-danger", 0).delay(2000).switchClass('btn-danger', "btn-link", 2000)
+
+            e.clearSelection();
+        });
+
+        function copy() {
+            
+        }
+
+
         // Validate a text field
         function validate_text() {
             var i = $(this)
@@ -200,16 +220,7 @@
         function generate() {
             var html = "<section class=\"wb-lbx lbx-gal\">\n\t<h4>Image gallery</h4>\n\t<ul class=\"list-inline\">"
 
-            $('#tbody tr').each(function () {
-                var e = $(this)
 
-                var img = baseURL + (e.find('.url').val() || "")
-                var alt = $('<span>' + e.find('.alt').val() + '</span>').text().replace(/"/g, '&quot;')
-                var desc = $('<span>' + e.find('.desc').val() + '</span>').text().replace(/"/g, '&quot;')
-
-                html += "\n\t\t<li>\n\t\t\t<a href=\"" + img + "\" title=\"" + desc + "\">"
-                html += "\n\t\t\t\t<img src=\"" + img + "\" alt=\"" + alt + "\" class=\"img-responsive thumbnail\">\n\t\t\t</a>\n\t\t</li>"
-            })
 
             return html + "\n\t</ul>\n</section>"
         }
@@ -218,9 +229,8 @@
 
 
         $('#save').click(function () {
-            $('.desc,.alt').each(validate_text)
-            $('.url').each(validate_image)
-            $('#code').text(generate)
+
+            $('#code_en').text(generate)
         })
 
 
