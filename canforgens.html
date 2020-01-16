@@ -56,7 +56,7 @@
                     log('Getting years...') 
 
                     async.parallel([
-                        get('http://vcds.mil.ca/apps/canforgens/default-eng.asp'),
+                        get('http://vcds.mil.ca/vcds-exec/pubs/canforgen/2020/t-of-c_e.txt'),
                     ], function (err, res) {
 
                         console.log(res)
