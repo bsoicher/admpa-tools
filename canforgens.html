@@ -33,8 +33,8 @@
             }, function (cb) {
                 jQuery.get({
                     url: url,
-                    cache: false,
-                    dataType: 'JSONP',
+                    //cache: false,
+                    //dataType: 'JSONP',
                     success: function (res) {cb(null, res) },
                     error: function (e) { cb(e, null) }
                 })
@@ -56,7 +56,7 @@
                     log('Getting years...') 
 
                     async.parallel([
-                        get('http://vcds.mil.ca/vcds-exec/pubs/canforgen/2020/t-of-c_e.txt'),
+                        get('http://vcds.mil.ca/vcds-exec/pubs/canforgen/2020/001-20_e.asp'),
                     ], function (err, res) {
 
                         console.log(res)
