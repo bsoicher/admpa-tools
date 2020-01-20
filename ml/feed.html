@@ -153,7 +153,6 @@
                         data[lang].forEach(function (o, i) {
                             data[lang][i][3] = truncate(utf8.decode(data[lang][i][3]), 140)
                             data[lang][i][1] = $(data[lang][i][1]).attr('src')
-                            data[lang][i][5] = $('<div>' + data[lang][i][5] + '</div>').text()
                         })
                     }
 
