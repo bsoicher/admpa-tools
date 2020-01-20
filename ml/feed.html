@@ -152,6 +152,7 @@
                     for (var lang in data) {
                         data[lang].forEach(function (o, i) {
                             data[lang][i][3] = truncate(utf8.decode(data[lang][i][3]), 140)
+                            data[lang][i][1] = $(data[lang][i][1]).attr('src')
                         })
                     }
 
@@ -192,7 +193,7 @@
 
                         data[o['jcr:language']].push([
                             category(url),
-                            o['gcOGImage'] ? '<img src="' + utf8.encode(o['gcOGImage']) + '"/>' : '',
+                            o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
                             '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
                             o['gcDescription'] ? truncate(o['gcDescription'], 140) : '',
                             o['gcKeywords'] ? utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1') : '',
