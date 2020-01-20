@@ -115,16 +115,6 @@
             return 'ml'
         }
 
-        // Truncate text, hiding the rest
-        function truncate(str, limit) {
-            if (str.length < limit) return utf8.encode(str)
-
-            limit = str.substr(0, limit).lastIndexOf(' ') || limit;
-
-            return utf8.encode(str.substr(0, limit) + '…') + '<em class="hidden">' + utf8.encode(str.substr(limit)) + '</em>'
-        }
-
-
         // Start loading info
         function start() {
             log.clear()
@@ -151,7 +141,6 @@
 
                     for (var lang in data) {
                         data[lang].forEach(function (o, i) {
-                            data[lang][i][3] = truncate(utf8.decode(data[lang][i][3]), 140)
                             data[lang][i][1] = $(data[lang][i][1]).attr('src')
                             data[lang][i][5] = $('<div>' + data[lang][i][5] + '</div>').text()
                         })
@@ -196,13 +185,11 @@
                             category(url),
                             o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
                             '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
-                            o['gcDescription'] ? truncate(o['gcDescription'], 140) : '',
+                            o['gcDescription'] ? o['gcDescription'] : '',
                             o['gcKeywords'] ? utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1') : '',
                             date
                         ])
                     })
-
-
 
                     cb(null, data)
                 }
