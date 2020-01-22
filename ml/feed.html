@@ -187,11 +187,9 @@
                             '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
                             o['gcDescription'] ? utf8.encode(o['gcDescription']) : '',
                             o['gcKeywords'] ? utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1') : '',
-                            date
+                            date.replace('.000Z', '')
                         ])
                     })
-
-
 
                     cb(null, data)
                 }

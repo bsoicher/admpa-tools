@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Maple Leaf &gt; Quality Assurance</title>
+
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta name="author" content="Ben Soicher" />
+
+    <!-- Style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.1.0/async.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
+
+</head>
+
+<body id="body">
+    <main>
+        <div class="container mb-5">
+            <h1 class="h4 mt-5">
+                <a href="../index.html">ADMPA Web Tools</a>
+                <small class="text-muted">&gt; Maple Leaf &gt; Quality Assurance</small>
+            </h1>
+            <p>Analyze Maple Leaf articles for potential QA issues.</p>
+            <h2 class="h6">Data sources</h2>
+            <p>
+                <a href="https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json"><code>maple-en.json</code></a> <span id="status-en">(Loading...)</span><br />
+                <a href="https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-fr.json"><code>maple-fr.json</code></a> <span id="status-fr">(Loading...)</span>
+            </p>
+
+            <button class="btn btn-primary" onclick="start()">Run</button>
+
+            
+            <!-- Table of issues -->
+
+            <table id="issues" class="table my-5">
+                <thead>
+                    <tr>
+                        <th class="border-top-0" width="200px">File</th>
+                        <th class="border-top-0">Description</th>
+                    </tr>
+                </thead>
+                <tbody class="border"></tbody>
+            </table>
+
+        </div>
+    </main>
+
+    <script>
+
+        // Configure data sources
+        var config = {
+            'en': 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json',
+            'fr': 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-fr.json',
+        }
+
+        var json = {}
+
+        // Preload the JSON data
+        $.when(
+            $.get({ url: config.en, cache: false }),
+            $.get({ url: config.fr, cache: false })
+        ).done(function (en, fr) {
+            json.en = en[0].data
+            json.fr = fr[0].data
+            $('#status-en,#status-fr').html('(Loaded)')
+        }).fail(function () {
+            $('#status-en,#status-fr').html('(Error)')
+        })
+
+        function log(file, message, type) {
+            $('#issues tbody').append('<tr' + (type ? ' class="table-' + type + '"' : '') + '><td>' + file + '</td><td>' + message + '</td></tr>')
+        }
+
+        function same_articles(en, fr) {
+            if (en.length !== fr.length) {
+                log('JSON', 'Number of articles does not match (en: ' + en.length + ', fr: ' + fr.length + ')')
+            }
+        }
+
+        function start() {
+
+            same_articles(json.en,json.fr)
+        }
+
+
+
+    </script>
+
+</body>
+
+</html>
