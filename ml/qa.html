@@ -25,16 +25,17 @@
                 <a href="../index.html">ADMPA Web Tools</a>
                 <small class="text-muted">&gt; Maple Leaf &gt; Quality Assurance</small>
             </h1>
-            <p>Analyze Maple Leaf articles for potential QA issues.</p>
-            <h2 class="h6">Data sources</h2>
-            <p>
-                <a href="https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json"><code>maple-en.json</code></a> <span id="status-en">(Loading...)</span><br />
-                <a href="https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-fr.json"><code>maple-fr.json</code></a> <span id="status-fr">(Loading...)</span>
-            </p>
+            <p>Analyze Maple Leaf articles (AEM only) for potential QA issues. This may take a while to run.</p>
 
-            <button class="btn btn-primary" onclick="start()">Run</button>
 
-            
+            <div class="progress mt-4" style="height: 5px;">
+                <div class="progress-bar" style="width:0%" id="progress"></div>
+            </div>
+            <p id="data-status">Click Run to begin</p>
+
+
+            <button id="start" class="btn btn-primary" onclick="start()">Run</button>
+
             <!-- Table of issues -->
 
             <table id="issues" class="table my-5">
@@ -58,34 +59,85 @@
             'fr': 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-fr.json',
         }
 
-        var json = {}
+        var data = {}
 
-        // Preload the JSON data
-        $.when(
-            $.get({ url: config.en, cache: false }),
-            $.get({ url: config.fr, cache: false })
-        ).done(function (en, fr) {
-            json.en = en[0].data
-            json.fr = fr[0].data
-            $('#status-en,#status-fr').html('(Loaded)')
-        }).fail(function () {
-            $('#status-en,#status-fr').html('(Error)')
-        })
+        // Always load unchached content
+        $.ajaxSetup({ cache: false })
+
+        function status(message, percent) {
+            $('#data-status').text(message)
+            if (typeof percent !== 'undefined') {
+                $('#progress').css('width', '+=' + percent + '%')
+            }
+        }
+
+        console.log( $('#progress').css('width') )
+
+        // Generate an AJAX task to be completed
+        function get(url, increment) {
+            return function (cb) {
+                $.get({
+                    url: url,
+                    success: function (res) {
+                        if (increment) {
+                            $('#progress').css('width', '+=' + increment + '%')
+                        }
+                        cb(null, res)
+                    },
+                    error: function (e) { cb(e, null) }
+                })
+            }
+        }
+
+
+        function start() {
+
+            async.waterfall([
+
+                function (cb) {
+                    status('Downloading sitemaps', 0)
+                    async.parallel([
+                        get('https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml', 5),
+                        get('https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml', 5)
+                    ], function (err, files) {
+                        status('Converting XML sitemaps to JSON')
+                        files = files.map(function (xml) {
+                            return $(xml).find('loc').map(function () {
+                                return this.innerHTML
+                            }).get()
+                        })
+                        cb(err, files)
+                    })
+                },
+
+                function (data, cb) {
+                    status('Processing sitemaps', .5)
+                    data = data.map(function (arr) {
+                        return arr.filter(function (url) {
+                            return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
+                        })
+                    })
+                    cb(null, data)
+                },
+
+
+
+
+            ], function (err, data) {
+                console.log(data)
+            })
+
+
+        }
+
+
+
+
 
         function log(file, message, type) {
             $('#issues tbody').append('<tr' + (type ? ' class="table-' + type + '"' : '') + '><td>' + file + '</td><td>' + message + '</td></tr>')
         }
 
-        function same_articles(en, fr) {
-            if (en.length !== fr.length) {
-                log('JSON', 'Number of articles does not match (en: ' + en.length + ', fr: ' + fr.length + ')')
-            }
-        }
-
-        function start() {
-
-            same_articles(json.en,json.fr)
-        }
 
 
 
