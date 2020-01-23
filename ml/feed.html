@@ -37,13 +37,21 @@
 
             <p>Usage: JSON files will be downloaded once complete.</p>
 
+         
+
             <button class="btn btn-primary" onclick="start()">Run</button>
 
+            <div class="progress mt-4" style="height: 5px;">
+                <div class="progress-bar" style="width:0%" id="progress"></div>
+            </div>
+            <p id="status">Click Run to begin</p>
+
+            <div class="invisible">
             <h2 class="h5">Status</h2>
             <div class="card card-body bg-light shadow-sm">
                 <pre id="log" class="mb-0">Click "Run" to begin</pre>
             </div>
-
+        </div>
         </div>
     </main>
 
@@ -66,22 +74,18 @@
         }
 
         // Last modified date as promise
-        function last_modified(url) {
-            var d = $.Deferred();
-
+        function last_modified(url, cb) {
             $.get({
                 url: url + '/_jcr_content.json',
                 cache: false,
-                success: function (res) { d.resolve(res['jcr:lastModified']) },
-                error: function (e) { d.reject(null) }
+                success: function (res) { cb(res['jcr:lastModified']) },
+                error: function (e) { }
             });
-
-            return d.promise();
         }
 
         // Display the last modified info
-        last_modified(config.aem_en).done(function (date) {
-            jQuery('#updated').html('updated <abbr class="text-primary" title="' + date + '">' + jQuery.timeago(new Date(date)) + '</abbr>')
+        last_modified(config.aem_en, function (t) {
+            jQuery('#updated').html('updated <abbr class="text-primary" title="' + t + '">' + jQuery.timeago(new Date(t)) + '</abbr>')
         })
 
         // Generate an AJAX task to be completed
