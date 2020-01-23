@@ -30,7 +30,7 @@
             <p>Compiles a list of Maple Leaf pages, merges content from Wordpress articles and AEM pages. The resulting JSON files will be downloaded automatically.</p>
             <p>Replace the exsting files in the DAM folder <code><a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a></p>
 
-            <p class="mt-5 mb-0">Last publish <span id="updated">Loading...</span></p>
+            <p class="mt-5 mb-0">Last published <span id="updated">Loading...</span></p>
             <div class="progress my-2" style="height: 5px">
                 <div class="progress-bar" style="width:0%" id="progress"></div>
             </div>
@@ -139,12 +139,12 @@
                     status('Processing WordPress export', 3)
                     for (var lang in data) {
                         data[lang].forEach(function (o, i) {
-                            data[lang][i][1] = $(data[lang][i][1]).attr('src')
+                            data[lang][i][4] = data[lang][i][4].replace(/,\s/g, ',')
                             data[lang][i][5] = $('<div>' + data[lang][i][5] + '</div>').text()
                         })
                     }
 
-                    status('Processing AEM sitemaps', 4)
+                    status('Processing AEM sitemaps')
                     var nodes = jQuery(xml).find('loc').map(function () {
                         return this.innerHTML
                     }).get().filter(function (url) {
@@ -183,9 +183,9 @@
                         data[o['jcr:language']].push([
                             category(url),
                             o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
-                            '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title']) + '</a>',
-                            o['gcDescription'] ? utf8.encode(o['gcDescription']) : '',
-                            o['gcKeywords'] ? utf8.encode(o['gcKeywords'] || '').replace(/,(\S)/g, ', $1') : '',
+                            '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title'].trim()) + '</a>',
+                            o['gcDescription'] ? utf8.encode(o['gcDescription'].trim()) : '',
+                            o['gcKeywords'] ? utf8.encode(o['gcKeywords'].trim() || '').replace(/,\s/g, ',') : '',
                             date.replace('.000Z', '')
                         ])
                     })
