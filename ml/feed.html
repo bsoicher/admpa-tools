@@ -75,8 +75,8 @@
         $.get({
             url: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json/_jcr_content.json',
             success: function (obj) {
-                var html = '<abbr title="' + obj['jcr:lastModified'] + '">' + jQuery.timeago(new Date(obj['jcr:lastModified'])) + '</abbr>'
-                $updated.html(html + ' by <em>' + obj['jcr:lastModifiedBy'] + '</em>')
+                var html = '<abbr title="' + obj['jcr:lastModified'] + '" class="text-primary">' + jQuery.timeago(new Date(obj['jcr:lastModified'])) + '</abbr>'
+                $updated.html(html + ' by <em class="text-primary">' + obj['jcr:lastModifiedBy'] + '</em>')
             },
             error: function (e) { $updated.text('Error') }
         })
