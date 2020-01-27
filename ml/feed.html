@@ -21,23 +21,27 @@
 </head>
 
 <body id="body">
+
     <main>
         <div class="container mb-5">
             <h1 class="h4 mt-5">
                 <a href="../index.html">ADMPA Web Tools</a>
                 <small class="text-muted">&gt; Maple Leaf &gt; Feed</small>
             </h1>
-            
-            <p>Compiles a list of Maple Leaf pages, merges content from Wordpress articles and AEM pages. The resulting JSON files will be downloaded automatically.</p>
-            <p>Replace the exsting files in the DAM folder <code><a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a></p>
 
-            <p class="mt-5 mb-0">Last published <span id="updated">Loading...</span></p>
+            <!-- Description -->
+            <p>Compiles a list of Maple Leaf pages, merges content from Wordpress articles and AEM pages. The resulting
+                JSON files will be downloaded automatically.</p>
+            <p>Replace the exsting files in the DAM folder:
+                <code><a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a>
+            </p>
+
+            <!-- Status and Progress -->
+            <p class="mt-4 mb-0">Last published <span id="updated">Loading...</span></p>
             <div class="progress my-2" style="height: 5px">
-                <div class="progress-bar" style="width:0%" id="progress"></div>
+                <div id="progress" class="progress-bar" style="width:0%"></div>
             </div>
             <p id="status"><a href="javascript:start()">Click here to run</a></p>
-
-
 
         </div>
     </main>
@@ -53,36 +57,28 @@
             'map_fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml'
         }
 
-        // Find elements
+        // Prevent loading cached data
+        $.ajaxSetup({ cache: false })
+
+        // Preselect elements
+        var $updated = $('#updated')
         var $status = $('#status')
         var $progress = $('#progress')
 
-        // Set status message and/or progress bar
-        function status(message, progress) {
-            if (typeof message === 'string') {
-                $status.html(message)
-            }
-            if (typeof progress === 'number') {
-                $progress.css('width', progress + '%')
-            }
+        // Set status message and/or progress
+        function status(message, percent) {
+            if (typeof message === 'string') { $status.html(message) }
+            if (typeof percent === 'number') { $progress.width(percent + '%') }
         }
 
-        // Last modified date as promise
-        function last_modified(url, cb) {
-            $.get({
-                url: url + '/_jcr_content.json',
-                cache: false,
-                success: function (res) {
-                    var html = '<abbr class="text-primary" title="' + res['jcr:lastModified'] + '">' + jQuery.timeago(new Date(res['jcr:lastModified'])) + '</abbr>'
-                    cb(html + ' by <span class="text-primary">' + res['jcr:lastModifiedBy'] + '</span>')
-                },
-                error: function (e) { cb('Error') }
-            });
-        }
-
-        // Display the last modified info
-        last_modified(config.aem_en, function (html) {
-            $('#updated').html(html)
+        // Display last published
+        $.get({
+            url: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json/_jcr_content.json',
+            success: function (obj) {
+                var html = '<abbr title="' + obj['jcr:lastModified'] + '">' + jQuery.timeago(new Date(obj['jcr:lastModified'])) + '</abbr>'
+                $updated.html(html + ' by <em>' + obj['jcr:lastModifiedBy'] + '</em>')
+            },
+            error: function (e) { $updated.text('Error') }
         })
 
         // Generate an AJAX task to be completed
@@ -90,7 +86,6 @@
             return function (cb) {
                 $.get({
                     url: url,
-                    cache: false,
                     success: function (res) {
                         if (progress) {
                             status(null, progress)
@@ -123,7 +118,6 @@
             // Perform functions in sequence
             async.waterfall([
 
-                // Load WordPress export and AEM sitemaps
                 function (cb) {
                     status('Downloading WordPress export and AEM sitemaps', 1)
                     async.parallel([
@@ -135,7 +129,6 @@
                     })
                 },
 
-                // Turn XML sitemaps into JSON, filtering out URLs that dont match the format
                 function (data, xml, cb) {
                     status('Processing WordPress export', 3)
                     for (var lang in data) {
@@ -155,7 +148,6 @@
                     cb(null, data, nodes)
                 },
 
-                // Download metadata
                 function (data, nodes, cb) {
                     status('Downloading metadata (' + nodes.length + ' nodes)')
 
@@ -173,7 +165,6 @@
                     })
                 },
 
-                // Process metadata
                 function (data, meta, cb) {
                     status('Processing metadata', 99)
 
