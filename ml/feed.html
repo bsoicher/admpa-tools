@@ -39,7 +39,7 @@
             <!-- Status and Progress -->
             <p class="mt-4 mb-0">
                 Last published
-                <abbr id="modified" class="text-primary">???</abbr> by <em id="modifiedby" class="text-primary">???</em>
+                <abbr id="modified" class="text-primary">…</abbr> by <em id="modifiedby" class="text-primary">…</em>
             </p>
             <div class="progress my-2" style="height: 5px">
                 <div id="progress" class="progress-bar" style="width:0%"></div>
@@ -136,7 +136,6 @@
                     for (var lang in data) {
                         data[lang].forEach(function (o, i) {
                             data[lang][i][4] = data[lang][i][4].replace(/,\s/g, ',')
-                            data[lang][i][5] = $('<div>' + data[lang][i][5] + '</div>').text()
                         })
                     }
 
@@ -185,13 +184,42 @@
                     })
 
                     cb(null, data)
+                },
+
+                function (data, cb) {
+                    status('Compare with current data')
+                    async.parallel([
+                        get(config.aem_en),
+                        get(config.aem_fr)
+                    ], function (err, res) {
+
+                        var en1 = JSON.stringify(res[0])
+                        var en2 = JSON.stringify(data.en)
+
+                        var fr1 = JSON.stringify(res[1])
+                        var fr2 = JSON.stringify(data.fr)
+
+                        if (en1 !== en2 && fr1 !== fr2) {
+                            status('No changes since previous publish', 100)
+                            cb(1)
+                        } else {
+                            cb(null, data)
+                        }
+
+
+                    })
+
                 }
 
             ], function (err, data) {
-                status('Done (' + data.en.length + ' entries)', 100)
+                if (err) {
+                    console.log(err)
+                } else {
+                    status('Done (' + data.en.length + ' entries)', 100)
 
-                for (var lang in data) {
-                    download(JSON.stringify({ data: data[lang] }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                    for (var lang in data) {
+                        download(JSON.stringify({ data: data[lang] }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                    }
                 }
             })
         }
