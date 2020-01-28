@@ -37,7 +37,10 @@
             </p>
 
             <!-- Status and Progress -->
-            <p class="mt-4 mb-0">Last published <span id="updated">Loading...</span></p>
+            <p class="mt-4 mb-0">
+                Last published
+                <abbr id="modified" class="text-primary">???</abbr> by <em id="modifiedby" class="text-primary">???</em>
+            </p>
             <div class="progress my-2" style="height: 5px">
                 <div id="progress" class="progress-bar" style="width:0%"></div>
             </div>
@@ -61,7 +64,6 @@
         $.ajaxSetup({ cache: false })
 
         // Preselect elements
-        var $updated = $('#updated')
         var $status = $('#status')
         var $progress = $('#progress')
 
@@ -75,8 +77,8 @@
         $.get({
             url: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json/_jcr_content.json',
             success: function (obj) {
-                var html = '<abbr title="' + obj['jcr:lastModified'] + '" class="text-primary">' + jQuery.timeago(new Date(obj['jcr:lastModified'])) + '</abbr>'
-                $updated.html(html + ' by <em class="text-primary">' + obj['jcr:lastModifiedBy'] + '</em>')
+                $('#modified').text($.timeago(new Date(obj['jcr:lastModified']))).attr('title', obj['jcr:lastModified'])
+                $('#modifiedby').text(obj['jcr:lastModifiedBy'])
             },
             error: function (e) { $updated.text('Error') }
         })
