@@ -51,6 +51,9 @@
 
     <script>
 
+        // TODO: Comapre output with currently published JSON
+        // TODO: Optimization: dont wait on WP export to start on nodes
+
         // Configure data sources
         var config = {
             'wp': 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php',
@@ -124,8 +127,18 @@
                     status('Downloading WordPress export and AEM sitemaps', 1)
                     async.parallel([
                         get(config.wp),
-                        get(config.map_en),
-                        get(config.map_fr)
+                        async.parallel([
+                            get(config.map_en),
+                            get(config.map_fr)
+                        ], function (err, files) {
+                            status('Converting XML sitemaps to JSON')
+                            files = files.map(function (xml) {
+                                return $(xml).find('loc').map(function () {
+                                    return this.innerHTML
+                                }).get()
+                            })
+                            cb(err, files)
+                        })
                     ], function (err, res) {
                         cb(err, res[0], [res[1], res[2]])
                     })
@@ -186,7 +199,7 @@
                     cb(null, data)
                 },
 
-                function (data, cb) {
+                /*function (data, cb) {
                     status('Compare with current data')
                     async.parallel([
                         get(config.aem_en),
@@ -209,7 +222,7 @@
 
                     })
 
-                }
+                }*/
 
             ], function (err, data) {
                 if (err) {
