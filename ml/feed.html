@@ -52,7 +52,7 @@
     <script>
 
         // TODO: Comapre output with currently published JSON
-     
+
         // Configure data sources
         var config = {
             'wp': 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php',
@@ -77,7 +77,7 @@
 
         // Display last published
         $.get({
-            url: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json/_jcr_content.json',
+            url: config.aem_en + '/_jcr_content.json',
             success: function (obj) {
                 $('#modified').text($.timeago(new Date(obj['jcr:lastModified']))).attr('title', obj['jcr:lastModified'])
                 $('#modifiedby').text(obj['jcr:lastModifiedBy'])
@@ -91,14 +91,8 @@
                 $.get({
                     url: url,
                     success: function (res) {
-                        if (progress) {
-                            status(null, progress)
-                        }
-
-                        if (url.endsWith('.json')) {
-                            res._self = url.replace('/_jcr_content.json', '.html')
-                        }
-
+                        if (progress) { status(null, progress) }
+                        if (url.endsWith('.json')) { res._self = url.replace('/_jcr_content.json', '.html') }
                         cb(null, res)
                     },
                     error: function (err) { cb(err, null) }
@@ -136,7 +130,7 @@
                         get(config.map_en),
                         get(config.map_fr)
                     ], function (err, sitemaps) {
-                        status('Processing sitemaps')
+                        status('Processing sitemaps', 2)
 
                         nodes = $(sitemaps).find('loc').map(function () {
                             // Extract URLs
@@ -145,22 +139,22 @@
                             // Remove non article nodes
                             return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
                         })
-                        
-                        var percent = 5
-                        var increment = 95 / nodes.length
-                        
+
+                        var percent = 3
+                        var increment = 96 / nodes.length
+
                         nodes = nodes.map(function (url) {
                             // Create download tasks
                             return get(url.replace('.html', '/_jcr_content.json'), percent += increment)
                         })
 
-                        status('Downloading metadata (' + nodes.length + ' nodes)')
+                        status('Downloading metadata (' + nodes.length + ' nodes)', 3)
                         async.parallelLimit(nodes, 5, function (err, meta) {
                             status('Processing metadata')
 
                             var data = { 'en': [], 'fr': [] }
 
-                            meta.forEach(function(o){
+                            meta.forEach(function (o) {
                                 data[o['jcr:language']].push([
                                     category(o._self),
                                     o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
@@ -179,14 +173,14 @@
                 get(config.wp),
 
             ], function (err, data) {
-            
+
                 if (err) {
                     return status('Error', 99)
                 }
 
-                var time = Math.round((new Date().getTime() - start) / 100) / 10
+                var elapsed = Math.round((new Date().getTime() - start) / 100) / 10
 
-                status('Done (' + (data[0].en.length + data[1].en.length) + ' entries in ' + time + ' seconds)')
+                status('Done (' + (data[0].en.length + data[1].en.length) + ' entries in ' + elapsed + ' seconds)', 100)
 
                 for (var lang in data[0]) {
                     var json = JSON.stringify({ data: data[0][lang].concat(data[1][lang]) }, null, null)
