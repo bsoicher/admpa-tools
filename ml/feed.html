@@ -52,8 +52,7 @@
     <script>
 
         // TODO: Comapre output with currently published JSON
-        // TODO: Optimization: dont wait on WP export to start on nodes
-
+     
         // Configure data sources
         var config = {
             'wp': 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php',
@@ -95,9 +94,14 @@
                         if (progress) {
                             status(null, progress)
                         }
+
+                        if (url.endsWith('.json')) {
+                            res._self = url.replace('/_jcr_content.json', '.html')
+                        }
+
                         cb(null, res)
                     },
-                    error: function (e) { cb(e, null) }
+                    error: function (err) { cb(err, null) }
                 })
             }
         }
@@ -119,121 +123,72 @@
         }
 
         function start() {
+            status('Downloading WordPress export', 1)
 
-            // Perform functions in sequence
-            async.waterfall([
+            async.parallel([
+
+                get(config.wp),
 
                 function (cb) {
-                    status('Downloading WordPress export and AEM sitemaps', 1)
+                    status('Downloading AEM Sitemaps')
+
                     async.parallel([
-                        get(config.wp),
-                        async.parallel([
-                            get(config.map_en),
-                            get(config.map_fr)
-                        ], function (err, files) {
-                            status('Converting XML sitemaps to JSON')
-                            files = files.map(function (xml) {
-                                return $(xml).find('loc').map(function () {
-                                    return this.innerHTML
-                                }).get()
+                        get(config.map_en),
+                        get(config.map_fr)
+                    ], function (err, sitemaps) {
+                        status('Processing sitemaps')
+
+                        nodes = $(sitemaps).find('loc').map(function () {
+                            // Extract URLs
+                            return this.innerHTML
+                        }).get().filter(function (url) {
+                            // Remove non article nodes
+                            return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
+                        })
+                        
+                        var percent = 5
+                        var increment = 95 / nodes.length
+                        
+                        nodes = nodes.map(function (url) {
+                            // Create download tasks
+                            return get(url.replace('.html', '/_jcr_content.json'), percent += increment)
+                        })
+
+                        status('Downloading metadata (' + nodes.length + ' nodes)')
+                        async.parallelLimit(nodes, 5, function (err, meta) {
+                            status('Processing metadata')
+
+                            var data = { 'en': [], 'fr': [] }
+
+                            meta.forEach(function(o){
+                                data[o['jcr:language']].push([
+                                    category(o._self),
+                                    o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
+                                    '<a href="' + o._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title'].trim()) + '</a>',
+                                    o['gcDescription'] ? utf8.encode(o['gcDescription'].trim()) : '',
+                                    o['gcKeywords'] ? utf8.encode(o['gcKeywords'].trim() || '').replace(/,\s/g, ',') : '',
+                                    new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString().replace('.000Z', '')
+                                ])
                             })
-                            cb(err, files)
+
+                            cb(err, data)
                         })
-                    ], function (err, res) {
-                        cb(err, res[0], [res[1], res[2]])
                     })
-                },
-
-                function (data, xml, cb) {
-                    status('Processing WordPress export', 3)
-                    for (var lang in data) {
-                        data[lang].forEach(function (o, i) {
-                            data[lang][i][4] = data[lang][i][4].replace(/,\s/g, ',')
-                        })
-                    }
-
-                    status('Processing AEM sitemaps')
-                    var nodes = jQuery(xml).find('loc').map(function () {
-                        return this.innerHTML
-                    }).get().filter(function (url) {
-                        return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
-                    })
-
-                    cb(null, data, nodes)
-                },
-
-                function (data, nodes, cb) {
-                    status('Downloading metadata (' + nodes.length + ' nodes)')
-
-                    var tasks = {}
-                    var percent = 5
-                    var increment = 95 / nodes.length
-
-                    nodes.forEach(function (url) {
-                        percent += increment
-                        tasks[url] = get(url.replace('.html', '/_jcr_content.json'), percent)
-                    })
-
-                    async.parallelLimit(tasks, 5, function (err, meta) {
-                        cb(err, data, meta)
-                    })
-                },
-
-                function (data, meta, cb) {
-                    status('Processing metadata', 99)
-
-                    Object.keys(meta).forEach(function (url) {
-                        var o = meta[url]
-                        var date = new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString()
-
-                        data[o['jcr:language']].push([
-                            category(url),
-                            o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
-                            '<a href="' + url.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title'].trim()) + '</a>',
-                            o['gcDescription'] ? utf8.encode(o['gcDescription'].trim()) : '',
-                            o['gcKeywords'] ? utf8.encode(o['gcKeywords'].trim() || '').replace(/,\s/g, ',') : '',
-                            date.replace('.000Z', '')
-                        ])
-                    })
-
-                    cb(null, data)
-                },
-
-                /*function (data, cb) {
-                    status('Compare with current data')
-                    async.parallel([
-                        get(config.aem_en),
-                        get(config.aem_fr)
-                    ], function (err, res) {
-
-                        var en1 = JSON.stringify(res[0])
-                        var en2 = JSON.stringify(data.en)
-
-                        var fr1 = JSON.stringify(res[1])
-                        var fr2 = JSON.stringify(data.fr)
-
-                        if (en1 !== en2 && fr1 !== fr2) {
-                            status('No changes since previous publish', 100)
-                            cb(1)
-                        } else {
-                            cb(null, data)
-                        }
-
-
-                    })
-
-                }*/
+                }
 
             ], function (err, data) {
+            
                 if (err) {
-                    console.log(err)
-                } else {
-                    status('Done (' + data.en.length + ' entries)', 100)
-
-                    for (var lang in data) {
-                        download(JSON.stringify({ data: data[lang] }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
-                    }
+                    return status('Error', 99)
                 }
+
+                status('Done (' + (data[0].en.length + data[1].en.length) + ' entries)')
+
+                for (var lang in data[0]) {
+                    var json = JSON.stringify({ data: data[0][lang].concat(data[1][lang]) }, null, null)
+                    download(json, 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                }
+
             })
         }
 
