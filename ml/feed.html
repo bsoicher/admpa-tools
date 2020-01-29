@@ -125,9 +125,9 @@
         function start() {
             status('Downloading WordPress export', 1)
 
-            async.parallel([
+            var start = new Date().getTime();
 
-                get(config.wp),
+            async.parallel([
 
                 function (cb) {
                     status('Downloading AEM Sitemaps')
@@ -174,7 +174,9 @@
                             cb(err, data)
                         })
                     })
-                }
+                },
+
+                get(config.wp),
 
             ], function (err, data) {
             
@@ -182,7 +184,9 @@
                     return status('Error', 99)
                 }
 
-                status('Done (' + (data[0].en.length + data[1].en.length) + ' entries)')
+                var time = Math.round((new Date().getTime() - start) / 100) / 10
+
+                status('Done (' + (data[0].en.length + data[1].en.length) + ' entries in ' + time + ' seconds)')
 
                 for (var lang in data[0]) {
                     var json = JSON.stringify({ data: data[0][lang].concat(data[1][lang]) }, null, null)
