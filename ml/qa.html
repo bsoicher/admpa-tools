@@ -98,44 +98,39 @@
                     async.parallel([
                         get('https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml'),
                         get('https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml')
-                    ], function (err, files) {
-                        status('Converting XML sitemaps to JSON')
-                        files = files.map(function (xml) {
-                            return $(xml).find('loc').map(function () {
-                                return this.innerHTML
-                            }).get()
-                        })
-                        cb(err, files)
-                    })
-                },
+                    ], function (err, sitemaps) {
+                        status('Processing sitemaps')
 
-                function (data, cb) {
-                    status('Processing sitemaps')
-                    data = data.map(function (arr) {
-                        return arr.filter(function (url) {
+                        nodes = $(sitemaps).find('loc').map(function () {
+                            // Extract URLs
+                            return this.innerHTML
+                        }).get().filter(function (url) {
+                            // Remove non article nodes
                             return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
                         })
-                    })
-                    cb(null, data)
-                },
 
-                function (data, cb) {
-                    status('Downloading HTML (' + data[0].length + ' nodes)')
-                    
-                    var percent = 5
-                    var increment = 95 / data[0].length
+                        var percent = 3
+                        var increment = 96 / nodes.length
 
-                    data = data.map(function (arr) {
-                        return arr.map(function (url) {
-                            percent += increment
-                            return get(url, percent)
+                        nodes = nodes.map(function (url) {
+                            // Create download tasks
+                            return get(url, percent += increment)
+                        })
+
+                        status('Loading documents (' + nodes.length + ' nodes)', 3)
+                        async.parallelLimit(nodes, 5, function (err, html) {
+                            cb(err, html)
                         })
                     })
+                },
 
-                    async.parallelLimit(data[0], 5, function (err, meta) {
-                        cb(err, meta)
-                    })
+                function (html, cb) {
+                    status('Processing documents')
 
+                    console.log(html)
+                    
+                    cb(err, html)
+                   
                     //cb(1)
 
 

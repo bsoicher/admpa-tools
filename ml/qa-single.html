@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Maple Leaf &gt; QA Single</title>
+
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta name="author" content="Ben Soicher" />
+
+    <!-- Style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.1.0/async.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
+
+</head>
+
+<body id="body">
+    <main>
+        <div class="container mb-5">
+            <h1 class="h4 mt-5">
+                <a href="../index.html">ADMPA Web Tools</a>
+                <small class="text-muted">&gt; Maple Leaf &gt; QA Single</small>
+            </h1>
+
+            <!-- Description -->
+            <p>Analyze an AEM article for common formatting issues. If the article has a redirect in place on the WordPress site, it will be checked.</p>
+
+            <!-- Input field -->
+            <div class="input-group mt-4">
+                <input id="url" type="text" class="form-control" />
+                <div class="input-group-append">
+                    <a class="btn btn-primary" href="javascript:start()">Start</a>
+                </div>
+            </div>
+            <small class="form-text text-muted">
+                Full URL of AEM article
+            </small>
+
+            <!-- Table of issues -->
+            <table id="issues" class="table my-5">
+                <thead>
+                    <tr>
+                        <th class="border-top-0">Description</th>
+                    </tr>
+                </thead>
+                <tbody class="border"></tbody>
+            </table>
+
+        </div>
+    </main>
+
+    <script>
+
+        // Prevent loading cached data
+        $.ajaxSetup({ cache: false })
+
+        // Preselect elements
+        var $url = $('#url')
+        var $tbody = $('#issues tbody')
+
+        // Log messages
+        function info(str) { $tbody.append('<tr class="table-info"><td>' + str + '</td></tr>') }
+        function error(str) { $tbody.append('<tr class="table-danger"><td>' + str + '</td></tr>') }
+        function warning(str) { $tbody.append('<tr class="table-warning"><td>' + str + '</td></tr>') }
+
+        // Array of tests to run
+        var tests = [
+
+            // Evaluate tags
+            function ($html, old) {
+
+                try {
+                    var tags = $html.find('meta[name=keywords]').attr('content').split(',')
+                } catch (e) {
+                    var tags = []
+                }
+
+                if (tags.length === 0) {
+                    issue('danger', 'No keywords')
+                }
+
+            }
+        ]
+
+        function start() {
+
+            //$url.val($url.val())
+
+            var url = $url.val()
+
+            // Clear issue table
+            $tbody.empty()
+
+            // this can work for preview if run from DWAN
+
+            // Basic URL validation
+            if (!url) { return error('No URL submitted') }
+            if (!url.match(/^https:\/\/(www\.canada\.ca|canada-preview\.adobecqms\.net)\//i)) { return error('URL must be on canada.ca') }
+            if (!url.match(/\.html$/i)) { return error('URL must have the <strong>.html</strong> file extension') }
+
+            // Multiple same captions
+
+            // Try and load it
+            var test = $.get(url).done(function (data) {
+
+                console.log(data)
+
+                $.get('https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url).always(function (d) {
+
+
+                    console.log(data)
+
+                })
+
+            }).fail(function (e) {
+                console.log(e.getResponseHeader())
+                error('Error loading that URL')
+            })
+        }
+
+    </script>
+
+</body>
+
+</html>
