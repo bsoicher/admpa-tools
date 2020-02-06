@@ -116,10 +116,15 @@
             return 'ml'
         }
 
+        function filter_tags(tags) {
+            return tags.replace()
+        }
+
         function start() {
             status('Downloading WordPress export', 1)
 
-            var start = new Date().getTime();
+            // For time tracking
+            var start = new Date().getTime()
 
             async.parallel([
 
@@ -160,7 +165,7 @@
                                     o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
                                     '<a href="' + o._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title'].trim()) + '</a>',
                                     o['gcDescription'] ? utf8.encode(o['gcDescription'].trim()) : '',
-                                    o['gcKeywords'] ? utf8.encode(o['gcKeywords'].trim() || '').replace(/,\s/g, ',') : '',
+                                    o['gcKeywords'] ? utf8.encode(o['gcKeywords'].trim() || '').replace(/\s?,\s+/g, ',') : '',
                                     new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString().replace('.000Z', '')
                                 ])
                             })
@@ -174,13 +179,14 @@
 
             ], function (err, data) {
 
-                if (err) {
-                    return status('Error', 99)
-                }
+                if (err) { return status('Error', 99) }
+
+                var en = data[0].en.concat(data[1].en)
+                var fr = data[0].fr.concat(data[1].fr)
 
                 var elapsed = Math.round((new Date().getTime() - start) / 100) / 10
 
-                status('Done (' + (data[0].en.length + data[1].en.length) + ' entries in ' + elapsed + ' seconds)', 100)
+                status('Done (' + en.length + ' entries in ' + elapsed + ' seconds)', 100)
 
                 for (var lang in data[0]) {
                     var json = JSON.stringify({ data: data[0][lang].concat(data[1][lang]) }, null, null)
