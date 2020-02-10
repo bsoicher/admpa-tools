@@ -118,8 +118,8 @@
 
         // Remove unwanted tags
         function filter_tags(tags) {
-            return tags.split(',').filter(function (val) {
-                return !val.match(/(featured|vedette)$/i)
+            return tags.split(',').filter(function (tag) {
+                return !tag.match(/(featured|vedette)$/i)
             }).join(',')
         }
 
@@ -159,10 +159,6 @@
                         status('Downloading metadata (' + nodes.length + ' nodes)', 3)
                         async.parallelLimit(nodes, 5, function (err, meta) {
 
-                            if (err) {
-                                cb(err)
-                            }
-                            console.log(err)
                             status('Processing metadata')
 
                             var data = { 'en': [], 'fr': [] }
