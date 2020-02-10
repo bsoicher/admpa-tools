@@ -70,7 +70,7 @@
         var $progress = $('#progress')
 
         // Set status message and/or progress
-        function status(message, percent) {
+        function status(message, percent, error) {
             if (typeof message === 'string') { $status.html(message) }
             if (typeof percent === 'number') { $progress.width(percent + '%') }
         }
@@ -90,12 +90,12 @@
             return function (cb) {
                 $.get({
                     url: url,
-                    success: function (res) {
+                    success: function (data) {
                         if (progress) { status(null, progress) }
-                        if (url.endsWith('.json')) { res._self = url.replace('/_jcr_content.json', '.html') }
-                        cb(null, res)
+                        if (url.endsWith('.json')) { data._self = url.replace('/_jcr_content.json', '.html') }
+                        cb(null, data)
                     },
-                    error: function (err) { cb(err, null) }
+                    error: function (xhr, status, err) { cb(err) }
                 })
             }
         }
@@ -116,8 +116,11 @@
             return 'ml'
         }
 
+        // Remove unwanted tags
         function filter_tags(tags) {
-            return tags.replace()
+            return tags.split(',').filter(function (val) {
+                return !val.match(/(featured|vedette)$/i)
+            }).join(',')
         }
 
         function start() {
@@ -155,6 +158,11 @@
 
                         status('Downloading metadata (' + nodes.length + ' nodes)', 3)
                         async.parallelLimit(nodes, 5, function (err, meta) {
+
+                            if (err) {
+                                cb(err)
+                            }
+                            console.log(err)
                             status('Processing metadata')
 
                             var data = { 'en': [], 'fr': [] }
@@ -179,20 +187,23 @@
 
             ], function (err, data) {
 
-                if (err) { return status('Error', 99) }
+                if (err) { return status('Error', 99, true) }
 
-                var en = data[0].en.concat(data[1].en)
-                var fr = data[0].fr.concat(data[1].fr)
+                var en = data[0].en.concat(data[1].en).map(function (val) {
+                    val[4] = filter_tags(val[4])
+                    return val
+                })
+
+                var fr = data[0].fr.concat(data[1].fr).map(function (val) {
+                    val[4] = filter_tags(val[4])
+                    return val
+                })
 
                 var elapsed = Math.round((new Date().getTime() - start) / 100) / 10
-
                 status('Done (' + en.length + ' entries in ' + elapsed + ' seconds)', 100)
 
-                for (var lang in data[0]) {
-                    var json = JSON.stringify({ data: data[0][lang].concat(data[1][lang]) }, null, null)
-                    download(json, 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
-                }
-
+                download(JSON.stringify({ data: en }, null, null), 'maple-en.json', 'text/plain;charset=UTF-8;')
+                download(JSON.stringify({ data: fr }, null, null), 'maple-fr.json', 'text/plain;charset=UTF-8;')
             })
         }
 
