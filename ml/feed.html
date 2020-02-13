@@ -70,7 +70,7 @@
         var $progress = $('#progress')
 
         // Set status message and/or progress
-        function status(message, percent, error) {
+        function status(message, percent) {
             if (typeof message === 'string') { $status.html(message) }
             if (typeof percent === 'number') { $progress.width(percent + '%') }
         }
@@ -168,7 +168,7 @@
                                     category(o._self),
                                     o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
                                     '<a href="' + o._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title'].trim()) + '</a>',
-                                    o['gcDescription'] ? utf8.encode(o['gcDescription'].trim()) : '',
+                                    o['gcDescription'] ? utf8.encode(o['gcDescription'].trim().replace(/\.$/, '')) : '',
                                     o['gcKeywords'] ? utf8.encode(o['gcKeywords'].trim() || '').replace(/\s?,\s+/g, ',') : '',
                                     new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString().replace('.000Z', '')
                                 ])
