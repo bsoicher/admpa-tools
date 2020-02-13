@@ -90,18 +90,19 @@
 
         function start() {
 
-            //$url.val($url.val())
+            $.get('https://author-canada-prod.adobecqms.net/api/assets/dnd-mdn/images/maple-leaf.json').always(function (d) {
+                console.log(d)
+            })
 
+            // Get URL value
             var url = $url.val()
 
             // Clear issue table
             $tbody.empty()
 
-            // this can work for preview if run from DWAN
-
             // Basic URL validation
-            if (!url) { return error('No URL submitted') }
-            if (!url.match(/^https:\/\/(www\.canada\.ca|canada-preview\.adobecqms\.net)\//i)) { return error('URL must be on canada.ca') }
+            if (!url) { return error('URL input is empty') }
+            if (!url.match(/^https:\/\/www\.canada\.ca\//i)) { return error('The URL must start with https://www.canada.ca/') }
             if (!url.match(/\.html$/i)) { return error('URL must have the <strong>.html</strong> file extension') }
 
             // Multiple same captions
