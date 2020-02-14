@@ -121,7 +121,7 @@
             return tags.split(',').map(function (tag) {
                 return tag.trim()
             }).filter(function (tag) {
-                return !tag.match(/(featured|vedette)$/i)
+                return tag ? !tag.match(/(featured|vedette)$/i) : false
             }).join(',')
         }
 
