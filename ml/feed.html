@@ -118,7 +118,9 @@
 
         // Remove unwanted tags
         function filter_tags(tags) {
-            return tags.split(',').filter(function (tag) {
+            return tags.split(',').map(function (tag) {
+                return tag.trim()
+            }).filter(function (tag) {
                 return !tag.match(/(featured|vedette)$/i)
             }).join(',')
         }
@@ -169,7 +171,7 @@
                                     o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
                                     '<a href="' + o._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title'].trim()) + '</a>',
                                     o['gcDescription'] ? utf8.encode(o['gcDescription'].trim().replace(/\.$/, '')) : '',
-                                    o['gcKeywords'] ? utf8.encode(o['gcKeywords'].trim() || '').replace(/\s?,\s+/g, ',') : '',
+                                    o['gcKeywords'] ? utf8.encode(filter_tags(o['gcKeywords'])) : '',
                                     new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString().replace('.000Z', '')
                                 ])
                             })
@@ -185,15 +187,8 @@
 
                 if (err) { return status('Error', 99, true) }
 
-                var en = data[0].en.concat(data[1].en).map(function (val) {
-                    val[4] = filter_tags(val[4])
-                    return val
-                })
-
-                var fr = data[0].fr.concat(data[1].fr).map(function (val) {
-                    val[4] = filter_tags(val[4])
-                    return val
-                })
+                var en = data[0].en.concat(data[1].en)
+                var fr = data[0].fr.concat(data[1].fr)
 
                 var elapsed = Math.round((new Date().getTime() - start) / 100) / 10
                 status('Done (' + en.length + ' entries in ' + elapsed + ' seconds)', 100)
