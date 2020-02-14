@@ -30,16 +30,20 @@
             </h1>
 
             <!-- Description -->
-            <p>Compiles a list of Maple Leaf pages, merges content from Wordpress articles and AEM pages. The resulting
-                JSON files will be downloaded automatically.</p>
-            <p>Replace the exsting files in the DAM folder:
-                <code><a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a>
-            </p>
+            <p>Compiles a listing of Maple Leaf article metadata used in the search table. Data is loaded from both WordPress and AEM.</p>
+
+            <!-- Instructions -->
+            <h2 class="h5">Instructions</h2>
+            <ol class="pl-3">
+                <li>Run the tool. Two JSON files will be generated and downloaded</li>
+                <li>Upload the files to the DAM folder (replacing existing files): <code><a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</code></a></li>
+                <li>Publish both files to production</li>
+                <li>Refresh this page to verify that the status has changed</li>
+            </ol>
 
             <!-- Status and Progress -->
             <p class="mt-4 mb-0">
-                Last published
-                <abbr id="modified" class="text-primary">…</abbr> by <em id="modifiedby" class="text-primary">…</em>
+                Status: Published <abbr id="modified" class="text-primary">…</abbr> by <em id="modifiedby" class="text-primary">…</em>
             </p>
             <div class="progress my-2" style="height: 5px">
                 <div id="progress" class="progress-bar" style="width:0%"></div>
