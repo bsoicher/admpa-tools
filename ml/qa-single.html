@@ -21,13 +21,8 @@
 <body>
     <main>
         <div class="container mb-5">
-            <h1 class="h4 mt-5">
-                <a href="../index.html">ADMPA Web Tools</a>
-                <small class="text-muted">&gt; Maple Leaf &gt; QA Single</small>
-            </h1>
-
-            <!-- Description -->
-            <p>Analyze an AEM article for common formatting issues. If the article has a redirect in place on the WordPress site, it will be checked.</p>
+            <h1 class="h4 mt-5"><a href="../index.html">ADMPA Web Tools</a><small class="text-muted">&gt; Maple Leaf &gt; QA Single</small></h1>
+            <p>Analyze an AEM article for common issues. If the article has a redirect in place on the WordPress site, it will be checked.</p>
 
             <!-- Input field -->
             <div class="input-group mt-4">
@@ -36,17 +31,10 @@
                     <a class="btn btn-primary" href="javascript:start()">Start</a>
                 </div>
             </div>
-            <small class="form-text text-muted">
-                Full URL of AEM article
-            </small>
+            <small class="form-text text-muted">Full URL of AEM article</small>
 
             <!-- Table of issues -->
-            <table id="issues" class="table my-5">
-                <thead>
-                    <tr>
-                        <th class="border-top-0">Description</th>
-                    </tr>
-                </thead>
+            <table id="issues" class="table mb-5 mt-4">
                 <tbody class="border"></tbody>
             </table>
 
@@ -90,10 +78,6 @@
 
         function start() {
 
-            $.get('https://author-canada-prod.adobecqms.net/api/assets/dnd-mdn/images/maple-leaf.json').always(function (d) {
-                console.log(d)
-            })
-
             // Get URL value
             var url = $url.val()
 
@@ -102,27 +86,33 @@
 
             // Basic URL validation
             if (!url) { return error('URL input is empty') }
-            if (!url.match(/^https:\/\/www\.canada\.ca\//i)) { return error('The URL must start with https://www.canada.ca/') }
+            if (!url.match(/^https:\/\/www\.canada\.ca\//i)) { return error('The URL must start with <strong>https://www.canada.ca/</strong>') }
             if (!url.match(/\.html$/i)) { return error('URL must have the <strong>.html</strong> file extension') }
 
             // Multiple same captions
 
+            var wp = null
+
             // Try and load it
-            var test = $.get(url).done(function (data) {
+            $.get({
+                url: url,
+                error: function(xhr, status, err){ error('Download failed (Error: ' + err + ')') },
+                success: function(data) {
+                    info('Loaded html')
 
-                console.log(data)
+                    $doc = $(data)
 
-                $.get('https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url).always(function (d) {
+                    var lang = $doc.find('html').attr('lang')
+                    
 
-
-                    console.log(data)
-
-                })
-
-            }).fail(function (e) {
-                console.log(e.getResponseHeader())
-                error('Error loading that URL')
+                    $.get({
+                        url: 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url,
+                        error: function() { info('Article was not migrated from WordPress') },
+                        success: function(){ info('Loaded original content from WordPress') }
+                    })
+                }
             })
+
         }
 
     </script>
