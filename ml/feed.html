@@ -17,22 +17,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.1.0/async.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-
 </head>
 
-<body id="body">
-
+<body>
     <main>
         <div class="container mb-5">
-            <h1 class="h4 mt-5">
-                <a href="../index.html">ADMPA Web Tools</a>
-                <small class="text-muted">&gt; Maple Leaf &gt; Feed</small>
-            </h1>
-
-            <!-- Description -->
+            <h1 class="h4 mt-5"><a href="../index.html">ADMPA Web Tools</a><small class="text-muted">&gt; Maple Leaf &gt; Feed</small></h1>
             <p>Compiles a listing of Maple Leaf article metadata used in the search table. Data is loaded from both WordPress and AEM.</p>
-
-            <!-- Instructions -->
             <h2 class="h5">Instructions</h2>
             <ol class="pl-3">
                 <li>Run the tool. Two JSON files will be generated and downloaded</li>
@@ -40,22 +31,13 @@
                 <li>Publish both files to production</li>
                 <li>Refresh this page to verify that the status has changed</li>
             </ol>
-
-            <!-- Status and Progress -->
-            <p class="mt-4 mb-0">
-                Status: Published <abbr id="modified" class="text-primary">…</abbr> by <span id="modifiedby" class="text-primary">…</span>
-            </p>
-            <div class="progress my-2" style="height: 5px">
-                <div id="progress" class="progress-bar" style="width:0%"></div>
-            </div>
+            <p class="mt-4 mb-0">Status: Published <abbr id="modified" class="text-primary">…</abbr> by <span id="modifiedby" class="text-primary">…</span></p>
+            <div class="progress my-2" style="height: 5px"><div id="progress" class="progress-bar" style="width:0%"></div></div>
             <p id="status"><a href="javascript:start()">Click here to run</a></p>
-
         </div>
     </main>
 
     <script>
-
-        // TODO: Comapre output with currently published JSON
 
         // Configure data sources
         var config = {
