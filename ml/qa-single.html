@@ -13,8 +13,6 @@
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.1.0/async.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
 
 </head>
 
@@ -22,7 +20,7 @@
     <main>
         <div class="container mb-5">
             <h1 class="h4 mt-5"><a href="../index.html">ADMPA Web Tools</a><small class="text-muted">&gt; Maple Leaf &gt; QA Single</small></h1>
-            <p>Analyze an AEM article for common issues. If the article has a redirect in place on the WordPress site, it will be checked.</p>
+            <p>Analyze a Maple Leaf article for common issues.</p>
 
             <!-- Input field -->
             <div class="input-group mt-4">
@@ -33,10 +31,10 @@
             </div>
             <small class="form-text text-muted">Full URL of AEM article</small>
 
+            <!-- Show pass/ fail-->
+
             <!-- Table of issues -->
-            <table id="issues" class="table mb-5 mt-4">
-                <tbody class="border"></tbody>
-            </table>
+            <ul id="issues" class="list-group mb-5 mt-4"></ul>
 
         </div>
     </main>
@@ -50,31 +48,33 @@
 
         // Preselect elements
         var $url = $('#url')
-        var $tbody = $('#issues tbody')
+        var $issues = $('#issues')
 
         // Log messages
-        function info(str) { $tbody.append('<tr class="table-info"><td>' + str + '</td></tr>') }
-        function error(str) { $tbody.append('<tr class="table-danger"><td>' + str + '</td></tr>') }
-        function warning(str) { $tbody.append('<tr class="table-warning"><td>' + str + '</td></tr>') }
+        function log(str) { $issues.append('<li class="list-group-item">' + str + '</li>') }
+        function pass(str) { $issues.append('<li class="list-group-item text-success">' + str + '</li>') }
+        function fail(str) { $issues.append('<li class="list-group-item text-danger">' + str + '</li>') }
 
-        // Array of tests to run
-        var tests = [
+        // Load HTML, alt HTML (if available) and WordPress object (if available)
+        function load(url) {
+            var d = $.Deferred()
 
-            // Evaluate tags
-            function ($html, old) {
+            $.get(url).fail(function (xhr, status, err) {
+                d.reject('Download failed (' + err + ')')
+            }).done(function (doc) {
+                var $doc = $('<div>' + doc + '</div>')
+                $.get('https://www.canada.ca' + $doc.find('#wb-lng a').attr('href')).always(function (alt) {
+                    $alt = typeof alt === 'string' ? $('<div>' + alt + '</div>') : null
+                    $.getJSON('https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url).fail(function () {
+                        d.resolve($doc, $alt, null)
+                    }).done(function (wp) {
+                        d.resolve($doc, $alt, wp)
+                    })
+                })
+            })
 
-                try {
-                    var tags = $html.find('meta[name=keywords]').attr('content').split(',')
-                } catch (e) {
-                    var tags = []
-                }
-
-                if (tags.length === 0) {
-                    issue('danger', 'No keywords')
-                }
-
-            }
-        ]
+            return d
+        }
 
         function start() {
 
@@ -82,38 +82,75 @@
             var url = $url.val()
 
             // Clear issue table
-            $tbody.empty()
+            $issues.empty()
 
             // Basic URL validation
             if (!url) { return error('URL input is empty') }
             if (!url.match(/^https:\/\/www\.canada\.ca\//i)) { return error('The URL must start with <strong>https://www.canada.ca/</strong>') }
             if (!url.match(/\.html$/i)) { return error('URL must have the <strong>.html</strong> file extension') }
 
-            // Multiple same captions
-
-            var wp = null
-
-            // Try and load it
-            $.get({
-                url: url,
-                error: function(xhr, status, err){ error('Download failed (Error: ' + err + ')') },
-                success: function(data) {
-                    info('Loaded html')
-
-                    $doc = $(data)
-
-                    var lang = $doc.find('html').attr('lang')
-                    
-
-                    $.get({
-                        url: 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url,
-                        error: function() { info('Article was not migrated from WordPress') },
-                        success: function(){ info('Loaded original content from WordPress') }
-                    })
-                }
+            // Execute each test
+            load(url).done(function ($doc, $alt, wp) {
+                tests.forEach(function (test) {
+                    test($doc, $alt, wp)
+                })
+            }).fail(function (err) {
+                error(err)
             })
 
         }
+
+        // List of tests to run
+        var tests = [
+
+            // What data was downloaded?
+            function ($doc, $alt, wp) {
+
+                function check(val) {
+                    return '<strong class="text-' + (val ? 'success">✓' : 'danger">✕') + '</strong>'
+                }
+
+                log('Download(s) complete ( HTML ' + check($doc) + ', alternate HTML ' + check($alt) + ', WordPress ' + check(wp) + ' )')
+            },
+
+            // Same number of tags?
+            function ($doc, $alt, wp) {
+
+                function tagCount(tags) {
+                    return tags.split(',').map(function (tag) {
+                        return tag.trim()
+                    }).filter(function (tag) {
+                        return tag ? !tag.match(/(featured|vedette)$/i) : false
+                    }).length
+                }
+
+            },
+
+            // Has thumbnail image?
+            function ($doc, $alt) {
+                var a = $doc.find('meta[property="og:image"]').attr('content')
+                var b = $alt.find('meta[property="og:image"]').attr('content')
+
+                if (!a) { return fail('Thumbnail image: Missing') }
+                if (!b) { return fail('Thumbnail image: Missing on alternate language') }
+                if (a === b) { return pass('Thumbnail image: Consistent between languages') }
+                if (a !== b) { return fail('Thumbail image: Not consistent between languages') }
+            },
+
+            // Consistent Dates?
+            function ($doc, $alt, wp) {
+                var a = $doc.find('#wb-dtmd time').text()
+                var b = $alt ? $alt.find('#wb-dtmd time').text() : null
+                var c = wp ? wp.date.substr(0, 10) : null
+
+                if (!b && !c) { return log('Modified Date: Nothing to compare values with') }
+                if (!c && a === b) { return pass('Modified Date: Consistent between languages') }
+                if (!c && a !== b) { return fail('Modified Date: Inconsistent ( ' + a + ' and ' + b + ' )') }
+                if (a === b && a !== c) { return fail('Modified Date: Consistent between languages, but not with WordPress') }
+                if (a === b && a === c) { return pass('Modified Date: Consistent between languages and WordPress') }
+            }
+
+        ]
 
     </script>
 
