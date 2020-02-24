@@ -107,7 +107,7 @@
             // Description
             function (jcr) {
                 if (!jcr['gcDescription']) { return '' }
-                return utf8.encode($.trim(jcr['gcDescription']).replace(/\r?\n|\r/g, ' ').replace(/\.$/, ''))
+                return utf8.encode($.trim(jcr['gcDescription'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
             },
 
             // Tags
