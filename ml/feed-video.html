@@ -95,6 +95,9 @@
             
             status('Downloading AEM Sitemaps')
 
+            // For time tracking
+            var start = new Date().getTime()
+
             async.parallel([
                 get(config.map_en),
                 get(config.map_fr)
