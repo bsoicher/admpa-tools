@@ -11,8 +11,12 @@
     <!-- Style -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
 
+
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.2.0/chai.min.js"></script>
+
+
 
 </head>
 
@@ -39,9 +43,16 @@
         </div>
     </main>
 
+
+
     <script>
 
+
         // TODO, compare with french version (num tags, num images, date...)
+
+        // Use chai assertion library
+        var assert = chai.assert
+        var expect = chai.expect
 
         // Prevent loading cached data
         $.ajaxSetup({ cache: false })
@@ -78,30 +89,48 @@
 
         function start() {
 
+
             // Get URL value
             var url = $url.val()
 
             // Clear issue table
             $issues.empty()
 
-            // Basic URL validation
-            if (!url) { return error('URL input is empty') }
-            if (!url.match(/^https:\/\/www\.canada\.ca\//i)) { return error('The URL must start with <strong>https://www.canada.ca/</strong>') }
-            if (!url.match(/\.html$/i)) { return error('URL must have the <strong>.html</strong> file extension') }
+            try {
 
-            // Execute each test
-            load(url).done(function ($doc, $alt, wp) {
-                tests.forEach(function (test) {
-                    test($doc, $alt, wp)
+                // Basic URL validation
+                expect(url, 'URL is required').to.not.be.empty
+                expect(url).to.include('https://www.canada.ca/', 'Invalid URL')
+                expect(url.split('.').pop()).to.equal('html', 'Invalid file extension')
+
+                // Execute each test
+                load(url).done(function ($doc, $alt, wp) {
+                    tests.forEach(function (test) {
+                        try {
+                            var res = test($doc, $alt, wp)
+                            if (res) {
+                                pass(res)
+                            }
+                        } catch (e) {
+                            fail(e.message)
+                        }
+
+                    })
+                }).fail(function (err) {
+                    error(err)
                 })
-            }).fail(function (err) {
-                error(err)
-            })
+
+            } catch (e) {
+                fail(e.message)
+            }
+
 
         }
 
         // List of tests to run
         var tests = [
+
+
 
             // What data was downloaded?
             function ($doc, $alt, wp) {
@@ -111,6 +140,16 @@
                 }
 
                 log('Download(s) complete ( HTML ' + check($doc) + ', alternate HTML ' + check($alt) + ', WordPress ' + check(wp) + ' )')
+            },
+
+
+            function ($doc) {
+
+                var year = Number($doc.find('#wb-dtmd time').text().substr(0, 4))
+
+                expect(year, 'Only 2020 articles').is.equal(2020)
+
+                return 'Documents are all 2020'
             },
 
             // Same number of tags?
@@ -137,18 +176,29 @@
                 if (a !== b) { return fail('Thumbail image: Not consistent between languages') }
             },
 
-            // Consistent Dates?
+            // Consistent Dates
             function ($doc, $alt, wp) {
                 var a = $doc.find('#wb-dtmd time').text()
                 var b = $alt ? $alt.find('#wb-dtmd time').text() : null
-                var c = wp ? wp.date.substr(0, 10) : null
+
+                if (a && b) {
+                    a.should.equal(b)
+                }
+
+
+                // assert.equal(a, c, 'nooo why fail??')//.and.to.equal(c, 'ahhhh');
+
+                //assert.fail( a == b == c, 'Not all dates match')
+
 
                 if (!b && !c) { return log('Modified Date: Nothing to compare values with') }
                 if (!c && a === b) { return pass('Modified Date: Consistent between languages') }
                 if (!c && a !== b) { return fail('Modified Date: Inconsistent ( ' + a + ' and ' + b + ' )') }
                 if (a === b && a !== c) { return fail('Modified Date: Consistent between languages, but not with WordPress') }
                 if (a === b && a === c) { return pass('Modified Date: Consistent between languages and WordPress') }
-            }
+            },
+
+
 
         ]
 

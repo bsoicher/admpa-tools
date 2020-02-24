@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Maple Leaf &gt; Video feed</title>
+
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta name="author" content="Ben Soicher" />
+
+    <!-- Style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.1.0/async.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+</head>
+
+<body>
+    <main>
+        <div class="container mb-5">
+            <h1 class="h4 mt-5"><a href="../index.html">ADMPA Web Tools</a><small class="text-muted">&gt; Maple Leaf &gt; Video feed</small></h1>
+            <p>Compiles a listing of corporate video metadata used in the search table.</p>
+            <h2 class="h5">Instructions</h2>
+            <ol class="pl-3">
+                <li>Run the tool below. Two JSON files will be generated and downloaded</li>
+                <li>Upload both files to AEM (replace existing files) in <a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</a></li>
+                <li>Publish both files</li>
+                <li>Refresh this page to verify that the status has changed</li>
+            </ol>
+            <p class="mt-4 mb-0">Status: Published <abbr id="modified" class="text-primary">…</abbr> by <span id="modifiedby" class="text-primary">…</span></p>
+            <div class="progress my-2" style="height: 5px"><div id="progress" class="progress-bar" style="width:0%"></div></div>
+            <p id="status"><a href="javascript:start()">Click here to start</a></p>
+        </div>
+    </main>
+
+    <script>
+
+        // Configure data sources
+        var config = {
+            'aem_en': 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/canada-video.json',
+            'map_en': 'https://www.canada.ca/en/department-national-defence/corporate/video.sitemap.xml',
+            'map_fr': 'https://www.canada.ca/fr/ministere-defense-nationale/organisation/video.sitemap.xml'
+        }
+
+        // Prevent loading cached data
+        $.ajaxSetup({ cache: false })
+
+        // Preselect elements
+        var $status = $('#status')
+        var $progress = $('#progress')
+
+        // Set status message and/or progress
+        function status(message, percent) {
+            if (typeof message === 'string') { $status.html(message) }
+            if (typeof percent === 'number') { $progress.width(percent + '%') }
+        }
+
+        // Remove unwanted tags
+        function filter_tags(tags) {
+            return tags.split(',').map(function (tag) {
+                return tag.trim()
+            }).filter(function (tag) {
+                return tag ? tag : false
+            }).join(',')
+        }
+
+        // Display last published
+        $.get({
+            url: config.aem_en + '/_jcr_content.json',
+            success: function (obj) {
+                $('#modified').text($.timeago(new Date(obj['jcr:lastModified']))).attr('title', obj['jcr:lastModified'])
+                $('#modifiedby').text(obj['jcr:lastModifiedBy'])
+            },
+            error: function (e) { $updated.text('Error') }
+        })
+
+        // Generate an AJAX task to be completed
+        function get(url, progress) {
+            return function (cb) {
+                $.get({
+                    url: url,
+                    success: function (data) {
+                        if (progress) { status(null, progress) }
+                        if (url.endsWith('.json')) { data._self = url.replace('/_jcr_content.json', '.html') }
+                        cb(null, data)
+                    },
+                    error: function (xhr, status, err) { cb(err) }
+                })
+            }
+        }
+
+        function start() {
+            
+            status('Downloading AEM Sitemaps')
+
+            async.parallel([
+                get(config.map_en),
+                get(config.map_fr)
+            ], function (err, sitemaps) {
+                status('Processing sitemaps', 2)
+
+                nodes = $(sitemaps).find('loc').map(function () {
+                    // Extract URLs
+                    return this.innerHTML
+                }).get().filter(function (url) {
+                    // Remove non article nodes
+                    return true // /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
+                })
+
+                var percent = 3
+                var increment = 96 / nodes.length
+
+                nodes = nodes.map(function (url) {
+                    // Create download tasks
+                    return get(url.replace('.html', '/_jcr_content.json'), percent += increment)
+                })
+
+                status('Downloading metadata (' + nodes.length + ' nodes)', 3)
+                async.parallelLimit(nodes, 5, function (err, meta) {
+
+                    status('Processing metadata')
+
+                    var data = { 'en': [], 'fr': [] }
+
+                    meta.forEach(function (o) {
+                        if(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']) {
+
+                            data[o['jcr:language']].push([
+                                o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
+                                '<a href="' + o._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title'].trim()) + '</a>',
+                                o['gcDescription'] ? utf8.encode(o['gcDescription'].trim().replace(/\.$/, '')) : '',
+                                o['gcKeywords'] ? utf8.encode(filter_tags(o['gcKeywords'])) : '',
+                                new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString().replace('.000Z', '')
+                            ])
+                        }
+                    })
+
+                    if (err) { return status('Error', 99, true) }
+
+                    var elapsed = Math.round((new Date().getTime() - start) / 100) / 10
+                    status('Done (' + data.en.length + ' entries in ' + elapsed + ' seconds)', 100)
+
+                    download(JSON.stringify({ data: data.en }, null, null), 'video-en.json', 'text/plain;charset=UTF-8;')
+                    download(JSON.stringify({ data: data.fr }, null, null), 'video-fr.json', 'text/plain;charset=UTF-8;')
+                })
+            })
+
+        }
+
+    </script>
+
+</body>
+
+</html>
