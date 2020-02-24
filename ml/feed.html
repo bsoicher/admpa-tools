@@ -31,8 +31,10 @@
                 <li>Publish both files</li>
                 <li>Refresh this page to verify that the status has changed</li>
             </ol>
-            <p class="mt-4 mb-0">Status: Published <abbr id="modified" class="text-primary">…</abbr> by <span id="modifiedby" class="text-primary">…</span></p>
-            <div class="progress my-2" style="height: 5px"><div id="progress" class="progress-bar" style="width:0%"></div></div>
+            <p class="mt-4 mb-0" id="published">Status: Published <abbr id="modified" class="text-primary">…</abbr> by <span id="modifiedby" class="text-primary">…</span></p>
+            <div class="progress my-2" style="height: 5px">
+                <div id="progress" class="progress-bar" style="width:0%"></div>
+            </div>
             <p id="status"><a href="javascript:start()">Click here to start</a></p>
         </div>
     </main>
@@ -61,17 +63,71 @@
             if (typeof percent === 'number') { $progress.width(percent + '%') }
         }
 
-        // Display last published
+        // Display current publish status
         $.get({
             url: config.aem_en + '/_jcr_content.json',
-            success: function (obj) {
-                $('#modified').text($.timeago(new Date(obj['jcr:lastModified']))).attr('title', obj['jcr:lastModified'])
-                $('#modifiedby').text(obj['jcr:lastModifiedBy'])
+            success: function (jcr) {
+                $('#modified').text($.timeago(new Date(jcr['jcr:lastModified']))).attr('title', jcr['jcr:lastModified'])
+                $('#modifiedby').text(jcr['jcr:lastModifiedBy'])
             },
-            error: function (e) { $updated.text('Error') }
+            error: function () { $('#modified,#modifiedby').text('ERROR') }
         })
 
-        // Generate an AJAX task to be completed
+        // Define response fields
+        var fields = [
+
+            // Category
+            function (jcr) {
+                switch (/(\w+)\/\d{4}\/\d{2}\/[^/]+$/.exec(jcr['_self']).pop()) {
+                    case 'navy':
+                    case 'marine':
+                        return 'rcn'
+                    case 'army':
+                    case 'armee':
+                        return 'ca'
+                    case 'rcaf':
+                    case 'arc':
+                        return 'rcaf'
+                }
+                return 'ml'
+            },
+
+            // Thumbnail image URL
+            function (jcr) {
+                if (!jcr['gcOGImage']) { return '' }
+                return utf8.encode($.trim(jcr['gcOGImage']))
+            },
+
+            // Title (containing link)
+            function (jcr) {
+                if (!jcr['_self'] || !jcr['jcr:title']) { return '' }
+                return '<a href="' + jcr._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
+            },
+
+            // Description
+            function (jcr) {
+                if (!jcr['gcDescription']) { return '' }
+                return utf8.encode($.trim(jcr['gcDescription']).replace(/\.$/, ''))
+            },
+
+            // Tags
+            function (jcr) {
+                if (!jcr['gcKeywords']) { return '' }
+                return utf8.encode(jcr['gcKeywords'].split(',').map(function (tag) {
+                    return tag.trim()
+                }).filter(function (tag) {
+                    return tag ? !tag.match(/(featured|vedette)$/i) : false
+                }).join(','))
+            },
+
+            // Date
+            function (jcr) {
+                if (!jcr['gcModifiedOverride'] && !jcr['gcIssued'] && !jcr['gcLastPublished']) { return '' }
+                return new Date(jcr['gcModifiedOverride'] || jcr['gcIssued'] || jcr['gcLastPublished']).toISOString().replace('.000Z', '')
+            }
+        ]
+
+        // Generate an asynchronous AJAX task
         function get(url, progress) {
             return function (cb) {
                 $.get({
@@ -84,31 +140,6 @@
                     error: function (xhr, status, err) { cb(err) }
                 })
             }
-        }
-
-        // Determine the article category based on the URL
-        function category(url) {
-            switch (/(\w+)\/\d{4}\/\d{2}\/[^/]+$/.exec(url).pop()) {
-                case 'navy':
-                case 'marine':
-                    return 'rcn'
-                case 'army':
-                case 'armee':
-                    return 'ca'
-                case 'rcaf':
-                case 'arc':
-                    return 'rcaf'
-            }
-            return 'ml'
-        }
-
-        // Remove unwanted tags
-        function filter_tags(tags) {
-            return tags.split(',').map(function (tag) {
-                return tag.trim()
-            }).filter(function (tag) {
-                return tag ? !tag.match(/(featured|vedette)$/i) : false
-            }).join(',')
         }
 
         function start() {
@@ -136,30 +167,23 @@
                             return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
                         })
 
+                        // Create download tasks
                         var percent = 3
                         var increment = 96 / nodes.length
-
                         nodes = nodes.map(function (url) {
-                            // Create download tasks
                             return get(url.replace('.html', '/_jcr_content.json'), percent += increment)
                         })
 
                         status('Downloading metadata (' + nodes.length + ' nodes)', 3)
-                        async.parallelLimit(nodes, 5, function (err, meta) {
 
+                        async.parallelLimit(nodes, 5, function (err, meta) {
                             status('Processing metadata')
 
                             var data = { 'en': [], 'fr': [] }
 
-                            meta.forEach(function (o) {
-                                data[o['jcr:language']].push([
-                                    category(o._self),
-                                    o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
-                                    '<a href="' + o._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title'].trim()) + '</a>',
-                                    o['gcDescription'] ? utf8.encode(o['gcDescription'].trim().replace(/\.$/, '')) : '',
-                                    o['gcKeywords'] ? utf8.encode(filter_tags(o['gcKeywords'])) : '',
-                                    new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString().replace('.000Z', '')
-                                ])
+                            // Generate data using field definitions
+                            meta.forEach(function (jcr) {
+                                data[jcr['jcr:language']].push(fields.map(function (fn) { return fn(jcr) }))
                             })
 
                             cb(err, data)
@@ -171,7 +195,7 @@
 
             ], function (err, data) {
 
-                if (err) { return status('Error', 99, true) }
+                if (err) { return status('Error', 0) }
 
                 var en = data[0].en.concat(data[1].en)
                 var fr = data[0].fr.concat(data[1].fr)

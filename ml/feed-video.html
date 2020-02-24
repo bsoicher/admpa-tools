@@ -30,7 +30,9 @@
                 <li>Run the tool below. Two JSON files will be generated and downloaded</li>
             </ol>
             <p class="mt-4 mb-0">Status: Published <abbr id="modified" class="text-primary">…</abbr> by <span id="modifiedby" class="text-primary">…</span></p>
-            <div class="progress my-2" style="height: 5px"><div id="progress" class="progress-bar" style="width:0%"></div></div>
+            <div class="progress my-2" style="height: 5px">
+                <div id="progress" class="progress-bar" style="width:0%"></div>
+            </div>
             <p id="status"><a href="javascript:start()">Click here to start</a></p>
         </div>
     </main>
@@ -92,7 +94,7 @@
         }
 
         function start() {
-            
+
             status('Downloading AEM Sitemaps')
 
             // For time tracking
@@ -128,7 +130,7 @@
                     var data = { 'en': [], 'fr': [] }
 
                     meta.forEach(function (o) {
-                        if(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']) {
+                        if (o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']) {
 
                             data[o['jcr:language']].push([
                                 o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
