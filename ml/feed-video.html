@@ -59,15 +59,6 @@
             if (typeof percent === 'number') { $progress.width(percent + '%') }
         }
 
-        // Remove unwanted tags
-        function filter_tags(tags) {
-            return tags.split(',').map(function (tag) {
-                return tag.trim()
-            }).filter(function (tag) {
-                return tag ? tag : false
-            }).join(',')
-        }
-
         // Display last published
         $.get({
             url: config.aem_en + '/_jcr_content.json',
@@ -77,6 +68,44 @@
             },
             error: function (e) { $updated.text('Error') }
         })
+
+        // Define response fields
+        var fields = [
+
+            // Thumbnail image URL
+            function (jcr) {
+                if (!jcr['gcOGImage']) { return '' }
+                return utf8.encode($.trim(jcr['gcOGImage']))
+            },
+
+            // Title (containing link)
+            function (jcr) {
+                if (!jcr['_self'] || !jcr['jcr:title']) { return '' }
+                return '<a href="' + jcr._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
+            },
+
+            // Description
+            function (jcr) {
+                if (!jcr['gcDescription']) { return '' }
+                return utf8.encode($.trim(jcr['gcDescription'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
+            },
+
+            // Tags
+            function (jcr) {
+                if (!jcr['gcKeywords']) { return '' }
+                return utf8.encode(jcr['gcKeywords'].split(',').map(function (tag) {
+                    return tag.trim()
+                }).filter(function (tag) {
+                    return tag ? tag : false
+                }).join(','))
+            },
+
+            // Date
+            function (jcr) {
+                if (!jcr['gcModifiedOverride'] && !jcr['gcIssued'] && !jcr['gcLastPublished']) { return '' }
+                return new Date(jcr['gcModifiedOverride'] || jcr['gcIssued'] || jcr['gcLastPublished']).toISOString().replace('.000Z', '')
+            }
+        ]
 
         // Generate an AJAX task to be completed
         function get(url, progress) {
@@ -124,24 +153,17 @@
 
                 status('Downloading metadata (' + nodes.length + ' nodes)', 3)
                 async.parallelLimit(nodes, 5, function (err, meta) {
-
-                    status('Processing metadata')
-
                     var data = { 'en': [], 'fr': [] }
 
-                    meta.forEach(function (o) {
-                        if (o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']) {
+                    // Generate data using field definitions
+                    meta.forEach(function (jcr) {
+                        if(jcr['cq:template'] === '/apps/canada/templates/page-pseudo-page') { return }
 
-                            data[o['jcr:language']].push([
-                                o['gcOGImage'] ? utf8.encode(o['gcOGImage']) : '',
-                                '<a href="' + o._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode(o['jcr:title'].trim()) + '</a>',
-                                o['gcDescription'] ? utf8.encode(o['gcDescription'].trim().replace(/\.$/, '')) : '',
-                                o['gcKeywords'] ? utf8.encode(filter_tags(o['gcKeywords'])) : '',
-                                new Date(o['gcModifiedOverride'] || o['gcIssued'] || o['gcLastPublished']).toISOString().replace('.000Z', '')
-                            ])
-                        }
+                        data[jcr['jcr:language']].push(fields.map(function (fn) { 
+                            return fn(jcr)
+                        }))
                     })
-
+              
                     if (err) { return status('Error', 99, true) }
 
                     var elapsed = Math.round((new Date().getTime() - start) / 100) / 10
