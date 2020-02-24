@@ -175,15 +175,14 @@
                         })
 
                         status('Downloading metadata (' + nodes.length + ' nodes)', 3)
-
                         async.parallelLimit(nodes, 5, function (err, meta) {
-                            status('Processing metadata')
-
                             var data = { 'en': [], 'fr': [] }
 
                             // Generate data using field definitions
                             meta.forEach(function (jcr) {
-                                data[jcr['jcr:language']].push(fields.map(function (fn) { return fn(jcr) }))
+                                data[jcr['jcr:language']].push(fields.map(function (fn) { 
+                                    return fn(jcr)
+                                }))
                             })
 
                             cb(err, data)
