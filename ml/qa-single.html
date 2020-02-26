@@ -15,8 +15,7 @@
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.2.0/chai.min.js"></script>
-
-
+    <!--<script src="https://cdn.jsdelivr.net/npm/chai-jquery@2.1.0/chai-jquery.js"></script>-->
 
 </head>
 
@@ -49,11 +48,16 @@
     <script>
 
 
+
+
+
         // TODO, compare with french version (num tags, num images, date...)
 
         // Use chai assertion library
+        chai.config.showDiff = false;
         var assert = chai.assert
         var expect = chai.expect
+        
 
         // Prevent loading cached data
         $.ajaxSetup({ cache: false })
@@ -62,10 +66,30 @@
         var $url = $('#url')
         var $issues = $('#issues')
 
+        if (window.location.search) {
+            $url.val(window.location.search.replace(/^\?=/, ''))
+            start()
+        }
+
         // Log messages
-        function log(str) { $issues.append('<li class="list-group-item">' + str + '</li>') }
-        function pass(str) { $issues.append('<li class="list-group-item text-success">' + str + '</li>') }
-        function fail(str) { $issues.append('<li class="list-group-item text-danger">' + str + '</li>') }
+        function log(str) { $issues.append('<li class="list-group-item">' + short(str) + '</li>') }
+        function pass(str) { $issues.append('<li class="list-group-item text-success">' + short(str) + '</li>') }
+        function fail(str) { $issues.append('<li class="list-group-item text-danger">' + short(str) + '</li>') }
+
+        function short(str) {
+            return str
+            var i = str.indexOf(':')
+            return i > 0 ? str.substr(0, i) : str
+        }
+
+        /**
+         * Rewrite absolute links to include domains
+         * @param {String} html Raw html response
+         * @return {String} Modified html
+         */
+        function absolute_links(html) {
+            return html.replace(/src="/ig, ' src="https://canada.ca/')
+        }
 
         // Load HTML, alt HTML (if available) and WordPress object (if available)
         function load(url) {
@@ -77,6 +101,11 @@
                 var $doc = $('<div>' + doc + '</div>')
                 $.get('https://www.canada.ca' + $doc.find('#wb-lng a').attr('href')).always(function (alt) {
                     $alt = typeof alt === 'string' ? $('<div>' + alt + '</div>') : null
+
+                    $([$doc, $alt]).find('img').attr('src', function(i, url) {
+                        return url.charAt(0) === '/' ? 'https://www.canada.ca' + url : url
+                    })
+
                     $.getJSON('https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url).fail(function () {
                         d.resolve($doc, $alt, null)
                     }).done(function (wp) {
@@ -90,10 +119,9 @@
 
         function start() {
 
-
             // Get URL value
-            var url = $url.val()
-
+            url = $url.val()
+            
             // Clear issue table
             $issues.empty()
 
@@ -104,8 +132,12 @@
                 expect(url).to.include('https://www.canada.ca/', 'Invalid URL')
                 expect(url.split('.').pop()).to.equal('html', 'Invalid file extension')
 
+                log('Loading...')
+
                 // Execute each test
                 load(url).done(function ($doc, $alt, wp) {
+                    $issues.empty()
+
                     tests.forEach(function (test) {
                         try {
                             var res = test($doc, $alt, wp)
@@ -144,13 +176,33 @@
             },
 
 
+            function ($doc, $alt) {
+                var thumb1 = $doc.find('meta[property="og:image"]').attr('content')
+                var thumb2 = $alt.find('meta[property="og:image"]').attr('content')
+
+                expect(thumb1, 'Thumbnail image (open graph image) not set', null, null, null, false).to.exist
+                expect(thumb1).to.not.include('/_jcr_content/', 'Thumbnail image should not be variation of original')
+                expect(thumb1).to.equal(thumb2, 'Thumbnail image not consistent between languages', null, null, null, false)
+
+                return 'Passed thumbnail tests'
+            },
+
             function ($doc) {
 
-                var year = Number($doc.find('#wb-dtmd time').text().substr(0, 4))
+                var links = $doc.find('a[href*=".mil.ca"')
 
-                expect(year, 'Only 2020 articles').is.equal(2020)
+                expect(links.length).to.equal(0, 'Intranet links found')
 
-                return 'Documents are all 2020'
+                return 'Passed: No Intranet links'
+            },
+
+            // Wordpress links
+            function ($doc) {
+                var links = $doc.find('a[href*="caf-fac.ca"]')
+
+                expect(links.length).to.equal(0, 'Links to caf-fac.ca found')
+
+                return 'Passed for not linking to caf-fac.ca'
             },
 
             // Same number of tags?
@@ -164,17 +216,6 @@
                     }).length
                 }
 
-            },
-
-            // Has thumbnail image?
-            function ($doc, $alt) {
-                var a = $doc.find('meta[property="og:image"]').attr('content')
-                var b = $alt.find('meta[property="og:image"]').attr('content')
-
-                if (!a) { return fail('Thumbnail image: Missing') }
-                if (!b) { return fail('Thumbnail image: Missing on alternate language') }
-                if (a === b) { return pass('Thumbnail image: Consistent between languages') }
-                if (a !== b) { return fail('Thumbail image: Not consistent between languages') }
             },
 
             // Consistent Dates
