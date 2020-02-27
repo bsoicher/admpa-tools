@@ -14,7 +14,10 @@
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.2.0/chai.min.js"></script>
+    <script src="https://unpkg.com/chai-string@1.5.0/chai-string.js"></script>
+
     <!--<script src="https://cdn.jsdelivr.net/npm/chai-jquery@2.1.0/chai-jquery.js"></script>-->
 
 </head>
@@ -54,10 +57,9 @@
         // TODO, compare with french version (num tags, num images, date...)
 
         // Use chai assertion library
-        chai.config.showDiff = false;
         var assert = chai.assert
         var expect = chai.expect
-        
+
 
         // Prevent loading cached data
         $.ajaxSetup({ cache: false })
@@ -82,18 +84,31 @@
             return i > 0 ? str.substr(0, i) : str
         }
 
+
+       
+
         /**
          * Rewrite absolute links to include domains
          * @param {String} html Raw html response
          * @return {String} Modified html
          */
-        function absolute_links(html) {
+        function rewrite_links(html) {
             return html.replace(/src="/ig, ' src="https://canada.ca/')
         }
 
         // Load HTML, alt HTML (if available) and WordPress object (if available)
+
+
+        // Need to download JCR version as well
         function load(url) {
             var d = $.Deferred()
+            var jcr = url.replace('.html', '/_jcr_content.json')
+
+           /* $.get(jcr).fail(function (xhr, status, err) {
+                d.reject('Download failed (' + err + ')')
+            }).done(function() {
+
+            }*/
 
             $.get(url).fail(function (xhr, status, err) {
                 d.reject('Download failed (' + err + ')')
@@ -102,9 +117,9 @@
                 $.get('https://www.canada.ca' + $doc.find('#wb-lng a').attr('href')).always(function (alt) {
                     $alt = typeof alt === 'string' ? $('<div>' + alt + '</div>') : null
 
-                    $([$doc, $alt]).find('img').attr('src', function(i, url) {
+                   /* $([$doc, $alt]).find('img').attr('src', function (i, url) {
                         return url.charAt(0) === '/' ? 'https://www.canada.ca' + url : url
-                    })
+                    })*/
 
                     $.getJSON('https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url).fail(function () {
                         d.resolve($doc, $alt, null)
@@ -121,16 +136,16 @@
 
             // Get URL value
             url = $url.val()
-            
+
             // Clear issue table
             $issues.empty()
 
             try {
 
                 // Basic URL validation
-                expect(url, 'URL is required').to.not.be.empty
-                expect(url).to.include('https://www.canada.ca/', 'Invalid URL')
-                expect(url.split('.').pop()).to.equal('html', 'Invalid file extension')
+                assert(url, 'URL is required')
+                assert(url.startsWith('https://www.canada.ca/'), 'Invalid URL: Must begin with "https://www.canada.ca/"')
+                assert(url.endsWith('.html'), 'Invalid URL: File extension must be ".html"')
 
                 log('Loading...')
 
@@ -154,6 +169,7 @@
                 })
 
             } catch (e) {
+                console.log(e.message)
                 fail(e.message)
             }
 
@@ -184,7 +200,7 @@
                 expect(thumb1).to.not.include('/_jcr_content/', 'Thumbnail image should not be variation of original')
                 expect(thumb1).to.equal(thumb2, 'Thumbnail image not consistent between languages', null, null, null, false)
 
-                return 'Passed thumbnail tests'
+                pass('Passed thumbnail tests')
             },
 
             function ($doc) {
@@ -193,7 +209,7 @@
 
                 expect(links.length).to.equal(0, 'Intranet links found')
 
-                return 'Passed: No Intranet links'
+                return 'No Intranet links found'
             },
 
             // Wordpress links
@@ -202,20 +218,26 @@
 
                 expect(links.length).to.equal(0, 'Links to caf-fac.ca found')
 
-                return 'Passed for not linking to caf-fac.ca'
+                return 'No links to "caf-fac.ca" found'
             },
 
             // Same number of tags?
             function ($doc, $alt, wp) {
+                var tags1 = $doc.find('meta[name="keywords"]').attr('content')
+                var tags2 = $alt.find('meta[name="keywords"]').attr('content')
 
-                function tagCount(tags) {
+                function taglist(tags) {
                     return tags.split(',').map(function (tag) {
                         return tag.trim()
                     }).filter(function (tag) {
                         return tag ? !tag.match(/(featured|vedette)$/i) : false
-                    }).length
+                    })
                 }
 
+                
+
+                expect(tags1, '').to.exist
+                expect(tags1.length).is.at.least(1, '')
             },
 
             // Consistent Dates
