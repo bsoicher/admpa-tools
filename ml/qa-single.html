@@ -73,14 +73,25 @@
         }
 
         // Log messages
-        function log(str) { $issues.append('<li class="list-group-item">' + short(str) + '</li>') }
-        function pass(str) { $issues.append('<li class="list-group-item text-success">' + short(str) + '</li>') }
-        function fail(str) { $issues.append('<li class="list-group-item text-danger">' + short(str) + '</li>') }
+        function log(str) { $issues.append('<li class="list-group-item">' + str + '</li>') }
+        function pass(str) { $issues.append('<li class="list-group-item text-success">' + str + '</li>') }
 
-        function short(str) {
-            return str
-            var i = str.indexOf(':')
-            return i > 0 ? str.substr(0, i) : str
+
+        /**
+         * Get metadata of an AEM node
+         * @param {String} url AEM document URL
+         * @return {Promise.<Object, null>} WordPress article object
+         */
+        function load_jcr(url) {
+            var d = $.Deferred()
+
+            $.get({
+                url: url.replace('.html', '/_jcr_content.json'),
+                success: function (jcr) { d.resolve(jcr) },
+                error: function () { d.resolve(null) }
+            })
+
+            return d.promise()
         }
 
         /**
@@ -119,28 +130,25 @@
         }
 
         /**
-         * Download all the relevant data
+         * Download all the relevant data in parallel
          * @param {String} url AEM document URL
          * @return {Promise.<Object>} contains all the data sources
          */
         function load(url) {
             var d = $.Deferred()
 
-            $.get(url.replace('.html', '/_jcr_content.json')).done(function (jcr) {
-                $.when(
-                    load_page(url),
-                    load_page(jcr.gcAltLanguagePeer),
-                    load_wp(url)
-                ).done(function ($doc, $alt, wp) {
-                    d.resolve({
-                        jcr: jcr,
-                        $doc: $doc, 
-                        $alt: $alt,
-                        wp: wp
+            $.get({
+                url: url.replace('.html', '/_jcr_content.json'),
+                success: function (jcr) {
+                    $.when(
+                        load_page(url),
+                        load_page(jcr.gcAltLanguagePeer),
+                        load_wp(url)
+                    ).done(function ($doc, $alt, wp) {
+                        d.resolve({ jcr: jcr, $doc: $doc, $alt: $alt, wp: wp })
                     })
-                }).fail(function (xhr, status, err) {
-                    console.log(err)
-                })
+                },
+                error: function (xhr, status, err) { d.reject('Download failed (' + err + ')') }
             })
 
             return d.promise()
@@ -174,17 +182,17 @@
                                 pass(res)
                             }
                         } catch (e) {
-                            fail(e.message)
+                            log(e.message)
                         }
 
                     })
                 }).fail(function (err) {
-                    error(err)
+                    log(err)
                 })
 
             } catch (e) {
                 console.log(e.message)
-                fail(e.message)
+                log(e.message)
             }
 
 
@@ -203,6 +211,19 @@
                 }
 
                 log('Download(s) complete ( HTML ' + check(data.$doc) + ', alternate HTML ' + check(data.$alt) + ', WordPress ' + check(data.wp) + ' )')
+
+                log('Node created by: ' + data.jcr['gcCredentialFirstname'] + ' ' + data.jcr['gcCredentialLastname'])
+            },
+
+            
+
+            function (data) {
+                assert(data.jcr['gcModifiedIsOverridden'], 'Metadata: Date modified override is not enabled')
+                assert(data.jcr['gcModifiedOverride'], 'Metadata: Date modified override is not set')
+
+                
+
+                pass('Metadata: Date modified override is present')
             },
 
 
@@ -217,22 +238,18 @@
                 pass('Passed thumbnail tests')
             },
 
+            // Intranet links
             function (data) {
-
                 var links = data.$doc.find('a[href*=".mil.ca"')
-
-                expect(links.length).to.equal(0, 'Intranet links found')
-
-                return 'No Intranet links found'
+                assert(links.length === 0, links.length + ' intranet links found')
+                pass('No Intranet links found')
             },
 
             // Wordpress links
             function (data) {
                 var links = data.$doc.find('a[href*="caf-fac.ca"]')
-
-                expect(links.length).to.equal(0, 'Links to caf-fac.ca found')
-
-                return 'No links to "caf-fac.ca" found'
+                assert(links.length === 0, links.length + ' links to caf-fac.ca found')
+                pass('No links to "caf-fac.ca" found')
             },
 
             // Same number of tags?
@@ -270,10 +287,10 @@
 
 
                 if (!b && !c) { return log('Modified Date: Nothing to compare values with') }
-                if (!c && a === b) { return pass('Modified Date: Consistent between languages') }
-                if (!c && a !== b) { return fail('Modified Date: Inconsistent ( ' + a + ' and ' + b + ' )') }
-                if (a === b && a !== c) { return fail('Modified Date: Consistent between languages, but not with WordPress') }
-                if (a === b && a === c) { return pass('Modified Date: Consistent between languages and WordPress') }
+                //if (!c && a === b) { return pass('Modified Date: Consistent between languages') }
+                //if (!c && a !== b) { return fail('Modified Date: Inconsistent ( ' + a + ' and ' + b + ' )') }
+                //if (a === b && a !== c) { return fail('Modified Date: Consistent between languages, but not with WordPress') }
+                //if (a === b && a === c) { return pass('Modified Date: Consistent between languages and WordPress') }
             },
 
 
