@@ -101,7 +101,7 @@
             // Title (containing link)
             function (jcr) {
                 if (!jcr['_self'] || !jcr['jcr:title']) { return '' }
-                return '<a href="' + jcr._self.replace('https://www.canada.ca/', '/') + '">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
+                return '<a href="' + jcr['_self'].replace('https://www.canada.ca/', '/') + '">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
             },
 
             // Description

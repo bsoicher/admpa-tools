@@ -14,11 +14,10 @@
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.2.0/chai.min.js"></script>
-    <script src="https://unpkg.com/chai-string@1.5.0/chai-string.js"></script>
 
-    <!--<script src="https://cdn.jsdelivr.net/npm/chai-jquery@2.1.0/chai-jquery.js"></script>-->
+    <!--<script src="https://unpkg.com/chai-string@1.5.0/chai-string.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chai-jquery@2.1.0/chai-jquery.js"></script>-->
 
 </head>
 
@@ -84,52 +83,67 @@
             return i > 0 ? str.substr(0, i) : str
         }
 
-
-       
-
         /**
-         * Rewrite absolute links to include domains
-         * @param {String} html Raw html response
-         * @return {String} Modified html
+         * Get WordPress version of AEM page if it exists
+         * @param {String} url AEM document URL
+         * @return {Promise.<Object, null>} WordPress article object
          */
-        function rewrite_links(html) {
-            return html.replace(/src="/ig, ' src="https://canada.ca/')
+        function load_wp(url) {
+            var d = $.Deferred()
+
+            $.get({
+                url: 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url,
+                success: function (jcr) { d.resolve(jcr) },
+                error: function () { d.resolve(null) }
+            })
+
+            return d.promise()
         }
 
-        // Load HTML, alt HTML (if available) and WordPress object (if available)
+        /**
+         * Get HTML document of AEM page
+         * @param {String} url AEM document URL
+         * @return {Promise.<jQuery, null>} jQuery processed AEM article document 
+         */
+        function load_page(url) {
+            var d = $.Deferred()
 
+            $.get({
+                url: url.replace('/content/canadasite/', 'https://www.canada.ca/'),
+                dataFilter: function (data) { return data.replace(/src="/ig, ' src="https://www.canada.ca/') },
+                success: function (html) { d.resolve($('<div>' + html + '</div>')) },
+                error: function () { d.resolve(null) }
+            })
 
-        // Need to download JCR version as well
+            return d.promise()
+        }
+
+        /**
+         * Download all the relevant data
+         * @param {String} url AEM document URL
+         * @return {Promise.<Object>} contains all the data sources
+         */
         function load(url) {
             var d = $.Deferred()
-            var jcr = url.replace('.html', '/_jcr_content.json')
 
-           /* $.get(jcr).fail(function (xhr, status, err) {
-                d.reject('Download failed (' + err + ')')
-            }).done(function() {
-
-            }*/
-
-            $.get(url).fail(function (xhr, status, err) {
-                d.reject('Download failed (' + err + ')')
-            }).done(function (doc) {
-                var $doc = $('<div>' + doc + '</div>')
-                $.get('https://www.canada.ca' + $doc.find('#wb-lng a').attr('href')).always(function (alt) {
-                    $alt = typeof alt === 'string' ? $('<div>' + alt + '</div>') : null
-
-                   /* $([$doc, $alt]).find('img').attr('src', function (i, url) {
-                        return url.charAt(0) === '/' ? 'https://www.canada.ca' + url : url
-                    })*/
-
-                    $.getJSON('https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url).fail(function () {
-                        d.resolve($doc, $alt, null)
-                    }).done(function (wp) {
-                        d.resolve($doc, $alt, wp)
+            $.get(url.replace('.html', '/_jcr_content.json')).done(function (jcr) {
+                $.when(
+                    load_page(url),
+                    load_page(jcr.gcAltLanguagePeer),
+                    load_wp(url)
+                ).done(function ($doc, $alt, wp) {
+                    d.resolve({
+                        jcr: jcr,
+                        $doc: $doc, 
+                        $alt: $alt,
+                        wp: wp
                     })
+                }).fail(function (xhr, status, err) {
+                    console.log(err)
                 })
             })
 
-            return d
+            return d.promise()
         }
 
         function start() {
@@ -144,18 +158,18 @@
 
                 // Basic URL validation
                 assert(url, 'URL is required')
-                assert(url.startsWith('https://www.canada.ca/'), 'Invalid URL: Must begin with "https://www.canada.ca/"')
-                assert(url.endsWith('.html'), 'Invalid URL: File extension must be ".html"')
+                assert(url.startsWith('https://www.canada.ca/'), 'Invalid URL: Expected to start with "https://www.canada.ca/"')
+                assert(url.endsWith('.html'), 'Invalid URL: Expected to end with ".html"')
 
                 log('Loading...')
 
                 // Execute each test
-                load(url).done(function ($doc, $alt, wp) {
+                load(url).done(function (data) {
                     $issues.empty()
 
                     tests.forEach(function (test) {
                         try {
-                            var res = test($doc, $alt, wp)
+                            var res = test(data)
                             if (res) {
                                 pass(res)
                             }
@@ -182,30 +196,30 @@
 
 
             // What data was downloaded?
-            function ($doc, $alt, wp) {
+            function (data) {
 
                 function check(val) {
                     return '<strong class="text-' + (val ? 'success">✓' : 'danger">✕') + '</strong>'
                 }
 
-                log('Download(s) complete ( HTML ' + check($doc) + ', alternate HTML ' + check($alt) + ', WordPress ' + check(wp) + ' )')
+                log('Download(s) complete ( HTML ' + check(data.$doc) + ', alternate HTML ' + check(data.$alt) + ', WordPress ' + check(data.wp) + ' )')
             },
 
 
-            function ($doc, $alt) {
-                var thumb1 = $doc.find('meta[property="og:image"]').attr('content')
-                var thumb2 = $alt.find('meta[property="og:image"]').attr('content')
+            function (data) {
+                var thumb1 = data.$doc.find('meta[property="og:image"]').attr('content')
+                var thumb2 = data.$alt.find('meta[property="og:image"]').attr('content')
 
-                expect(thumb1, 'Thumbnail image (open graph image) not set', null, null, null, false).to.exist
+                expect(thumb1, 'Thumbnail image (open graph image) not set').to.exist
                 expect(thumb1).to.not.include('/_jcr_content/', 'Thumbnail image should not be variation of original')
-                expect(thumb1).to.equal(thumb2, 'Thumbnail image not consistent between languages', null, null, null, false)
+                expect(thumb1).to.equal(thumb2, 'Thumbnail image not consistent between languages')
 
                 pass('Passed thumbnail tests')
             },
 
-            function ($doc) {
+            function (data) {
 
-                var links = $doc.find('a[href*=".mil.ca"')
+                var links = data.$doc.find('a[href*=".mil.ca"')
 
                 expect(links.length).to.equal(0, 'Intranet links found')
 
@@ -213,8 +227,8 @@
             },
 
             // Wordpress links
-            function ($doc) {
-                var links = $doc.find('a[href*="caf-fac.ca"]')
+            function (data) {
+                var links = data.$doc.find('a[href*="caf-fac.ca"]')
 
                 expect(links.length).to.equal(0, 'Links to caf-fac.ca found')
 
@@ -222,9 +236,9 @@
             },
 
             // Same number of tags?
-            function ($doc, $alt, wp) {
-                var tags1 = $doc.find('meta[name="keywords"]').attr('content')
-                var tags2 = $alt.find('meta[name="keywords"]').attr('content')
+            function (data) {
+                var tags1 = data.$doc.find('meta[name="keywords"]').attr('content')
+                var tags2 = data.$alt.find('meta[name="keywords"]').attr('content')
 
                 function taglist(tags) {
                     return tags.split(',').map(function (tag) {
@@ -234,16 +248,16 @@
                     })
                 }
 
-                
+
 
                 expect(tags1, '').to.exist
                 expect(tags1.length).is.at.least(1, '')
             },
 
             // Consistent Dates
-            function ($doc, $alt, wp) {
-                var a = $doc.find('#wb-dtmd time').text()
-                var b = $alt ? $alt.find('#wb-dtmd time').text() : null
+            function (data) {
+                var a = data.$doc.find('#wb-dtmd time').text()
+                var b = data.$alt ? data.$alt.find('#wb-dtmd time').text() : null
 
                 if (a && b) {
                     a.should.equal(b)
