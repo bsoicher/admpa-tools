@@ -146,8 +146,8 @@
                     d.resolve({ jcr: jcr, $doc: $doc, jcr_alt: jcr_alt, wp: wp })
                 })
             }).fail(function (e) {
-                console.log(e)
-                log(e)
+                throw new Error('Unable to load')
+               
             })
 
             return d.promise()
@@ -185,16 +185,18 @@
                         }
 
                     })
-                }).fail(function (err) {
-                    fail(err)
                 })
 
             } catch (e) {
-                fail(e.message)
+                $issues.empty()
+                fail(e)
             }
 
 
         }
+
+        // TODO USE CUSTOM ASSERT FUNCTION. NO NEED FOR CHAI. IT COULD TRACK TESTS..
+        // TODO ALLOW GROUPING OF TESTS
 
         // List of tests to run
         var tests = [
@@ -219,13 +221,13 @@
 
             function (d) {
                 var a = d.$doc.find('a[href*=".mil.ca"').length
-                assert(a === 0, a + ' intranet links found')
+                assert(a === 0, 'Content: ' + a + ' intranet links found')
                 pass('Content: Intranet links were not found')
             },
 
             function (d) {
                 var a = d.$doc.find('a[href*="caf-fac.ca"]').length
-                assert(a === 0, a + ' Links to caf-fac.ca found')
+                assert(a === 0, 'Content: ' + a + ' Links to caf-fac.ca found')
                 pass('Content: Links to "caf-fac.ca" were not found')
             },
 
