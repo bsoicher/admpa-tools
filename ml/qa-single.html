@@ -40,7 +40,7 @@
             <!-- Show pass/ fail-->
 
             <!-- Table of issues -->
-            <ul id="issues" class="list-group mb-5 mt-4"></ul>
+            <ul id="issues" class="list-group mb-5 mt-4 "></ul>
 
         </div>
     </main>
@@ -74,8 +74,8 @@
 
         // Log messages
         function log(str) { $issues.append('<li class="list-group-item">' + str + '</li>') }
-        function pass(str) { $issues.append('<li class="list-group-item text-success">' + str + '</li>') }
-
+        function pass(str) { $issues.append('<li class="list-group-item text-success"><strong class="mr-3">✓</strong>' + str + '</li>') }
+        function fail(str) { $issues.append('<li class="list-group-item text-danger"><strong class="mr-3">✕</strong>' + str + '</li>') }
 
         /**
          * Get metadata of an AEM node
@@ -86,9 +86,9 @@
             var d = $.Deferred()
 
             $.get({
-                url: url.replace('.html', '/_jcr_content.json'),
+                url: url.replace('/content/canadasite/', 'https://www.canada.ca/').replace('.html', '/_jcr_content.json'),
                 success: function (jcr) { d.resolve(jcr) },
-                error: function () { d.resolve(null) }
+                error: function (xhr, status, err) { d.reject(err) }
             })
 
             return d.promise()
@@ -137,18 +137,17 @@
         function load(url) {
             var d = $.Deferred()
 
-            $.get({
-                url: url.replace('.html', '/_jcr_content.json'),
-                success: function (jcr) {
-                    $.when(
-                        load_page(url),
-                        load_page(jcr.gcAltLanguagePeer),
-                        load_wp(url)
-                    ).done(function ($doc, $alt, wp) {
-                        d.resolve({ jcr: jcr, $doc: $doc, $alt: $alt, wp: wp })
-                    })
-                },
-                error: function (xhr, status, err) { d.reject('Download failed (' + err + ')') }
+            load_jcr(url).done(function (jcr) {
+                $.when(
+                    load_wp(url),
+                    load_jcr(jcr.gcAltLanguagePeer),
+                    load_page(url)
+                ).done(function (wp, jcr_alt, $doc) {
+                    d.resolve({ jcr: jcr, $doc: $doc, jcr_alt: jcr_alt, wp: wp })
+                })
+            }).fail(function (e) {
+                console.log(e)
+                log(e)
             })
 
             return d.promise()
@@ -182,17 +181,16 @@
                                 pass(res)
                             }
                         } catch (e) {
-                            log(e.message)
+                            fail(e.message)
                         }
 
                     })
                 }).fail(function (err) {
-                    log(err)
+                    fail(err)
                 })
 
             } catch (e) {
-                console.log(e.message)
-                log(e.message)
+                fail(e.message)
             }
 
 
@@ -201,61 +199,41 @@
         // List of tests to run
         var tests = [
 
-
-
-            // What data was downloaded?
-            function (data) {
-
-                function check(val) {
-                    return '<strong class="text-' + (val ? 'success">✓' : 'danger">✕') + '</strong>'
-                }
-
-                log('Download(s) complete ( HTML ' + check(data.$doc) + ', alternate HTML ' + check(data.$alt) + ', WordPress ' + check(data.wp) + ' )')
-
-                log('Node created by: ' + data.jcr['gcCredentialFirstname'] + ' ' + data.jcr['gcCredentialLastname'])
+            function (d) {
+                var a = d.jcr['gcModifiedOverride']
+                var b = d.jcr_alt['gcModifiedOverride']
+                assert(d.jcr['gcModifiedIsOverridden'], 'Metadata: Date modified override is not enabled')
+                assert(a, 'Metadata: Date modified override is not set')
+                assert(a === b, 'Metadata: Date modified override does not match between languages')
+                pass('Metadata: Date modified override passed 3 test')
             },
 
-            
-
-            function (data) {
-                assert(data.jcr['gcModifiedIsOverridden'], 'Metadata: Date modified override is not enabled')
-                assert(data.jcr['gcModifiedOverride'], 'Metadata: Date modified override is not set')
-
-                
-
-                pass('Metadata: Date modified override is present')
+            function (d) {
+                var a = d.jcr['gcOGImage']
+                var b = d.jcr_alt['gcOGImage']
+                assert(a, 'Metadata: Thumbnail image (open graph) not set')
+                assert(!a.includes('/_jcr_content/'), 'Metadata: Thumbnail image (open graph) should not be coppied from within the article')
+                assert(a === b, 'Metadata: Thumbnail image (open graph) does not match between languages')
+                pass('Metadata: Thumbnail image passed 3 tests')
             },
 
-
-            function (data) {
-                var thumb1 = data.$doc.find('meta[property="og:image"]').attr('content')
-                var thumb2 = data.$alt.find('meta[property="og:image"]').attr('content')
-
-                expect(thumb1, 'Thumbnail image (open graph image) not set').to.exist
-                expect(thumb1).to.not.include('/_jcr_content/', 'Thumbnail image should not be variation of original')
-                expect(thumb1).to.equal(thumb2, 'Thumbnail image not consistent between languages')
-
-                pass('Passed thumbnail tests')
+            function (d) {
+                var a = d.$doc.find('a[href*=".mil.ca"').length
+                assert(a === 0, a + ' intranet links found')
+                pass('Content: Intranet links were not found')
             },
 
-            // Intranet links
-            function (data) {
-                var links = data.$doc.find('a[href*=".mil.ca"')
-                assert(links.length === 0, links.length + ' intranet links found')
-                pass('No Intranet links found')
+            function (d) {
+                var a = d.$doc.find('a[href*="caf-fac.ca"]').length
+                assert(a === 0, a + ' Links to caf-fac.ca found')
+                pass('Content: Links to "caf-fac.ca" were not found')
             },
 
-            // Wordpress links
-            function (data) {
-                var links = data.$doc.find('a[href*="caf-fac.ca"]')
-                assert(links.length === 0, links.length + ' links to caf-fac.ca found')
-                pass('No links to "caf-fac.ca" found')
-            },
+            function (d) {
+                var a = d.jcr['gcKeywords']
+                var b = d.jcr_alt['gcKeywords']
 
-            // Same number of tags?
-            function (data) {
-                var tags1 = data.$doc.find('meta[name="keywords"]').attr('content')
-                var tags2 = data.$alt.find('meta[name="keywords"]').attr('content')
+                assert(a, 'Metadata: Keywords (tags) not set')
 
                 function taglist(tags) {
                     return tags.split(',').map(function (tag) {
@@ -265,35 +243,13 @@
                     })
                 }
 
+                a = taglist(a)
+                b = taglist(b)
 
+                assert(a.length === b.length, 'Metadata: Keywords (tags), different number of tags between languages (' + a.length + ' vs ' + b.length + ')')
 
-                expect(tags1, '').to.exist
-                expect(tags1.length).is.at.least(1, '')
+                pass('Metadata: Keywords (tags) passed 2 tests')
             },
-
-            // Consistent Dates
-            function (data) {
-                var a = data.$doc.find('#wb-dtmd time').text()
-                var b = data.$alt ? data.$alt.find('#wb-dtmd time').text() : null
-
-                if (a && b) {
-                    a.should.equal(b)
-                }
-
-
-                // assert.equal(a, c, 'nooo why fail??')//.and.to.equal(c, 'ahhhh');
-
-                //assert.fail( a == b == c, 'Not all dates match')
-
-
-                if (!b && !c) { return log('Modified Date: Nothing to compare values with') }
-                //if (!c && a === b) { return pass('Modified Date: Consistent between languages') }
-                //if (!c && a !== b) { return fail('Modified Date: Inconsistent ( ' + a + ' and ' + b + ' )') }
-                //if (a === b && a !== c) { return fail('Modified Date: Consistent between languages, but not with WordPress') }
-                //if (a === b && a === c) { return pass('Modified Date: Consistent between languages and WordPress') }
-            },
-
-
 
         ]
 
