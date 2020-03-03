@@ -207,7 +207,7 @@
                 assert(d.jcr['gcModifiedIsOverridden'], 'Metadata: Date modified override is not enabled')
                 assert(a, 'Metadata: Date modified override is not set')
                 assert(a === b, 'Metadata: Date modified override does not match between languages')
-                pass('Metadata: Date modified override passed 3 test')
+                pass('Metadata: Date modified override passed tests')
             },
 
             function (d) {
@@ -216,8 +216,15 @@
                 assert(a, 'Metadata: Thumbnail image (open graph) not set')
                 assert(!a.includes('/_jcr_content/'), 'Metadata: Thumbnail image (open graph) should not be coppied from within the article')
                 assert(a === b, 'Metadata: Thumbnail image (open graph) does not match between languages')
-                pass('Metadata: Thumbnail image passed 3 tests')
+                pass('Metadata: Thumbnail image passed tests')
             },
+
+            /*function (d) {
+                var a = d.$doc.find('img:not([alt])')
+                assert(a.length === 0, 'Content: Images without caption')
+                pass('Metadata: Thumbnail image passed tests')
+
+            },*/
 
             function (d) {
                 var a = d.$doc.find('a[href*=".mil.ca"').length
