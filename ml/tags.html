@@ -24,18 +24,23 @@
         <div class="container mb-5">
             <h1 class="h4 mt-5"><a href="../index.html">ADMPA Web Tools</a><small class="text-muted">&gt; Maple Leaf &gt; Tags</small></h1>
             <p>Analyze the tags used in the Maple Leaf feed</p>
-
+           
+            <ul class="nav nav-pills mb-3">
+                <li class="nav-item"><a class="nav-link active" href="#" data-lang="">Both</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" data-lang="en">English</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" data-lang="fr">French</a></li>
+            </ul>
+          
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Language</th>
-                        <th>Count</th>
+                        <th width="62%">Name</th>
+                        <th width="19%">Language</th>
+                        <th width="19%">Count</th>
                     </tr>
                 </thead>
-                <tbody id="tbody"></tbody>
+                <tbody></tbody>
             </table>
-
         </div>
     </main>
 
@@ -47,7 +52,7 @@
                 en: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json',
                 fr: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-fr.json'
             },
-            search : {
+            search: {
                 en: 'https://www.canada.ca/en/department-national-defence/maple-leaf/search.html?q=',
                 fr: 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable/recherche.html?q='
             }
@@ -56,51 +61,43 @@
         // Prevent loading cached data
         $.ajaxSetup({ cache: false })
 
+        // Datatable setup
+        var table = $('table').DataTable({ 'order': [[ 0, 'asc' ]] })
+
         $.when(
             $.get(config.json.en),
             $.get(config.json.fr)
         ).done(function (en, fr) {
 
-            var json = {
-                en: en[0].data,
-                fr: fr[0].data
-            }
-
-            var count = {
-                en: {},
-                fr: {}
-            }
-
-            var html = ''
-
+            var json = { en: en[0].data, fr: fr[0].data }
+            var data = { en: {}, fr: {} }
+            
             Object.keys(json).forEach(function (lang) {
 
+                // Count occurances
                 json[lang].forEach(function (obj) {
                     obj[4].split(',').forEach(function (tag) {
                         if (tag) {
-                            count[lang][tag] = count[lang][tag] ? count[lang][tag] + 1 : 1
+                            data[lang][tag] = data[lang][tag] ? data[lang][tag] + 1 : 1
                         }
                     })
                 })
 
-                Object.keys(count[lang]).forEach(function (key) {
-                    html +='<tr><td><a href="' + config.search[lang] + key + '" target="_blank">' + key + '</td><td>' + lang + '</td><td>' + count[lang][key] + '</td></tr>'
+                // Add to datatable
+                Object.keys(data[lang]).forEach(function(tag) {
+                    table.row.add([
+                        '<a href="' + config.search[lang] + tag + '" target="_blank">' + tag + '</a>',
+                        lang,
+                        data[lang][tag]
+                    ])
                 })
 
             })
 
-            $('tbody').append(html)
-
-            $('table').DataTable({
-                "order": [[ 0, "asc" ]]
-            })
-
+            table.draw()
         })
 
-
-
     </script>
-
 </body>
 
 </html>
