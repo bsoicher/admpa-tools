@@ -24,19 +24,21 @@
         <div class="container mb-5">
             <h1 class="h4 mt-5"><a href="../index.html">ADMPA Web Tools</a><small class="text-muted">&gt; Maple Leaf &gt; Tags</small></h1>
             <p>Analyze the tags used in the Maple Leaf feed</p>
-           
-            <ul class="nav nav-pills mb-3">
-                <li class="nav-item"><a class="nav-link active" href="#" data-lang="">Both</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" data-lang="en">English</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" data-lang="fr">French</a></li>
-            </ul>
-          
+
+            <div id="filter" class="text-center">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary active" data-lang="">Both</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-lang="en">English</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-lang="fr">French</button>
+                </div>
+            </div>
+
             <table class="table">
                 <thead>
                     <tr>
-                        <th width="62%">Name</th>
-                        <th width="19%">Language</th>
-                        <th width="19%">Count</th>
+                        <th width="62%" class="border-top-0">Name</th>
+                        <th width="19%" class="border-top-0">Language</th>
+                        <th width="19%" class="border-top-0">Count</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -62,7 +64,7 @@
         $.ajaxSetup({ cache: false })
 
         // Datatable setup
-        var table = $('table').DataTable({ 'order': [[ 0, 'asc' ]] })
+        var table = $('table').DataTable({ order: [[0, 'asc']] })
 
         $.when(
             $.get(config.json.en),
@@ -71,7 +73,7 @@
 
             var json = { en: en[0].data, fr: fr[0].data }
             var data = { en: {}, fr: {} }
-            
+
             Object.keys(json).forEach(function (lang) {
 
                 // Count occurances
@@ -84,7 +86,7 @@
                 })
 
                 // Add to datatable
-                Object.keys(data[lang]).forEach(function(tag) {
+                Object.keys(data[lang]).forEach(function (tag) {
                     table.row.add([
                         '<a href="' + config.search[lang] + tag + '" target="_blank">' + tag + '</a>',
                         lang,
@@ -95,6 +97,17 @@
             })
 
             table.draw()
+        })
+
+        // Filter table by language
+        $('#filter button').click(function () {
+            var $this = $(this)
+
+            if (!$this.is('.active')) {
+                $('#filter button').removeClass('active')
+                var lang = $this.addClass('active').data('lang')
+                table.column(1).search(lang).draw()
+            }
         })
 
     </script>
