@@ -23,24 +23,19 @@
     <main>
         <div class="container mb-5">
             <h1 class="h4 mt-5"><a href="../index.html">ADMPA Web Tools</a><small class="text-muted">&gt; Maple Leaf &gt; Tags</small></h1>
-            <p>Analyze the tags used in the Maple Leaf feed</p>
-
-            <div id="filter" class="text-center">
-                Show 
-                <div class="btn-group mb-1" role="group">
-                    <button type="button" class="btn btn-sm btn-outline-primary active" data-lang="">all</button>
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-lang="en">english</button>
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-lang="fr">french</button>
-                </div>
-                tags
-            </div>
-
+            <p>Search the full list of tags used on the Maple Leaf.</p>
             <table class="table">
                 <thead>
                     <tr>
-                        <th width="62%" class="border-top-0">Name</th>
-                        <th width="19%" class="border-top-0">Language</th>
-                        <th width="19%" class="border-top-0">Count</th>
+                        <th width="55%" class="border-top-0 align-middle">Name</th>
+                        <th width="30%" class="border-top-0 align-middle">Language
+                            <div class="btn-group float-right" role="group" id="filter">
+                                <button type="button" class="btn btn-sm btn-outline-primary active" data-lang="">ALL</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-lang="en">EN</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-lang="fr">FR</button>
+                            </div>
+                        </th>
+                        <th width="15%" class="border-top-0 align-middle">Count</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -91,7 +86,7 @@
                 Object.keys(data[lang]).forEach(function (tag) {
                     table.row.add([
                         '<a href="' + config.search[lang] + tag + '" target="_blank">' + tag + '</a>',
-                        lang,
+                        lang === 'en' ? 'EN' : 'FR',
                         data[lang][tag]
                     ])
                 })
