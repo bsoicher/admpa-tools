@@ -14,6 +14,7 @@
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.2.0/chai.min.js"></script>
 
     <!--<script src="https://unpkg.com/chai-string@1.5.0/chai-string.js"></script>
@@ -208,6 +209,15 @@
                 assert(a, 'Metadata: Date modified override is not set')
                 assert(a === b, 'Metadata: Date modified override does not match between languages')
                 pass('Metadata: Date modified override passed tests')
+            },
+
+            function (d) {
+               if (d.wp) {
+                 var a = new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished']).toString("MMMM d, yyyy hh:mm tt")
+                 var b = new Date(d.wp.date).toString("MMMM d, yyyy hh:mm tt")
+                 assert(a === b, 'Metadata: Date does not match WordPress: ' + b)
+                 pass('Metadata: Date was migrated properly')
+               }
             },
 
             function (d) {
