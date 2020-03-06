@@ -120,6 +120,8 @@
                     return tag.trim()
                 }).filter(function (tag) {
                     return tag ? !tag.match(/(featured|vedette)$/i) : false
+                }).filter(function(tag, index, self){
+                    return self.indexOf(tag) === index
                 }).join(','))
             },
 
