@@ -148,7 +148,7 @@
                 })
             }).fail(function (e) {
                 throw new Error('Unable to load')
-               
+
             })
 
             return d.promise()
@@ -212,12 +212,24 @@
             },
 
             function (d) {
-               if (d.wp) {
-                 var a = new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished']).toString("MMMM d, yyyy hh:mm tt")
-                 var b = new Date(d.wp.date).toString("MMMM d, yyyy hh:mm tt")
-                 assert(a === b, 'Metadata: Date does not match WordPress: ' + b)
-                 pass('Metadata: Date was migrated properly')
-               }
+                if (d.wp) {
+                    var a = new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished']).toString('MMMM d, yyyy hh:mm tt')
+                    var b = new Date(d.wp.date).toString('MMMM d, yyyy hh:mm tt')
+                    assert(a === b, 'Metadata: Date does not match WordPress: ' + b)
+                    pass('Metadata: Date was migrated properly')
+                }
+            },
+
+            function (d) {
+                var a = d.$doc.find('main p>strong:first')
+                if (a.length) {
+                    var m = a.text().match(/^[^\d]+(\d+)[^\d]+(\d+) -/)
+                    if (m) {
+                        var b = new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished']).toString('d yyyy')
+                        assert(m[1] + ' ' + m[2] === b, 'Content: Byline date does not match article date')
+                        pass('Content: Byline date is consistent with article date')
+                    }
+                }
             },
 
             function (d) {
