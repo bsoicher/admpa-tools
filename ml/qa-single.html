@@ -208,7 +208,7 @@
                 assert(d.jcr['gcModifiedIsOverridden'], 'Metadata: Date modified override is not enabled')
                 assert(a, 'Metadata: Date modified override is not set')
                 assert(a === b, 'Metadata: Date modified override does not match between languages')
-                pass('Metadata: Date modified override passed tests')
+                pass('Metadata: Date modified override is set')
             },
 
             function (d) {
@@ -223,10 +223,11 @@
             function (d) {
                 var a = d.$doc.find('main p>strong:first')
                 if (a.length) {
-                    var m = a.text().match(/^[^\d]+(\d+)[^\d]+(\d+) -/)
-                    if (m) {
+                    a = a.text().match(/^[^\d]+(\d+)[^\d]+(\d+) -/)
+                    if (a) {
+                        a = a[1] + ' ' + a[2]
                         var b = new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished']).toString('d yyyy')
-                        assert(m[1] + ' ' + m[2] === b, 'Content: Byline date does not match article date')
+                        assert(a === b, 'Content: Byline date does not match article date')
                         pass('Content: Byline date is consistent with article date')
                     }
                 }
