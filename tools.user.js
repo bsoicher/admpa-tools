@@ -33,7 +33,7 @@
     var node_alt = '/content/canadasite' + $('#wb-lng a').attr('href').replace('.html', '')
 
     var menu = '<ul id="aem_tools" class=" pull-right mrgn-tp-md" role="toolbar">'
-    menu += '<li class="btn-group mrgn-rght-sm"><button class="btn ' + (alt ? 'btn-danger' : 'btn-default') + ' brdr-rds-0" data-action="both" id="both">' + (alt ? 'Both' : 'Single') + '</button></li>'
+    menu += '<li class="btn-group mrgn-rght-sm"><button class="btn ' + (alt ? 'btn-danger' : 'btn-default') + ' brdr-rds-0" data-action="both" id="both" title="Toggle between selecting both language nodes or only the current node">' + (alt ? 'Both' : 'Single') + '</button></li>'
     menu += '<li class="btn-group">'
     menu += '<button class="btn btn-default brdr-rds-0" data-action="metadata" title="View metadata JSON">Metadata</button>'
     menu += '<button class="btn btn-default brdr-rds-0" data-action="qa" title="Run Maple Leaf QA tool">QA</button>'
@@ -84,7 +84,7 @@
   // Handle button events
   $(document).on('click', '#aem_tools button', function (e) {
     var name = $(this).data('action')
-    if (name) { actions[name]() }
+    if (name && typeof actions.name === 'function') { actions[name]() }
   })
 
 })(jQuery)
