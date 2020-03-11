@@ -68,8 +68,8 @@
       window.open(node + '/_jcr_content.json?_=' + t)
     },
     publish: function () {
-      if (alt) { window.open(server + '/libs/wcm/core/content/sites/publishpagewizard.html?item=' + node_alt + '&autoclose' + autoPublish) }
-      window.open(server + '/libs/wcm/core/content/sites/publishpagewizard.html?item=' + node + '&autoclose' + autoPublish)
+      if (alt) { window.open(server + '/libs/wcm/core/content/sites/publishpagewizard.html?item=' + node_alt + '&autoclose' + autoPublish, '_blank', 'width=500,height=100') }
+      window.open(server + '/libs/wcm/core/content/sites/publishpagewizard.html?item=' + node + '&autoclose' + autoPublish, '_blank', 'width=500,height=100')
     },
     folder: function () {
       if (alt) { window.open(server + '/sites.html' + node_alt.replace(/[^/]+$/i, '')) }
