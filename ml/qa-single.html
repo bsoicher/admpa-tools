@@ -208,7 +208,7 @@
                 assert(d.jcr['gcModifiedIsOverridden'], 'Metadata: Date modified override is not enabled')
                 assert(a, 'Metadata: Date modified override is not set')
                 assert(a === b, 'Metadata: Date modified override does not match between languages')
-                pass('Metadata: Date modified override passed tests')
+                pass('Metadata: Date modified override is set up correctly')
             },
 
             function (d) {
@@ -216,7 +216,7 @@
                     var a = new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished']).toString('MMMM d, yyyy hh:mm tt')
                     var b = new Date(d.wp.date).toString('MMMM d, yyyy hh:mm tt')
                     assert(a === b, 'Metadata: Date does not match WordPress: ' + b)
-                    pass('Metadata: Date was migrated properly')
+                    pass('Metadata: Date was migrated correctly')
                 }
             },
 
@@ -238,7 +238,7 @@
                 assert(a, 'Metadata: Thumbnail image (open graph) not set')
                 assert(!a.includes('/_jcr_content/'), 'Metadata: Thumbnail image (open graph) should not be coppied from within the article')
                 assert(a === b, 'Metadata: Thumbnail image (open graph) does not match between languages')
-                pass('Metadata: Thumbnail image passed tests')
+                pass('Metadata: Thumbnail image is set up correctly')
             },
 
             /*function (d) {
