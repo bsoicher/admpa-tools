@@ -84,7 +84,7 @@
   // Handle button events
   $(document).on('click', '#aem_tools button', function (e) {
     var name = $(this).data('action')
-    if (name && typeof actions.name === 'function') { actions[name]() }
+    if (name && typeof actions[name] === 'function') { actions[name]() }
   })
 
 })(jQuery)
