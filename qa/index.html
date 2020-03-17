@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Mocha Tests</title>
+
+    <!-- Style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mocha/7.1.0/mocha.min.css" />
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mocha/7.1.0/mocha.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.2.0/chai.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
+
+    <style>
+        #mocha-stats {
+            position: relative !important
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mb-5">
+        <h1 class="h4 mt-5"><a href="../index.html">ADMPA Web Tools</a><small class="text-muted">&gt; Maple Leaf &gt; QA Single</small></h1>
+        <!--<div class="alert alert-warning mt-3" role="alert">Warning: Still under development</div>-->
+        <p>Analyze a Maple Leaf article for common issues.</p>
+
+        <div class="input-group mt-4">
+            <input id="url" type="text" class="form-control" />
+            <div class="input-group-append">
+                <a class="btn btn-primary" href="javascript:start()">Start</a>
+            </div>
+        </div>
+        <small class="form-text text-muted">Full URL of AEM article</small>
+
+        <div id="mocha"></div>
+    </div>
+
+
+    <script src="reporter.js"></script>
+
+
+
+    <script class="mocha-init">
+
+        var assert = chai.assert
+        var expect = chai.expect
+        var should = chai.should();
+
+console.log(Mocha)
+
+        mocha.setup({
+            checkLeaks: false,
+            reporter: 'QA',
+            ui: 'bdd',
+        })
+
+    </script>
+
+    <script src="test.js"></script>
+
+    <script class="mocha-exec">
+        var params = Mocha.utils.parseQuery(window.location.search)
+
+        if (params.hasOwnProperty('url')) {
+            mocha.run();
+        }
+
+        function start() {
+            mocha.run();
+        }
+
+    </script>
+</body>
+
+</html>

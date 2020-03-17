@@ -14,7 +14,7 @@
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/datejs/1.0/date.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.2.0/chai.min.js"></script>
 
     <!--<script src="https://unpkg.com/chai-string@1.5.0/chai-string.js"></script>
@@ -196,6 +196,22 @@
 
         }
 
+        function Warning(message) {
+            this.message = message
+        }
+
+        
+
+        function assert(test, message, level) {
+            if(!test) {
+                if(!level || level === 'error') {
+                    throw new Error(message)
+                } else {
+                    throw new Warning(message)
+                }
+            }
+        }
+
         // TODO USE CUSTOM ASSERT FUNCTION. NO NEED FOR CHAI. IT COULD TRACK TESTS..
         // TODO ALLOW GROUPING OF TESTS
 
@@ -213,32 +229,58 @@
 
             function (d) {
                 if (d.wp) {
-                    var a = new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished']).toString('MMMM d, yyyy hh:mm tt')
-                    var b = new Date(d.wp.date).toString('MMMM d, yyyy hh:mm tt')
+                    var a = moment(new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished'])).format('LLL')
+                    var b = moment(d.wp['date']).format('LLL')
                     assert(a === b, 'Metadata: Date does not match WordPress: ' + b)
                     pass('Metadata: Date was migrated properly')
                 }
             },
 
             function (d) {
-                var a = d.$doc.find('main p>strong:first')
-                if (a.length) {
-                    var m = a.text().match(/^[^\d]+(\d+)[^\d]+(\d+) -/)
-                    if (m) {
-                        var b = new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished']).toString('d yyyy')
-                        assert(m[1] + ' ' + m[2] === b, 'Content: Byline date does not match article date')
-                        pass('Content: Byline date is consistent with article date')
-                    }
+                var a = d.$doc.find('main p:first:has(strong)')
+                assert(a.length === 1, 'Content: Byline element is not present')
+                a = a.text().trim().split(' - ')
+                assert(a.length === 2, 'Content: Byline format should be: date - author organization')
+                
+                
+
+
+                var be = ['Defence Stories', 'Royal Canadian Navy', 'Canadian Army', 'Royal Canadian Air Force']
+                var bf = ['Nouvelles de la Défense', 'La Marine royale canadienne', 'L’Armée canadienne', 'L’Aviation royale canadienne']
+
+                //var me = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+                //var mf = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'décembre']
+
+                
+
+                moment.locale(d.jcr['jcr:language'])
+
+                if (d.jcr['jcr:language'] === 'fr') {
+                    var re = new RegExp('Le (\\d{1,2}) (' + mf.join('|') + ') (\\d{4}) - (' + bf.join('|') + ')')
+                } else {
+                    var re = new RegExp('(' + me.join('|') + ') (\\d{1,2}), (\\d{4}) - (' + be.join('|') + ')')
                 }
+
+                var a = a.text().match(re)
+                assert(a.length === 5, 'Content: Byline does not match format')
+
+                if (m) {
+                    var b = new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished']).toString('d yyyy')
+                    assert(m[1] + ' ' + m[2] === b, 'Content: Byline date does not match article date')
+                    pass('Content: Byline date is consistent with article date')
+                }
+
             },
 
             function (d) {
                 var a = d.jcr['gcOGImage']
                 var b = d.jcr_alt['gcOGImage']
+
                 assert(a, 'Metadata: Thumbnail image (social media) not set')
                 assert(a.startsWith('/content/dam/'), 'Metadata: Thumbnail image (social media) path is not in the DAM')
                 assert(!a.includes('/_jcr_content/'), 'Metadata: Thumbnail image (social media) should not be coppied from within the article')
                 assert(a === b, 'Metadata: Thumbnail image (open graph) does not match between languages')
+
                 pass('Metadata: Thumbnail image passed tests')
             },
 
