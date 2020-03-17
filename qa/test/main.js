@@ -2,6 +2,12 @@
 
 describe('Hello world', function () {
 
+  before(function(){
+
+    //this.skip()
+
+  })
+
   it('should be a string', function () {
     expect('Hello world').to.be.a('string')
   })
@@ -14,14 +20,15 @@ describe('Hello world', function () {
     expect('Hello world').to.match(/world$/)
   })
 
-  it('should end with test', function () {
-    expect('Hello world').to.match(/test$/)
-  })
+  describe('Hello world part 2', function () {
+    it('should end with test', function () {
+      expect('Hello world').to.match(/test$/)
+    })
 
-  it('should end with test2', function () {
-    expect('Hello world').to.match(/test2$/)
+    it('should end with test2', function () {
+      expect('Hello world').to.match(/test2$/)
+    })
   })
-
   
   it('test')
 })

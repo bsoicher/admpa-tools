@@ -57,7 +57,7 @@
     var ctx
 
     var root = $('#mocha')
-    var report = $('<ul id="mocha-report"></ul>').appendTo(root)
+    var report = $('<div id="mocha-report"></div>').appendTo(root)
 
     if (!root) {
       return console.error('#mocha div missing, add it to your document')
@@ -74,7 +74,7 @@
 
     runner.on(constants.EVENT_SUITE_BEGIN, function (suite) {
       if (!suite.root) {
-        suite.root = $('<h2>' + suite.title + '</h2>').appendTo(report)
+        suite.root = $('<h2 class="h4">' + suite.title + '</h2>').appendTo(report)
       }
     })
 
@@ -88,7 +88,7 @@
 
       // var suite = test.parent
 
-      report.append('<p class="test pass ' + test.speed + '">' + test.title + '<span class="duration">' + test.duration + '</span></p>')
+      report.append('<p class="test pass ' + test.speed + '">&#x2714;' + test.title + '<span class="duration">' + test.duration + '</span></p>')
 
       // self.addCodeToggle(el, test.body);
 
@@ -97,13 +97,13 @@
 
     runner.on(constants.EVENT_TEST_FAIL, function (test) {
 
-      var message = test.err.toString();
+      var message = test.err.toString()
 
       if (message === '[object Error]') {
         message = test.err.message
       }
 
-      report.append('<p class="test fail">' + test.title + '</p><p>' + message + '</p>')
+      report.append('<p class="test fail">&#10060; ' + test.title + ' --- ' + message + '</p>')
 
       /*
 
@@ -149,23 +149,26 @@
     })
 
     runner.on(constants.EVENT_TEST_PENDING, function (test) {
-      $('<li class="test pass pending"><h3>' + test.title + '</h3></li>').appendTo(report)
+      $('<p class="test pending"><span class="text-warning" title="Skipped">&#10033;</span> ' + test.title + '</p>').appendTo(report)
       updateStats()
     })
 
     function updateStats () {
 
       var str = '<ul class="list-inline">'
-      str += '<li class="list-inline-item">Tests: ' + runner.total + '</li>'
+      str += '<li class="list-inline-item">Total: <span class="font-weight-bold">' + runner.total + '</span></li>'
 
-      str += '<li class="list-inline-item">Passed: <span class="text-success">' + stats.passes + '</span></li>'
-      str += '<li class="list-inline-item">Failed: <span class="text-danger">' + stats.failures + '</span></li>'
+      str += '<li class="list-inline-item">Passed: <span class="text-success font-weight-bold">' + stats.passes + '</span></li>'
 
       if (stats.pending) {
-        str += '<li class="list-inline-item">Pending: <span class="text-info">' + stats.pending + '</span></li>'
+        str += '<li class="list-inline-item">Skipped: <span class="text-warning font-weight-bold">' + stats.pending + '</span></li>'
       }
 
-      str += '<li class="list-inline-item">Duration: ' + ((new Date() - stats.start) / 1000).toFixed(2) + 's</li>'
+
+      str += '<li class="list-inline-item">Failed: <span class="text-danger font-weight-bold">' + stats.failures + '</span></li>'
+
+     
+      str += '<li class="list-inline-item">Runtime: <span class="font-weight-bold">' + ((new Date() - stats.start) / 1000).toFixed(2) + 's</span></li>'
       str += '</ul>'
 
       $('#mocha-stats').html(str)

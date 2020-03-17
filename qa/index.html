@@ -36,16 +36,16 @@
             
             <div class="progress my-2" style="height: 5px">
                 <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="progress_passes" title="Passed"></div>
+                <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" id="progress_pending" title="Untested"></div>
                 <div class="progress-bar bg-danger" role="progressbar" style="width: 0%" id="progress_failures" title="Failed"></div>
-                <div class="progress-bar bg-info" role="progressbar" style="width: 0%" id="progress_pending" title="Untested"></div>
+                
             </div>
             <div id="mocha-stats"></div>
         </div>
     </div>
 
 
-    <script src="reporter.js"></script>
-
+    <script src="mocha.reporter.js"></script>
 
 
     <script class="mocha-init">
@@ -54,11 +54,10 @@
         var expect = chai.expect
         var should = chai.should();
 
-
         mocha.setup({
             checkLeaks: false,
             reporter: QA,
-            ui: 'bdd',
+            ui: 'bdd'
         })
 
     </script>
