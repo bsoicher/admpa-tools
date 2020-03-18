@@ -64,17 +64,18 @@
     }
 
     $(document).on('click', 'a.passes', function (e) {
-      console.log('only show passes')
+      $('.fail,.pending').hide()
+      $('.pass').show()
     })
 
     $(document).on('click', 'a.failures', function (e) {
-      $('.suite:has(.fail), .fail').removeClass('d-none')
-      $('.suite:not(:has(.fail)').addClass('d-none')
+      $('.fail').show()
+      $('.pass,.pending').hide()
     })
 
     runner.on(constants.EVENT_SUITE_BEGIN, function (suite) {
       if (!suite.root) {
-        suite.root = $('<h2 class="h4">' + suite.title + '</h2>').appendTo(report)
+        suite.root = $('<h2 class="h5 suite">' + suite.title + '</h2>').appendTo(report)
       }
     })
 
@@ -88,7 +89,7 @@
 
       // var suite = test.parent
 
-      report.append('<p class="test pass ' + test.speed + '">&#x2714;' + test.title + '<span class="duration">' + test.duration + '</span></p>')
+      report.append('<p class="test pass ' + test.speed + '">&#x2714; ' + test.title + '<span class="duration">' + test.duration + '</span></p>')
 
       // self.addCodeToggle(el, test.body);
 
@@ -153,21 +154,42 @@
       updateStats()
     })
 
+
+    function Stat (opts) {
+      $.extend(this, opts)
+    }
+
+    Stat.prototype.render = function () {
+      return '<li class="list-inline-item"><a href="javascript:void(0)" class="' + this.name + '">' + this.title + ': <span class="text-dark font-weight-bold">' + this.val() + '</span></a></li>'
+    }
+
+    var statsO = [
+      new Stat({
+        name: 'total',
+        title: 'Total',
+        class: 'text-dark',
+        val: function () { return runner.total }
+      })
+    ]
+
     function updateStats () {
 
-      var str = '<ul class="list-inline">'
-      str += '<li class="list-inline-item">Total: <span class="font-weight-bold">' + runner.total + '</span></li>'
 
-      str += '<li class="list-inline-item">Passed: <span class="text-success font-weight-bold">' + stats.passes + '</span></li>'
+      var str = '<ul class="list-inline">'
+
+      statsO.forEach(function (stat) {
+        str += stat.render()
+      })
+
+
+      str += '<li class="list-inline-item"><a href="javascript:void(0)" class="total">Total: <span class="text-dark font-weight-bold">' + stats.total + '</span></a></li>'
+      str += '<li class="list-inline-item"><a href="javascript:void(0)" class="passes">Passed: <span class="text-success font-weight-bold">' + stats.passes + '</span></a></li>'
 
       if (stats.pending) {
-        str += '<li class="list-inline-item">Skipped: <span class="text-warning font-weight-bold">' + stats.pending + '</span></li>'
+        str += '<li class="list-inline-item"><a href="javascript:void(0)" class="pending">Skipped: <span class="text-warning font-weight-bold">' + stats.pending + '</span></a></li>'
       }
 
-
-      str += '<li class="list-inline-item">Failed: <span class="text-danger font-weight-bold">' + stats.failures + '</span></li>'
-
-     
+      str += '<li class="list-inline-item"><a href="javascript:void(0)" class="failures">Failed: <span class="text-danger font-weight-bold">' + stats.failures + '</span></a></li>'
       str += '<li class="list-inline-item">Runtime: <span class="font-weight-bold">' + ((new Date() - stats.start) / 1000).toFixed(2) + 's</span></li>'
       str += '</ul>'
 

@@ -1,8 +1,26 @@
-/* global describe, it, expect  */
+/* global describe, it, $  */
+
+describe('Node URL', function () {
+  var url = $('#url').val()
+
+  it('should not be empty', function () {
+    url.should.be.a('string').and.not.equal('')
+  })
+
+  it('should be on canada.ca', function () {
+    url.should.match(/^https:\/\/www.canada.ca\//)
+  })
+
+  it('should have <code>.html</code> file extension', function () {
+    url.should.match(/.html$/)
+  })
+
+
+})
 
 describe('Hello world', function () {
 
-  before(function(){
+  before(function () {
 
     //this.skip()
 
@@ -29,7 +47,7 @@ describe('Hello world', function () {
       expect('Hello world').to.match(/test2$/)
     })
   })
-  
+
   it('test')
 })
 

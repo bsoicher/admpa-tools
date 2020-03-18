@@ -176,6 +176,9 @@
 
                 // Execute each test
                 load(url).done(function (data) {
+
+                    console.log(data)
+
                     $issues.empty()
 
                     tests.forEach(function (test) {
