@@ -5,9 +5,8 @@
     <meta charset="utf-8" />
     <title>QA Advanced</title>
 
-    <!-- Style -->
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
-
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
@@ -20,7 +19,7 @@
 <body>
     <div class="container mb-5">
         <h1 class="h4 mt-5"><a href="../index.html">ADMPA Web Tools</a><small class="text-muted">&gt; Maple Leaf &gt; QA Advanced</small> <span class="badge badge-warning">Under Development</span></h1>
-        <p>Analyze a Maple Leaf article for common issues.</p>
+        <p>Analyze an AEM node for common issues.</p>
 
         <div class="input-group mt-4">
             <input id="url" type="text" class="form-control" />
@@ -28,42 +27,50 @@
                 <a class="btn btn-primary" href="javascript:start()">Start</a>
             </div>
         </div>
-       
+
         <div id="mocha" class="mt-3">
             <div id="mocha-progress" class="progress my-2" style="height: 5px">
-                <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="progress_passes" title="Passed"></div>
-                <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" id="progress_pending" title="Untested"></div>
-                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%" id="progress_failures" title="Failed"></div>
+                <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="progress-passes" title="Passed"></div>
+                <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" id="progress-pending" title="Skipped"></div>
+                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%" id="progress-failures" title="Failed"></div>
             </div>
-            <div id="mocha-stats"></div>
+            <div id="mocha-stats">
+                <ul class="list-inline">
+                    <li class="list-inline-item"><a href="javascript:void(0)" id="view-all">Total</a>: <strong id="stat-total">0</strong></li>
+                    <li class="list-inline-item"><a href="javascript:void(0)" id="view-passes">Passed</a>: <strong id="stat-passes">0</strong></li>
+                    <li class="list-inline-item"><a href="javascript:void(0)" id="view-pending">Skipped</a>: <strong id="stat-pending">0</strong></li>
+                    <li class="list-inline-item"><a href="javascript:void(0)" id="view-failures">Failed</a>: <strong id="stat-failures">0</strong></li>
+                    <li class="list-inline-item">Time: <strong id="stat-time">0.00s</strong></li>
+                </ul>
+            </div>
         </div>
     </div>
 
-
-    <script src="mocha.reporter.js"></script>
-
+    <!-- Custom reporter -->
+    <script src="reporter.js"></script>
 
     <script class="mocha-init">
 
         var assert = chai.assert
         var expect = chai.expect
-        var should = chai.should();
+        var should = chai.should()
 
         mocha.setup({
-            checkLeaks: false,
-            reporter: QA,
             ui: 'bdd',
-            global: ['$']
+            reporter: Reporter,
+            global: ['$', 'data']
         })
 
     </script>
 
+    <!-- Test suites -->
     <script src="test/main.js"></script>
 
+    <!-- Run the tests -->
     <script class="mocha-exec">
         var params = Mocha.utils.parseQuery(window.location.search)
 
-        if (params.hasOwnProperty('url') && params.url) {
+        if (params.url) {
             $('#url').val(params.url)
             mocha.run();
         }
@@ -73,6 +80,7 @@
         }
 
     </script>
+
 </body>
 
 </html>

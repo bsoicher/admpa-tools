@@ -1,6 +1,6 @@
 /* global describe, it, $  */
 
-describe('Node URL', function () {
+describe('Testing', function () {
   var url = $('#url').val()
 
   it('should not be empty', function () {
@@ -15,6 +15,9 @@ describe('Node URL', function () {
     url.should.match(/.html$/)
   })
 
+
+  it('Should be a child of the maple leaf node')
+  it('Should not have featured tags')
 
 })
 
@@ -48,22 +51,5 @@ describe('Hello world', function () {
     })
   })
 
-  it('test')
-})
-
-describe('Hello world timed', function () {
-
-  it('should be 11 characters long', function () {
-    expect('Hello world').to.have.length(11)
-  })
-
-  it('should be 11 characters long', function () {
-    expect('Hello world').to.have.length(11)
-  })
-
-  it('should be 11 characters long', function () {
-    expect('Hello world').to.have.length(11)
-  })
-
-  it('test')
+  //it('test')
 })
