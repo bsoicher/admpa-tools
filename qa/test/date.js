@@ -1,5 +1,22 @@
 /* global describe, before, it, data */
 
+
+describe('testing', function() {
+
+  it('blank test should be skipped')
+  it('second blank test should be skipped')
+
+
+  it('"hello world" should be 11 characters', function () {
+    'hello world'.should.have.lengthOf(11)
+  })
+
+  it('"hello world" should be 12 characters?', function () {
+    'hello world'.should.have.lengthOf(12)
+  })
+  
+})
+
 /**
  * Date related tests
  */
