@@ -3,7 +3,9 @@
 describe('Thumbnail image', function() {
 
     it('should not be an in article image', function() {
-        data.jcr['gcOGImage'].should.not.match('/_jcr_content/')
+        if(data.meta['gcOGImage']) {
+            data.meta['gcOGImage'].should.not.match('/_jcr_content/')
+        }
     })
 })
 

@@ -14,6 +14,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.2.0/chai.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
 
+    <style>
+        #mocha code .comment { color: #ddd; }
+        #mocha code .init { color: #2f6fad; }
+        #mocha code .string { color: #5890ad; }
+        #mocha code .keyword { color: #8a6343; }
+        #mocha code .number { color: #2f6fad; }
+    </style>
+
 </head>
 
 <body>
@@ -24,7 +32,7 @@
         <div class="input-group mt-4">
             <input id="url" type="text" class="form-control" />
             <div class="input-group-append">
-                <a class="btn btn-primary" href="javascript:start()">Start</a>
+                <a id="start" class="btn btn-primary" href="javascript:void(0)">Start</a>
             </div>
         </div>
 
@@ -46,6 +54,9 @@
         </div>
     </div>
 
+    <!-- Loader -->
+    <script src="js/data.js"></script>
+
     <!-- Custom reporter -->
     <script src="js/reporter.js"></script>
 
@@ -58,7 +69,7 @@
         mocha.setup({
             ui: 'bdd',
             reporter: QA,
-            global: ['$', 'moment', 'data']
+            global: ['data', '$', 'moment']
         })
 
     </script>
@@ -72,16 +83,14 @@
 
     <!-- Run the tests -->
     <script class="mocha-exec">
-        var params = Mocha.utils.parseQuery(window.location.search)
 
-        if (params.url) {
-            $('#url').val(params.url)
+        $(document).on('dataReady', function() {
             mocha.run();
-        }
+        })
 
-        function start() {
+        $('#start').click(function(){
             window.location = '?url=' + $('#url').val()
-        }
+        })
 
     </script>
 

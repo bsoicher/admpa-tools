@@ -3,8 +3,12 @@
 
 describe('Content links', function() {
 
-    it('should not link to WordPress server', function () {
-        data.$doc.find('a[href*=".mil.ca"').should.have.lengthOf(0)
+    it('?should not link to WordPress server', function () {
+        data.doc.find('a[href*=".mil.ca"').should.have.lengthOf(0)
+    })
+
+    it('?something that should be a warning', function () {
+        expect(1 + 1).to.equal(3)
     })
 
 })

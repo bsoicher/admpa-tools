@@ -1,21 +1,4 @@
-/* global describe, before, it, data */
-
-
-describe('testing', function() {
-
-  it('blank test should be skipped')
-  it('second blank test should be skipped')
-
-
-  it('"hello world" should be 11 characters', function () {
-    'hello world'.should.have.lengthOf(11)
-  })
-
-  it('"hello world" should be 12 characters?', function () {
-    'hello world'.should.have.lengthOf(12)
-  })
-  
-})
+/* global describe, it, data */
 
 /**
  * Date related tests
@@ -23,25 +6,25 @@ describe('testing', function() {
 describe('Date modified override', function () {
 
   it('should have date override enabled', function () {
-    data.jcr.should.have.own.property('gcModifiedIsOverridden', 'true')
-    data.jcr.should.have.own.property('gcModifiedOverride')
+    data.meta.should.have.own.property('gcModifiedIsOverridden', 'true')
+    data.meta.should.have.own.property('gcModifiedOverride')
   })
 
   it('should have date override set', function () {
-    data.jcr['gcModifiedOverride'].should.be.a('string').and.not.equal('')
+    data.meta['gcModifiedOverride'].should.be.a('string').and.not.equal('')
   })
 
   it('should have alt date override enabled', function () {
-    data.jcr_alt.should.have.own.property('gcModifiedIsOverridden', 'true')
-    data.jcr_alt.should.have.own.property('gcModifiedOverride')
+    data.meta.alt.should.have.own.property('gcModifiedIsOverridden', 'true')
+    data.meta.alt.should.have.own.property('gcModifiedOverride')
   })
 
   it('should have alt date override set', function () {
-    data.jcr_alt['gcModifiedOverride'].should.be.a('string').and.not.equal('')
+    data.meta.alt['gcModifiedOverride'].should.be.a('string').and.not.equal('')
   })
 
   it('should have the same date override for both languages', function () {
-    data.jcr['gcModifiedOverride'].should.equal(data.jcr_alt['gcModifiedOverride'])
+    data.meta['gcModifiedOverride'].should.equal(data.meta.alt['gcModifiedOverride'])
   })
 
 })
