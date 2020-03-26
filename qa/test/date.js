@@ -1,25 +1,21 @@
-/* global describe, it, data */
+/* global describe, it, data, moment */
 
-/**
- * Date related tests
- */
 describe('Date modified override', function () {
-
   it('should have date override enabled', function () {
     data.meta.should.have.own.property('gcModifiedIsOverridden', 'true')
-    data.meta.should.have.own.property('gcModifiedOverride')
   })
 
   it('should have date override set', function () {
+    data.meta.should.have.own.property('gcModifiedOverride')
     data.meta['gcModifiedOverride'].should.be.a('string').and.not.equal('')
   })
 
   it('should have alt date override enabled', function () {
     data.meta.alt.should.have.own.property('gcModifiedIsOverridden', 'true')
-    data.meta.alt.should.have.own.property('gcModifiedOverride')
   })
 
   it('should have alt date override set', function () {
+    data.meta.alt.should.have.own.property('gcModifiedOverride')
     data.meta.alt['gcModifiedOverride'].should.be.a('string').and.not.equal('')
   })
 
@@ -27,15 +23,12 @@ describe('Date modified override', function () {
     data.meta['gcModifiedOverride'].should.equal(data.meta.alt['gcModifiedOverride'])
   })
 
-})
+  it('should match original wordpress date', function () {
+    if (!data.wp) { this.skip() }
+    var wp = moment(data.wp['date']).format('LLL').should.equal()
+    var aem = moment(data.meta['gcModifiedOverride']).format('LLL')
+    wp.should.equal(aem)
+  })
 
-/*
-function (d) {
-    if (d.wp) {
-        var a = moment(new Date(d.jcr['gcModifiedOverride'] || d.jcr['gcIssued'] || d.jcr['gcLastPublished'])).format('LLL')
-        var b = moment(d.wp['date']).format('LLL')
-        assert(a === b, 'Metadata: Date does not match WordPress: ' + b)
-        pass('Metadata: Date was migrated properly')
-    }
-},
-*/
+  it('should have byline with same date')
+})

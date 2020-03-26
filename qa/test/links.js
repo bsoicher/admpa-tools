@@ -1,27 +1,16 @@
+/* global describe, it, data */
 
+describe('Content links', function () {
+  it('should not link to old Maple Leaf, it will be archived', function () {
+    data.doc.find('a[href*="ml-fd.caf-fac.ca"').should.have.lengthOf(0)
+  })
 
+  it('should identify links to intranet content')
 
-describe('Content links', function() {
-
-    it('?should not link to WordPress server', function () {
-        data.doc.find('a[href*=".mil.ca"').should.have.lengthOf(0)
-    })
-
-    it('?something that should be a warning', function () {
-        expect(1 + 1).to.equal(3)
-    })
-
+  it('should identify links to canada.ca intranet')
 })
 
 /*
- function (d) {
-    var a = d.$doc.find('a[href*=".mil.ca"').length
-    assert(a === 0, 'Content: ' + a + ' intranet links found')
-    pass('Content: Intranet links were not found')
-},
-
-function (d) {
-    var a = d.$doc.find('a[href*="caf-fac.ca"]').length
-    assert(a === 0, 'Content: ' + a + ' Links to caf-fac.ca found')
-    pass('Content: Links to "caf-fac.ca" were not found')
-},*/
+ data.doc.find('a[href*=".mil.ca"').get().should.have.lengthOf(0)
+ data.doc.find('a[href*="intranet.canada.ca"').get().should.have.lengthOf(0)
+ */

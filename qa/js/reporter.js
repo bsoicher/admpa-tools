@@ -33,34 +33,34 @@
     }
 
     $(document).on('click', '#view-passes', function () {
-      $('pre:visible').addClass('d-none')
+      $('.test-details:visible').addClass('d-none')
       $('.fail,.pending,.suite:not(:has(.pass))').hide()
       $('.pass,.suite:has(.pass)').show()
     })
 
     $(document).on('click', '#view-failures', function () {
-      $('pre:visible').addClass('d-none')
+      $('.test-details:visible').addClass('d-none')
       $('.pass,.pending,.suite:not(:has(.fail))').hide()
       $('.fail,.suite:has(.fail)').show()
     })
 
     $(document).on('click', '#view-pending', function () {
-      $('pre:visible').addClass('d-none')
+      $('.test-details:visible').addClass('d-none')
       $('.pass,.fail,.suite:not(:has(.pending))').hide()
       $('.pending,.suite:has(.pending)').show()
     })
 
     $(document).on('click', '#view-all', function () {
-      $('pre:visible').addClass('d-none')
+      $('.test-details:visible').addClass('d-none')
       $('.test,.suite').show()
     })
 
     $(document).on('click', '.view-code', function () {
-      $(this).parent().find('pre').toggleClass('d-none')
+      $(this).parent().find('.test-details').toggleClass('d-none')
     })
 
     runner.on(constants.EVENT_SUITE_BEGIN, function (suite) {
-      suite.root = suite.root === true ? report : $('<li class="suite"><h2 class="h5">' + suite.title + '</h2><ul class="list-unstyled ml-4"></ul></li>').appendTo(suite.parent.root).find('ul')
+      suite.root = suite.root === true ? report : $('<li class="suite"><h2 class="h5 mt-2">' + suite.title + '</h2><ul class="list-unstyled ml-4"></ul></li>').appendTo(suite.parent.root).find('ul')
     })
 
     runner.on(constants.EVENT_SUITE_END, function (suite) {
@@ -68,8 +68,7 @@
     })
 
     runner.on(constants.EVENT_TEST_PASS, function (test) {
-      var title = test.title.charAt(0) === '?' ? test.title.substr(1) : test.title
-      $('<li class="test pass"><strong class="text-success">✓</strong> ' + title + viewCode(test) + '</li>').appendTo(test.parent.root)
+      $('<li class="test pass"><strong class="text-success">✓</strong> ' + test.title + viewCode(test) + '</li>').appendTo(test.parent.root)
       updateStats()
     })
 
@@ -80,26 +79,19 @@
         message = test.err.message
       }
 
-      if (test.title.charAt(0) === '?') {
-        var title = test.title.substr(1)
-
-        $('<li class="test fail warning"><strong class="text-warning">✕</strong> ' + title + viewCode(test) + '</li>').appendTo(test.parent.root)
-      } else {
-        $('<li class="test fail"><strong class="text-danger">✕</strong> ' + test.title + viewCode(test) + '</li>').appendTo(test.parent.root)
-      }
-
-      
-
+      $('<li class="test fail"><strong class="text-danger">✕</strong> ' + test.title + viewCode(test) + '</li>').appendTo(test.parent.root)
+   
       updateStats()
     })
 
     runner.on(constants.EVENT_TEST_PENDING, function (test) {
-      $('<li class="test pending"><span class="text-warning" title="Skipped">&#10033;</span> ' + test.title + viewCode(test) + '</li>').appendTo(test.parent.root)
+      $('<li class="test pending"><span class="text-warning" title="Skipped">&#10033;</span> ' + test.title + (test.body ? viewCode(test) : ' (todo)') + '</li>').appendTo(test.parent.root)
       updateStats()
     })
 
     runner.on(constants.EVENT_RUN_END, function () {
       updateStats()
+
     })
 
     function updateStats () {
@@ -108,17 +100,23 @@
       $('#stat-pending').text(stats.pending)
       $('#stat-failures').text(stats.failures)
       $('#stat-time').text(((new Date() - stats.start) / 1000).toFixed(2) + 's')
-      $('#progress-passes').width(((stats.passes / runner.total) * 100 | 0) + '%')
-      $('#progress-pending').width(((stats.pending / runner.total) * 100 | 0) + '%')
-      $('#progress-failures').width(((stats.failures / runner.total) * 100 | 0) + '%')
+
+
+      $('#progress-passes').width(((stats.passes / runner.total) * 100) + '%')
+      $('#progress-pending').width(((stats.pending / runner.total) * 100) + '%')
+      $('#progress-failures').width(((stats.failures / runner.total) * 100) + '%')
     }
+
   }
 
 
   
   function viewCode (test) {
-    var link = ' <a href="javascript:void(0)" class="view-code" title="View test">+</a>'
-    return link + '<pre class="d-none alert alert-light border"><code>' + Mocha.utils.clean(test.body) + '</code></pre>'
+    var html = ' <a href="javascript:void(0)" class="view-code badge badge-light" title="Details">+</a>'
+    html += '<div class="test-details d-none card my-1">'
+    if (test.err) { html += '<pre class="card-header">' + test.err + '</pre>' }
+    html += '<pre class="card-body mb-0"><code>' + Mocha.utils.clean(test.body) + '</code></pre>'
+    return html + '</div>'
   }
 
   // Flag as browser only
