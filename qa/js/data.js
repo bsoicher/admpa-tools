@@ -107,15 +107,6 @@
     return d.promise()
   }
 
-  
-
-  function exit (msg) {
-    $('<div class="alert alert-danger">' + msg + '</div>').appendTo('#mocha')
-    throw new Error(msg)
-  }
-
-  
-
   // export object
   return data
 }))

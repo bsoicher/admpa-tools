@@ -109,13 +109,11 @@
 
   }
 
-
-  
   function viewCode (test) {
     var html = ' <a href="javascript:void(0)" class="view-code badge badge-light" title="Details">+</a>'
     html += '<div class="test-details d-none card my-1">'
     if (test.err) { html += '<pre class="card-header">' + test.err + '</pre>' }
-    html += '<pre class="card-body mb-0"><code>' + Mocha.utils.clean(test.body) + '</code></pre>'
+    html += '<pre class="card-body mb-0 bg-light"><code>' + Mocha.utils.clean(test.body) + '</code></pre>'
     return html + '</div>'
   }
 

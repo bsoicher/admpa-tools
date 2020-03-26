@@ -15,11 +15,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
 
     <style>
-        #mocha code .comment { color: #6b9955 }
-        #mocha code .init { color: #2f6fad }
-        #mocha code .string { color: #c59178 }
-        #mocha code .keyword { color: #c586c0 }
-        #mocha code .number { color: #889a7f }
+        #mocha code .comment {
+            color: #6b9955
+        }
+
+        #mocha code .init {
+            color: #2f6fad
+        }
+
+        #mocha code .string {
+            color: #c59178
+        }
+
+        #mocha code .keyword {
+            color: #c586c0
+        }
+
+        #mocha code .number {
+            color: #889a7f
+        }
     </style>
 
 </head>
@@ -76,27 +90,19 @@
             global: ['data', '$', 'moment']
         })
 
+        $('#start').click(function () { window.location = '?url=' + $('#url').val() })
+
     </script>
 
-    <!-- Test suites -->
-    <!--<script src="test/main.js"></script>-->
-
+    <!-- Test cases -->
     <script src="test/date.js"></script>
     <script src="test/thumbnail.js"></script>
     <script src="test/tags.js"></script>
     <script src="test/links.js"></script>
 
-    <!-- Run the tests -->
+    <!-- Start testing when data is ready -->
     <script class="mocha-exec">
-
-        $(document).on('dataReady', function() {
-            mocha.run();
-        })
-
-        $('#start').click(function(){
-            window.location = '?url=' + $('#url').val()
-        })
-
+        $(document).on('dataReady', function () { mocha.run() })
     </script>
 
 </body>
