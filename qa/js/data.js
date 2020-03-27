@@ -55,7 +55,8 @@
         data.doc = doc
         data.wp = wp
 
-        $(document).trigger('dataReady')
+
+        window.run()
       })
     })
 

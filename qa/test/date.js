@@ -1,6 +1,7 @@
 /* global describe, it, data, moment */
 
-describe('Date modified override', function () {
+describe('Date', function () {
+
   it('should have date override enabled', function () {
     data.meta.should.have.own.property('gcModifiedIsOverridden', 'true')
   })
@@ -23,12 +24,18 @@ describe('Date modified override', function () {
     data.meta['gcModifiedOverride'].should.equal(data.meta.alt['gcModifiedOverride'])
   })
 
-  it('should match original wordpress date', function () {
-    if (!data.wp) { this.skip() }
-    var wp = moment(data.wp['date']).format('LLL').should.equal()
-    var aem = moment(data.meta['gcModifiedOverride']).format('LLL')
-    wp.should.equal(aem)
+  describe('WordPress migration', function () {
+    it('should match original wordpress date', function () {
+      if (!data.wp) {
+        this.skip() // Not migrated
+      }
+      var wp = moment(data.wp['date']).format('LLL').should.equal()
+      var aem = moment(data.meta['gcModifiedOverride']).format('LLL')
+      wp.should.equal(aem)
+    })
   })
+
+  
 
   it('should have byline with same date')
 })

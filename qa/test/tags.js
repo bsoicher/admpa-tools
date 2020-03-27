@@ -1,9 +1,32 @@
-/* global describe, it, data */
+/* global describe, before, it, data */
 
 describe('Tags (keywords)', function () {
-  it('should not have no tags')
-  it('should have same number of tags on both languages')
-  it('should not have featured tags')
+
+  //console.log(window.data.meta)
+  var test = data.meta
+
+  before(function () {
+    
+    data.meta.tags = data.meta['gcKeywords'] ? data.meta['gcKeywords'].split(',').map(function (tag) { return tag.trim() }) : []
+    data.meta.alt.tags = data.meta.alt['gcKeywords'] ? data.meta['gcKeywords'].split(',').map(function (tag) { return tag.trim() }) : []
+  })
+
+  it('Has at least one tag', function () {
+    console.log(test)
+    data.meta.tags.should.not.be.empty
+  })
+
+  it('Number of tags matches between languages', function () {
+    data.meta.tags.length.should.equal(data.meta.alt.tags.length)
+  })
+
+  it('should not have featured tags', function () {
+    data.meta.should.not.match('')
+  })
+
+  it('"Regional round-up" was renamed to "Regional stories"', function () {
+    data.meta.should.not.match(/regional round[- ]?up/i)
+  })
 })
 
 /*

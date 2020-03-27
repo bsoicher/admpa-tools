@@ -32,33 +32,6 @@
       return console.error('#mocha div missing, add it to your document')
     }
 
-    $(document).on('click', '#view-passes', function () {
-      $('.test-details:visible').addClass('d-none')
-      $('.fail,.pending,.suite:not(:has(.pass))').hide()
-      $('.pass,.suite:has(.pass)').show()
-    })
-
-    $(document).on('click', '#view-failures', function () {
-      $('.test-details:visible').addClass('d-none')
-      $('.pass,.pending,.suite:not(:has(.fail))').hide()
-      $('.fail,.suite:has(.fail)').show()
-    })
-
-    $(document).on('click', '#view-pending', function () {
-      $('.test-details:visible').addClass('d-none')
-      $('.pass,.fail,.suite:not(:has(.pending))').hide()
-      $('.pending,.suite:has(.pending)').show()
-    })
-
-    $(document).on('click', '#view-all', function () {
-      $('.test-details:visible').addClass('d-none')
-      $('.test,.suite').show()
-    })
-
-    $(document).on('click', '.view-code', function () {
-      $(this).parent().find('.test-details').toggleClass('d-none')
-    })
-
     runner.on(constants.EVENT_SUITE_BEGIN, function (suite) {
       suite.root = suite.root === true ? report : $('<li class="suite"><h2 class="h5 mt-2">' + suite.title + '</h2><ul class="list-unstyled ml-4"></ul></li>').appendTo(suite.parent.root).find('ul')
     })
@@ -68,7 +41,7 @@
     })
 
     runner.on(constants.EVENT_TEST_PASS, function (test) {
-      $('<li class="test pass"><strong class="text-success">✓</strong> ' + test.title + viewCode(test) + '</li>').appendTo(test.parent.root)
+      $('<li class="test pass"><strong class="text-success" title="Passed">✓</strong> ' + test.title + viewCode(test) + '</li>').appendTo(test.parent.root)
       updateStats()
     })
 
@@ -79,7 +52,7 @@
         message = test.err.message
       }
 
-      $('<li class="test fail"><strong class="text-danger">✕</strong> ' + test.title + viewCode(test) + '</li>').appendTo(test.parent.root)
+      $('<li class="test fail"><strong class="text-danger" title="Failed">✕</strong> ' + test.title + viewCode(test) + '</li>').appendTo(test.parent.root)
    
       updateStats()
     })
@@ -90,7 +63,9 @@
     })
 
     runner.on(constants.EVENT_RUN_END, function () {
-      updateStats()
+      
+        updateStats()
+   
 
     })
 
@@ -109,6 +84,11 @@
 
   }
 
+  function abort() {
+    $('#progress-passes,#progress-pending').width('0%')
+    $('#progress-failures').width('100%')
+  }
+
   function viewCode (test) {
     var html = ' <a href="javascript:void(0)" class="view-code badge badge-light" title="Details">+</a>'
     html += '<div class="test-details d-none card my-1 border-0">'
@@ -116,6 +96,33 @@
     html += '<pre class="card-body mb-0 py-3 bg-light"><code>' + Mocha.utils.clean(test.body) + '</code></pre>'
     return html + '</div>'
   }
+
+  $(document).on('click', '#view-passes', function () {
+    $('.test-details:visible').addClass('d-none')
+    $('.fail,.pending,.suite:not(:has(.pass))').hide()
+    $('.pass,.suite:has(.pass)').show()
+  })
+
+  $(document).on('click', '#view-failures', function () {
+    $('.test-details:visible').addClass('d-none')
+    $('.pass,.pending,.suite:not(:has(.fail))').hide()
+    $('.fail,.suite:has(.fail)').show()
+  })
+
+  $(document).on('click', '#view-pending', function () {
+    $('.test-details:visible').addClass('d-none')
+    $('.pass,.fail,.suite:not(:has(.pending))').hide()
+    $('.pending,.suite:has(.pending)').show()
+  })
+
+  $(document).on('click', '#view-all', function () {
+    $('.test-details:visible').addClass('d-none')
+    $('.test,.suite').show()
+  })
+
+  $(document).on('click', '.view-code', function () {
+    $(this).parent().find('.test-details').toggleClass('d-none')
+  })
 
   // Flag as browser only
   QA.browserOnly = true
