@@ -1,4 +1,4 @@
-/* global describe, it, data, moment */
+/* global describe, it, data */
 
 describe('Date', function () {
 
@@ -23,19 +23,6 @@ describe('Date', function () {
   it('should have the same date override for both languages', function () {
     data.meta['gcModifiedOverride'].should.equal(data.meta.alt['gcModifiedOverride'])
   })
-
-  describe('WordPress migration', function () {
-    it('should match original wordpress date', function () {
-      if (!data.wp) {
-        this.skip() // Not migrated
-      }
-      var wp = moment(data.wp['date']).format('LLL').should.equal()
-      var aem = moment(data.meta['gcModifiedOverride']).format('LLL')
-      wp.should.equal(aem)
-    })
-  })
-
-  
 
   it('should have byline with same date')
 })

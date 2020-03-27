@@ -1,18 +1,12 @@
 /* global describe, before, it, data */
 
 describe('Tags (keywords)', function () {
-
-  //console.log(window.data.meta)
-  var test = data.meta
-
   before(function () {
-    
     data.meta.tags = data.meta['gcKeywords'] ? data.meta['gcKeywords'].split(',').map(function (tag) { return tag.trim() }) : []
     data.meta.alt.tags = data.meta.alt['gcKeywords'] ? data.meta['gcKeywords'].split(',').map(function (tag) { return tag.trim() }) : []
   })
 
   it('Has at least one tag', function () {
-    console.log(test)
     data.meta.tags.should.not.be.empty
   })
 

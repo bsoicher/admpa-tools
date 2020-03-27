@@ -55,8 +55,9 @@
         data.doc = doc
         data.wp = wp
 
-
+        console.log(data)
         window.run()
+        
       })
     })
 

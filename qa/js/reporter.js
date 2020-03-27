@@ -63,10 +63,7 @@
     })
 
     runner.on(constants.EVENT_RUN_END, function () {
-      
-        updateStats()
-   
-
+      updateStats()
     })
 
     function updateStats () {

@@ -66,7 +66,7 @@
             </div>
             <div id="mocha-stats">
                 <ul class="list-inline">
-                    <li class="list-inline-item"><a href="javascript:void(0)" id="view-all" title="View All">Total</a>: <strong id="stat-total">0</strong></li>
+                    <li class="list-inline-item"><a href="javascript:void(0)" id="view-all" title="View All tests">Total</a>: <strong id="stat-total">0</strong></li>
                     <li class="list-inline-item"><a href="javascript:void(0)" id="view-passes" title="View passed tests">Passed</a>: <strong id="stat-passes" class="text-success">0</strong></li>
                     <li class="list-inline-item"><a href="javascript:void(0)" id="view-pending" title="View skipped tests">Skipped</a>: <strong id="stat-pending" class="text-warning">0</strong></li>
                     <li class="list-inline-item"><a href="javascript:void(0)" id="view-failures" title="View failed tests">Failed</a>: <strong id="stat-failures" class="text-danger">0</strong></li>
@@ -96,7 +96,6 @@
             reporter: QA,
             global: ['Mocha', 'data', '$', 'moment']
         })
-
     </script>
 
     <!-- Test cases -->
@@ -105,12 +104,12 @@
     <script src="test/thumbnail.js"></script>
     <script src="test/tags.js"></script>
     <script src="test/links.js"></script>
+    <script src="test/migration.js"></script>
 
     <!-- Start testing -->
     <script class="mocha-exec">
         mocha.run()
     </script>
-
 </body>
 
 </html>
