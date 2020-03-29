@@ -82,19 +82,19 @@
     <!-- Custom reporter -->
     <script src="js/reporter.js"></script>
 
-    <script class="mocha-init">
-
+    <script>
         var assert = chai.assert
         var expect = chai.expect
         var should = chai.should()
 
         $('#start').click(function () { window.location = '?url=' + $('#url').val() })
+    </script>
 
+    <script>
         mocha.setup({
             delay: true,
             ui: 'bdd',
-            reporter: QA,
-            global: ['Mocha', 'data', '$', 'moment']
+            reporter: QA
         })
     </script>
 
@@ -106,8 +106,7 @@
     <script src="test/links.js"></script>
     <script src="test/migration.js"></script>
 
-    <!-- Start testing -->
-    <script class="mocha-exec">
+    <script>
         mocha.run()
     </script>
 </body>

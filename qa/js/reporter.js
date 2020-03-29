@@ -72,18 +72,10 @@
       $('#stat-pending').text(stats.pending)
       $('#stat-failures').text(stats.failures)
       $('#stat-time').text(((new Date() - stats.start) / 1000).toFixed(2) + 's')
-
-
       $('#progress-passes').width(((stats.passes / runner.total) * 100) + '%')
       $('#progress-pending').width(((stats.pending / runner.total) * 100) + '%')
       $('#progress-failures').width(((stats.failures / runner.total) * 100) + '%')
     }
-
-  }
-
-  function abort() {
-    $('#progress-passes,#progress-pending').width('0%')
-    $('#progress-failures').width('100%')
   }
 
   function viewCode (test) {

@@ -1,6 +1,6 @@
 /* global describe, before, it, data */
 
-describe('WordPress migration <small>(for articles moved from WP into AEM)</small>', function () {
+describe('WordPress migration <small>(Applies to articles with WP redirects)</small>', function () {
   before(function () {
     if (!data.wp) { this.skip() }
   })

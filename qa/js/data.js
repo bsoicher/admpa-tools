@@ -57,7 +57,6 @@
 
         console.log(data)
         window.run()
-        
       })
     })
 
@@ -87,7 +86,10 @@
     $.get({
       url: url.replace('/content/canadasite/', 'https://www.canada.ca/'),
       dataFilter: function (data) { return data.replace(/src="/ig, ' src="https://www.canada.ca/') },
-      success: function (html) { d.resolve($('<div>' + html + '</div>')) },
+      success: function (html) { 
+        console.log($(html))
+        d.resolve($(html))
+      },
       error: function () { d.resolve(null) }
     })
 
