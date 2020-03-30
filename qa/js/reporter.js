@@ -58,7 +58,7 @@
     })
 
     runner.on(constants.EVENT_TEST_PENDING, function (test) {
-      $('<li class="test pending"><span class="text-warning" title="Skipped">&#10033;</span> ' + test.title + (test.body ? viewCode(test) : ' (todo)') + '</li>').appendTo(test.parent.root)
+      $('<li class="test pending"><span class="text-warning" title="Skipped">&#10033;</span> ' + test.title + (test.body ? viewCode(test) : ' <span class="badge badge-info">In Development</span>') + '</li>').appendTo(test.parent.root)
       updateStats()
     })
 
