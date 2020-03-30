@@ -26,10 +26,6 @@ describe('Thumbnail image', function () {
     }
   })
 
-  it('Path must start with <code>/content/dam/</code>', function () {
-    data.meta['gcOGImage'].should.match(/^\/content\/dam\//)
-  })
-
   describe('Path', function () {
     it('within the maple-leaf folder', function () {
       // All images should be stored in the same folder in the DAM

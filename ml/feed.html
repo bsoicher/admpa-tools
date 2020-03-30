@@ -34,6 +34,7 @@
                 <li>Publish both files</li>
                 <li>Refresh this page to verify that the status has changed</li>
             </ol>
+            <p>Note: Articles with tag "nofeed" are now ignored</p>
             <p class="mt-4 mb-0" id="published">Status: Published <abbr id="modified" class="text-primary">…</abbr> by <span id="modifiedby" class="text-primary">…</span></p>
             <div class="progress my-2" style="height: 5px">
                 <div id="progress" class="progress-bar" style="width:0%"></div>
@@ -185,7 +186,11 @@
 
                             // Generate data using field definitions
                             meta.forEach(function (jcr) {
-                                data[jcr['jcr:language']].push(fields.map(function (fn) { 
+                                if (jcr['gcKeywords'] && jcr['gcKeywords'].indexOf('nofeed') > -1) {
+                                    return
+                                }
+
+                                data[jcr['jcr:language']].push(fields.map(function (fn) {
                                     return fn(jcr)
                                 }))
                             })
