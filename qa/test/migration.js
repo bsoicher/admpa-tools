@@ -30,8 +30,6 @@ describe('WordPress migration <small>(Applies to articles with WP redirects)</sm
   it('Correct category', function () {
     var wp = data.wp['category']
     var aem = data.url.match(/(feuille-derable|maple-leaf)\/(\w+)\//)[2]
-
-  
     //var aem = data.url.match(//)
   })
 

@@ -186,9 +186,9 @@
 
                             // Generate data using field definitions
                             meta.forEach(function (jcr) {
-                                if (jcr['gcKeywords'] && jcr['gcKeywords'].indexOf('nofeed') > -1) {
-                                    return
-                                }
+                                //if (jcr['gcKeywords'] && jcr['gcKeywords'].indexOf('nofeed') > -1) {
+                                //    return
+                                //}
 
                                 data[jcr['jcr:language']].push(fields.map(function (fn) {
                                     return fn(jcr)

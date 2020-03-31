@@ -47,8 +47,6 @@ describe('Thumbnail image', function () {
       thumbnail.should.not.have.string('/_jcr_content/')
     })
 
-    
-
     it('Path should be structured properly <code>/articles/{YEAR}/{MONTH}/</code>', function () {
       thumbnail.should.match(/^\/content\/dam\/dnd-mdn\/images\/maple-leaf\/articles\/\d{4}\/\d{2}\//)
     })
