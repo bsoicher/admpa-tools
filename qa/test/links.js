@@ -8,6 +8,8 @@ describe('Content links', function () {
   it('should identify links to intranet content')
 
   it('should identify links to canada.ca intranet')
+
+  it('should not have year/month breadcrumbs')
 })
 
 /*

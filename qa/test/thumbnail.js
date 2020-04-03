@@ -51,7 +51,6 @@ describe('Thumbnail image', function () {
       thumbnail.should.match(/^\/content\/dam\/dnd-mdn\/images\/maple-leaf\/articles\/\d{4}\/\d{2}\//)
     })
 
-    it('wtregr')
   })
 
 })

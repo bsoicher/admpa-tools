@@ -25,11 +25,14 @@
       <small class="text-muted">&gt; Other &gt; Video Player</small>
       <span class="badge badge-warning">Under Development</span>
     </h1>
+
+    <a href="?test">Test</a>
   </div>
 </body>
 
 <script>
-  (function (s) { // Force 1 minute cache
+  // Force 1 minute cache
+  (function (s) {
     var t = new Date().setSeconds(0, 0).toString()
     if (!s) {
       window.location = '?_=' + t
@@ -43,6 +46,12 @@
     }
   })(window.location.search)
 
+  $(document).on('click', 'a', function(e) {
+    if (this.href.indexOf(window.location.pathname) > -1) {
+      this.href = this.href + (this.href.indexOf('?') > -1 ? '&_=' : '?_=') + new Date().setSeconds(0, 0).toString()
+    }
+  })
+
   // Use URL params to filter the table
   function applyParams(api) {
     var vars = getUrlVars()
@@ -55,7 +64,7 @@
       } else if (c && /^(rcn|mrc)$/.test(c)) {
         c = 'rcn'
       } else if (/^(ca|army|armée)$/.test(c)) {
-        c = 'ca'
+        c = '^ca'
       } else if (/^(rcaf|arc)$/.test(c)) {
         c = 'rcaf'
       } else {
@@ -65,7 +74,7 @@
       c = 'ml'
     }
 
-    if (c) { api.column(0).search(c) }
+    if (c) { api.column(0).search(c, true, false) }
     if (q) { api.search(q) }
     if (c || q) { api.draw() }
   }
