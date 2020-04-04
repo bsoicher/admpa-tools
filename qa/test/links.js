@@ -9,7 +9,11 @@ describe('Content links', function () {
 
   it('should identify links to canada.ca intranet')
 
-  it('should not have year/month breadcrumbs')
+  it('year/month breadcrumbs are hidden', function () {
+    // Year/Month nodes do not have landing pages and should be hidden
+    data.doc.find('ol.breadcrumb>li:last').text().should.not.match(/^\d+$/)
+  })
+
 })
 
 /*

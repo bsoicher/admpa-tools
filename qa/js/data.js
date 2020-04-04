@@ -10,6 +10,8 @@
   }
 }(this, function (Mocha, assert, $) {
 
+  var start = new Date().getTime()
+
   // Will be populated
   var data = {
     meta: null,
@@ -56,8 +58,10 @@
         data.meta = meta
         data.doc = doc
         data.wp = wp
+        data.duration = new Date().getTime() - start
 
         console.log(data)
+
         window.run()
       })
     })
