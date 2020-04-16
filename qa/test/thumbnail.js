@@ -26,14 +26,14 @@ describe('Thumbnail image', function () {
       data.meta['gcOGImage'].should.match(/^\/content\/dam\//)
     })
 
-    it('in the Maple Leaf articles folder', function () {
+    it('in the maple-Leaf/articles folder', function () {
       // Assets must be in the maple-leaf/articles folder
       data.meta['gcOGImage'].should.match(/^\/content\/dam\/dnd-mdn\/images\/maple-leaf\/articles\//)
     })
 
     it('sorted into year and month folders', function () {
       // Asset organization helps navigating through AEM
-      data.meta['gcOGImage'].should.match(/\/maple-leaf\/articles\/\d{4}\/\d{2}\//)
+      data.meta['gcOGImage'].should.match(/\/\d{4}\/\d{2}\//)
     })
   })
 
