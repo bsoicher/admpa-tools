@@ -105,6 +105,24 @@
             tr.insertAfter(tr.next())
         })
 
+        // Delete table row
+        $(document).on('click', '.remove', function () {
+            $(this).closest('tr').toggleClass('table-danger')
+        })
+
+        $(document).on('input', 'input', function() {
+            var i = $(this)
+            var tr = i.closest('tr')
+            
+            if(i.val() === i.data('original')) {
+                tr.removeClass('table-danger')
+            } else {
+
+            }
+
+            $(this).closest('tr').addClass('table-warning')
+        })
+
         function toHTML(json) {
 
             var html = ''
@@ -112,8 +130,8 @@
             json.sections.forEach(function (section) {
                 html += '<tr>'
                     
-                html += '<td><input type="text" class="form-control border-0 rounded-0" placeholder="test" aria-label="test" aria-describedby="basic-addon2" value="' + section.title.en + '" /></td>'
-                html += '<td><input type="text" class="form-control border-0 rounded-0" placeholder="test" aria-label="test" aria-describedby="basic-addon2" value="' + section.title.fr + '" /></td>'
+                html += '<td><input type="text" class="form-control border-0 rounded-0" value="' + section.title.en + '" data-original="' + section.title.en + '"/></td>'
+                html += '<td><input type="text" class="form-control border-0 rounded-0" value="' + section.title.fr + '" data-original="' + section.title.en + '"/></td>'
 
                 
                 //html += '<input type="text" class="form-control border-0 rounded-0" placeholder="test" aria-label="test" aria-describedby="basic-addon2" value="' + section.title.fr + '" />'
@@ -121,7 +139,7 @@
                 html += '<button class="btn btn-outline-primary border-0 rounded-0" type="button" title="Show Items">' + section.list.length + ' items</button>'
                 html += '<button class="btn btn-outline-primary border-0 rounded-0 move-up" type="button" title="Move Up">&uarr;</button>'
                 html += '<button class="btn btn-outline-primary border-0 rounded-0 move-down" type="button" title="Move Down">&darr;</button>'
-                html += '<button class="btn btn-outline-primary border-0 rounded-0" type="button" title="Remove">✕</button>'
+                html += '<button class="btn btn-outline-primary border-0 rounded-0 remove" type="button" title="Remove">✕</button>'
                 html += '</td>'
                 html += '</tr>'
 
