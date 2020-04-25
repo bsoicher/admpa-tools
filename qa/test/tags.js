@@ -14,9 +14,7 @@ describe('Tags (keywords)', function () {
     data.meta.tags.length.should.equal(data.meta.alt.tags.length)
   })
 
-  it('should not have featured tags', function () {
-    data.meta.should.not.match('')
-  })
+  it('should not have featured tags')
 
   it('"Regional round-up" was renamed to "Regional stories"', function () {
     data.meta.should.not.match(/regional round[- ]?up/i)
