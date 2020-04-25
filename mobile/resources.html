@@ -16,6 +16,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+
+    <style>
+        .fr{display:none}
+    </style>
 </head>
 
 <body>
@@ -123,10 +127,38 @@
             $(this).closest('tr').addClass('table-warning')
         })
 
-        function toHTML(json) {
+        function render(json) {
+
+            var tree = ''
+
+            json.sections.forEach(function(section){
+                tree += '<ul>'
+                tree += '<li><span class="en">' + section.title.en + '</span><span class="fr">' + section.title.fr + '</span>'
+                tree += '<ul>'
+
+                section.list.forEach(function(item) {
+                    tree += '<li><span class="en">' + item.title.en + '</span><span class="fr">' + item.title.fr + '</span>'
+
+                    if (item.web) {
+                        tree += '<a class="badge badge-light en" href="' + item.web.en + '" target="_blank">🔗</a>'
+                        tree += '<a class="badge badge-light fr" href="' + item.web.fr + '" target="_blank">🔗</a>'
+                    }
+
+                    if (item.phone) {
+                        tree += '<abbr class="badge badge-light en" title="' + item.phone + '">📞</abbr>'
+                    }
+
+                    tree += '</li>'
+                })
+
+                tree += '</ul>'
+                tree += '</ul>'
+            })
+
+            $('main .container').append(tree)
+
 
             var html = ''
-
             json.sections.forEach(function (section) {
                 html += '<tr>'
                     
@@ -180,7 +212,7 @@
             cache: false
         }).done(function (data) {
 
-            toHTML(data)
+            render(data)
 
         })
 
