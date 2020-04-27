@@ -26,8 +26,8 @@ describe('Thumbnail image', function () {
       data.meta['gcOGImage'].should.match(/^\/content\/dam\//)
     })
 
-    it('in the maple-Leaf folder', function () {
-      // Assets must be in the maple-leaf/articles folder
+    it('in the maple-leaf folder', function () {
+      // Assets must be in the maple-leaf folder
       data.meta['gcOGImage'].should.match(/^\/content\/dam\/dnd-mdn\/images\/maple-leaf\//)
     })
 

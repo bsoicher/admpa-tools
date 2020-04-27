@@ -46,5 +46,3 @@ describe('Initialize', function () {
   })*/
 
 })
-
-
