@@ -4,7 +4,7 @@
  */
 (function (root, factory) {
   if (typeof exports === 'object') {
-    module.exports = factory(require('mocha'), require('chai'), require('jquery'))
+    module.exports = factory(require('mocha'), require('chai').assert, require('jquery'))
   } else {
     root.data = factory(root.Mocha, root.chai.assert, root.jQuery)
   }
