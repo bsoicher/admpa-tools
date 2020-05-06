@@ -14,8 +14,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chai/4.2.0/chai.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
 
+
     <style>
         #mocha code {
+            font-size: 13px;
             color: #4d4d4c
         }
 
@@ -49,8 +51,8 @@
             <small class="text-muted">&gt; Maple Leaf &gt; QA Advanced</small>
             <span class="badge badge-warning">In Development</span>
         </h1>
-        <p>Analyze an AEM node for common issues.</p>
-
+        <p>Analyze an AEM node for common issues.  Send me a message on slack if there are any other common issues that could be added.</p>
+        <p>Note: Tests marked as alternate are tests done on the alternate language node of the current node.</p>
         <div class="input-group mt-4">
             <input id="url" type="text" class="form-control" />
             <div class="input-group-append">
@@ -88,7 +90,9 @@
         var expect = chai.expect
         var should = chai.should()
 
-        $('#start').click(function () { window.location = '?url=' + $('#url').val() })
+        $('#start').click(function () {
+            window.location = '?url=' + $('#url').val()
+        })
     </script>
 
     <script>
@@ -101,11 +105,13 @@
 
     <!-- Test cases -->
     <!--<script src="test/main.js"></script>-->
+    <script src="test/metadata.js"></script>
     <script src="test/date.js"></script>
-    <script src="test/thumbnail.js"></script>
+    <!--<script src="test/thumbnail.js"></script>-->
     <script src="test/tags.js"></script>
     <script src="test/links.js"></script>
     <script src="test/migration.js"></script>
+    
 
     <script>
         mocha.run()

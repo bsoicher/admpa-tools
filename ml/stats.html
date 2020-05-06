@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Maple Leaf &gt; Stats</title>
+
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta name="author" content="Ben Soicher" />
+
+    <!-- Style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+</head>
+
+<body>
+    <main>
+        <div class="container mb-5">
+            <h1 class="h4 mt-5">
+                <a href="../index.html">ADMPA Web Tools</a>
+                <small class="text-muted">&gt; Maple Leaf &gt; Stats</small>
+                <span class="badge badge-warning">In Development</span>
+            </h1>
+            <p>Some stats on the maple leaf.</p>
+            
+            <ul>
+                <li>articles without thumbnails</li>
+                <li>articles on wordpress</li>
+                <li>countdown to wordpress being removed</li>
+            </ul>
+
+        </div>
+    </main>
+
+    <script>
+
+        // Configure data sources
+        var config = {
+            json: {
+                en: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json',
+                fr: 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-fr.json'
+            },
+            search: {
+                en: 'https://www.canada.ca/en/department-national-defence/maple-leaf/search.html?q=',
+                fr: 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable/recherche.html?q='
+            }
+        }
+
+        // Prevent loading cached data
+        $.ajaxSetup({ cache: false })
+
+        $.when(
+            $.get(config.json.en),
+            $.get(config.json.fr)
+        ).done(function (en, fr) {
+            console.log(en)
+            console.log(fr)
+        })
+
+
+    </script>
+</body>
+
+</html>
