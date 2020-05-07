@@ -30,7 +30,7 @@ describe('Metadata', function () {
       // Test: Date modified override is enabled
       // Why: To ensure the table order is accurate
       // Fix: Enable date modified override (Properties > Mandatory > Dates > Overwrite the date modified)
-
+ 
       data.meta.should.have.own.property('gcModifiedIsOverridden', 'true')
     })
 
@@ -38,7 +38,7 @@ describe('Metadata', function () {
       // Test: Date modified override value is set
       // Why: To ensure the table order is accurate
       // Fix: Set the date modified date (Properties > Mandatory > Dates > Date Modified Override)
-
+ 
       data.meta.should.have.own.property('gcModifiedOverride')
       data.meta['gcModifiedOverride'].should.be.a('string').and.not.equal('')
     })
@@ -47,7 +47,7 @@ describe('Metadata', function () {
       // Test: Date modified override is enabled
       // Why: To ensure the table order is accurate
       // Fix: Enable date modified override (Properties > Mandatory > Dates > Overwrite the date modified)
-
+ 
       data.meta.alt.should.have.own.property('gcModifiedIsOverridden', 'true')
     })
 
@@ -61,7 +61,7 @@ describe('Metadata', function () {
     })
 
     it('matches between languages', function () {
-      // What: Node dates must match exactly (to the minute)
+      // Test: Node dates must match exactly (to the minute)
       // Why: To ensure the table order matches between languages
       // Fix: Compare the two override dates and use the one which is older for both nodes
       

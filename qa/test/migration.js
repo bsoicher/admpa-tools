@@ -35,7 +35,7 @@ describe('WordPress migration <small>(Applies to articles with WP redirects)</sm
     // Test: The original article tags matches new article tags
     // Why: Migration accuracy
     // Fix: Update the tags in the keywords (Properties > Mandatory > Descriptive metadata > Keywords)
-
+ 
     data.wp['tags'].forEach(function (tag) {
       tag.should.be.oneOf(data.meta['tags'])
     })
