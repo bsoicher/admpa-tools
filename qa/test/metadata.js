@@ -1,22 +1,100 @@
-/* global describe, it, data */
+/* global describe, before, it, data */
 
 describe('Metadata', function () {
 
-  describe('Social media (thumbnail image)', function () {
+  describe('Keywords (Tags)', function () {
+    before(function () {
+      data.meta.tags = data.meta['gcKeywords'] ? data.meta['gcKeywords'].split(',').map(function (tag) { return tag.trim() }) : []
+      data.meta.alt.tags = data.meta.alt['gcKeywords'] ? data.meta['gcKeywords'].split(',').map(function (tag) { return tag.trim() }) : []
+    })
+  
+    it('at least one tag', function () {
+      // Test: Article is tagged with at least one tag
+      // Why: Articles must be searchable by tags
+      // Fix: Add a tag to the keywords (Properties > Mandatory > Descriptive metadata > Keywords)
+ 
+      data.meta.tags.should.not.be.empty
+    })
+  
+    it('same number of tags in both languages', function () {
+      // Test: Number of tags matches between languages
+      // Why: Both languages must be searchable by same tags
+      // Fix: Modify the keywords (Properties > Mandatory > Descriptive metadata > Keywords)
+ 
+      data.meta.tags.length.should.equal(data.meta.alt.tags.length)
+    })
+  })
+
+  describe('Date modified override', function () {
+    it('date override enabled', function () {
+      // Test: Date modified override is enabled
+      // Why: To ensure the table order is accurate
+      // Fix: Enable date modified override (Properties > Mandatory > Dates > Overwrite the date modified)
+
+      data.meta.should.have.own.property('gcModifiedIsOverridden', 'true')
+    })
+
+    it('date override set', function () {
+      // Test: Date modified override value is set
+      // Why: To ensure the table order is accurate
+      // Fix: Set the date modified date (Properties > Mandatory > Dates > Date Modified Override)
+
+      data.meta.should.have.own.property('gcModifiedOverride')
+      data.meta['gcModifiedOverride'].should.be.a('string').and.not.equal('')
+    })
+
+    it('alternate: date override enabled', function () {
+      // Test: Date modified override is enabled
+      // Why: To ensure the table order is accurate
+      // Fix: Enable date modified override (Properties > Mandatory > Dates > Overwrite the date modified)
+
+      data.meta.alt.should.have.own.property('gcModifiedIsOverridden', 'true')
+    })
+
+    it('alertenate: date override set', function () {
+      // Test: Date modified override value is set
+      // Why: To ensure the table order is accurate
+      // Fix: Set the date modified date (Properties > Mandatory > Dates > Date Modified Override)
+      
+      data.meta.alt.should.have.property('gcModifiedOverride')
+      data.meta.alt['gcModifiedOverride'].should.be.a('string').and.not.equal('')
+    })
+
+    it('matches between languages', function () {
+      // What: Node dates must match exactly (to the minute)
+      // Why: To ensure the table order matches between languages
+      // Fix: Compare the two override dates and use the one which is older for both nodes
+      
+      data.meta.should.have.property('gcModifiedOverride')
+      data.meta.alt.should.have.property('gcModifiedOverride')
+      
+      var a = new Date(data.meta['gcModifiedOverride']).setSeconds(0)
+      var b = new Date(data.meta.alt['gcModifiedOverride']).setSeconds(0)
+      
+      a.should.equal(b)
+    })
+
+  })
+
+  describe('Social media (Thumbnail image)', function () {
     before(function () {
       if (!data.meta['gcOGImage'] && !data.meta.alt['gcOGImage']) {
         this.skip() // Skip if thumbnails are not set
       }
     })
   
-    it('should have thumbnail image set on both languages', function () {
-      data.meta.should.have.own.property('gcOGImage')
-      data.meta.alt.should.have.own.property('gcOGImage')
+    it('on both languages', function () {
+      // Test: Asset is set on both languages
+      // Why: Consistency between languages
+      // Fix: Add missing thumbnail
+ 
+      data.meta.should.have.property('gcOGImage')
+      data.meta.alt.should.have.property('gcOGImage')
     })
   
     it('same thumbnail for both languages', function () {
-      // Test: Same thumbnail for both languages (Does not result in error, only a warning)
-      // Why: Ideally images should not have text and be bilinugal
+      // Test: Same asset for both languages (Does not result in error, only a warning)
+      // Why: Ideally images should not have text and be bilingual
       // Fix: Crop out or remove text to make the image bilingual
  
       try {
@@ -28,28 +106,31 @@ describe('Metadata', function () {
   
     describe('Location', function () {
       it('in the DAM', function () {
-        // Assets must be stored in the the DAM
+        // Test: Assets are stored in the DAM
+        // Why: Easier to find existing assets
+        // Fix: Move assets or create copy within the DAM
+ 
         data.meta['gcOGImage'].should.match(/^\/content\/dam\//)
       })
   
       it('in the maple-leaf folder', function () {
-        // What: All Maple Leaf assets should be within the Maple Leaf folder
-        // Why: 
-        // Fix: Move assets or create copy into the Maple Leaf folder
-
+        // Test: Assets are stored in the Maple Leaf folder
+        // Why: Easier to find existing assets
+        // Fix: Move assets or create copy within the Maple Leaf folder
+ 
         data.meta['gcOGImage'].should.match(/^\/content\/dam\/dnd-mdn\/images\/maple-leaf\//)
       })
   
       it('sorted into year and month folders', function () {
-        // What: Assets must be organized
+        // Test: Assets are well organized
         // Why: Easier to find existing assets
         // Fix: Upload assets into year/month folder structure
-
+ 
         data.meta['gcOGImage'].should.match(/\/\d{4}\/\d{2}\//)
       })
     })
   
-    describe('Other', function () {
+    describe('Other issues', function () {
       it('JPEG format', function () {
         // Test: Images should be in jpeg format
         // Why: For consistency accross the site

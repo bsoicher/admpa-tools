@@ -7,6 +7,9 @@ describe('Tags (keywords)', function () {
   })
 
   it('Has at least one tag', function () {
+    // Test: Article is tagged with at least one tag
+    // Why: 
+    // Fix: Add a tag to the keywords (Properties > )
     data.meta.tags.should.not.be.empty
   })
 
