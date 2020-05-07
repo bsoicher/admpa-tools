@@ -51,7 +51,7 @@ describe('Metadata', function () {
       data.meta.alt.should.have.own.property('gcModifiedIsOverridden', 'true')
     })
 
-    it('alertenate: date override set', function () {
+    it('alternate: date override set', function () {
       // Test: Date modified override value is set
       // Why: To ensure the table order is accurate
       // Fix: Set the date modified date (Properties > Mandatory > Dates > Date Modified Override)
