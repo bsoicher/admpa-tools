@@ -63,6 +63,8 @@
         console.log(data)
 
         window.run()
+      }).fail(function (e) {
+        $('<div class="alert alert-danger">AJAX Error: Failed to load with response \'' + e + '\'</div>').appendTo('#mocha')
       })
     })
 
