@@ -53,12 +53,28 @@
         </h1>
         <p>Analyze an AEM node for common issues.  Send me a message on slack if there are any other common issues that could be added.</p>
         <p>Note: Tests marked as alternate are tests done on the alternate language node of the current node.</p>
+
+        <p>For fast access to the <a href="javascript:(function(){if(window.location.hostname!=='www.canada.ca'){alert('Only for canada.ca')}else{window.open('https://caf-fac.ca/tools/qa/?url='+window.location,'_blank');}})()">QA Tool</a> (click and drag link to your bookmarks). Click your bookmark when viewing an article and it will run the tool.</p>
         <div class="input-group mt-4">
             <input id="url" type="text" class="form-control" />
             <div class="input-group-append">
                 <a id="start" class="btn btn-primary" href="javascript:void(0)" title="Click to start testing">Start</a>
             </div>
         </div>
+
+        <!--
+
+        (function(){
+            if(window.location.hostname !== 'www.canada.ca'){
+                alert('only for canada.ca');
+            }else{
+                window.open('https://caf-fac.ca/tools/qa/?url='+window.location,'_blank');
+            }
+        })()
+
+        -->
+
+        
 
         <div id="mocha" class="mt-3">
             <div id="mocha-progress" class="progress my-2" style="height: 5px">
@@ -111,7 +127,6 @@
     <!--<script src="test/tags.js"></script>-->
     <script src="test/links.js"></script>
     <script src="test/migration.js"></script>
-    
 
     <script>
         mocha.run()
