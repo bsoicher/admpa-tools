@@ -12,11 +12,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
 
     <!-- Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.1.0/async.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+    <script src="../lib/aem.js"></script>
 
 </head>
 
@@ -25,14 +25,14 @@
         <div class="container mb-5">
             <h1 class="h4 mt-5">
                 <a href="../index.html">ADMPA Web Tools</a>
-                <small class="text-muted">&gt; Maple Leaf &gt; Feed</small>
+                <small class="text-muted">&gt; Maple Leaf &gt; Feed Generator v2</small>
             </h1>
             <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table. Data is loaded from both WordPress and AEM.</p>
             <p class="mt-4 mb-0" id="published">Status: Published <abbr id="modified" class="text-primary">…</abbr> by <span id="modifiedby" class="text-primary">…</span></p>
-            <div class="progress my-2" style="height: 5px">
+            <div id="progressbar" class="progress my-2" style="height: 5px">
                 <div id="progress" class="progress-bar" style="width:0%"></div>
             </div>
-            <p id="status"><a href="javascript:start()">Click here to start</a></p>
+            <p id="status"><a href="javascript:main()">Click here to start</a></p>
             <h2 class="h5 mt-4">Instructions</h2>
             <ol class="pl-3">
                 <li>Run the tool above. Two JSON files will be generated and downloaded</li>
@@ -40,6 +40,7 @@
                 <li>Select both files and publish them</li>
                 <li>Refresh this page to verify that the status has changed</li>
             </ol>
+            <p>Note: <a href="feed1.html">Version 1</a> is still available if this version is not functioning properly</p>
         </div>
     </main>
 
@@ -48,14 +49,22 @@
         // Configure data sources
         var config = {
             'wp': 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php',
-            'aem_en': 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-en.json',
-            'aem_fr': 'https://www.canada.ca/content/dam/dnd-mdn/documents/json/maple-fr.json',
-            'map_en': 'https://www.canada.ca/en/department-national-defence/maple-leaf.sitemap.xml',
-            'map_fr': 'https://www.canada.ca/fr/ministere-defense-nationale/feuille-derable.sitemap.xml'
+            'root': 'en/department-national-defence/maple-leaf',
+            'aem_en': 'content/dam/dnd-mdn/documents/json/maple-en.json',
+            'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr.json'
         }
 
-        // Prevent loading cached data
-        $.ajaxSetup({ cache: false })
+        // Display current publish status
+        AEM.asset(config.aem_en, function (jcr) {
+            $('#modified').text($.timeago(new Date(jcr['jcr:lastModified']))).attr('title', jcr['jcr:lastModified'])
+            $('#modifiedby').text(jcr['jcr:lastModifiedBy'])
+        }).fail(function () {
+            $('#modified,#modifiedby').text('ERROR')
+        })
+
+        // Current progress percentage
+        var progress = 0
+        var started = null
 
         // Preselect elements
         var $status = $('#status')
@@ -64,25 +73,18 @@
         // Set status message and/or progress
         function status(message, percent) {
             if (typeof message === 'string') { $status.html(message) }
-            if (typeof percent === 'number') { $progress.width(percent + '%') }
+            if (typeof percent === 'number') {
+                progress = percent === 100 ? 100 : progress + percent
+                return $progress.width(progress + '%')
+            }
         }
-
-        // Display current publish status
-        $.get({
-            url: config.aem_en + '/_jcr_content.json',
-            success: function (jcr) {
-                $('#modified').text($.timeago(new Date(jcr['jcr:lastModified']))).attr('title', jcr['jcr:lastModified'])
-                $('#modifiedby').text(jcr['jcr:lastModifiedBy'])
-            },
-            error: function () { $('#modified,#modifiedby').text('ERROR') }
-        })
 
         // Define response fields
         var fields = [
 
             // Category
             function (jcr) {
-                switch (/(\w+)\/\d{4}\/\d{2}\/[^/]+$/.exec(jcr['_self']).pop()) {
+                switch (/(\w+)\/\d{4}\/\d{2}\/.+$/.exec(jcr._self).pop()) {
                     case 'navy':
                     case 'marine':
                         return 'rcn'
@@ -102,16 +104,10 @@
                 return utf8.encode($.trim(jcr['gcOGImage']))
             },
 
-            // Article URL
+            // Title (containing link)
             function (jcr) {
-                if (!jcr['_self']) { return '' }
-                return jcr['_self'].replace('https://www.canada.ca/', '/')
-            },
-
-            // Title
-            function (jcr) {
-                if (!jcr['jcr:title']) { return '' }
-                return utf8.encode($.trim(jcr['jcr:title']))
+                if (!jcr['_self'] || !jcr['jcr:title']) { return '' }
+                return '<a href="/' + AEM.normalize(jcr['_self']) + '.html">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
             },
 
             // Description
@@ -139,83 +135,84 @@
             }
         ]
 
-        // Generate an asynchronous AJAX task
-        function get(url, progress) {
-            return function (cb) {
-                $.get({
-                    url: url,
-                    success: function (data) {
-                        if (progress) { status(null, progress) }
-                        if (url.endsWith('.json')) { data._self = url.replace('/_jcr_content.json', '.html') }
-                        cb(null, data)
-                    },
-                    error: function (xhr, status, err) { cb(err) }
+        function main() {
+            started = new Date().getTime()
+            status('Initializing', 1)
+
+            var wp = $.get(config.wp)
+            var aem = $.Deferred()
+
+            // Get AEM articles and process them
+            AEM.descendants(config.root, function (urls) {
+                urls = urls.filter(isArticle)
+                status('Downloading metadata (' + (urls.length * 2) + ' nodes)')
+
+                $.when.apply(null, urls.map(mapMetaPair)).done(function () {
+                    aem.resolve(Array.prototype.slice.call(arguments).map(mapDataPair))
                 })
-            }
+            })
+
+            // Export data as downloads
+            $.when(wp, aem).done(exportData)
         }
 
-        function start() {
-            status('Downloading WordPress export', 1)
+        // Test if URL is an article
+        function isArticle(url) {
+            return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
+        }
 
-            // For time tracking
-            var start = new Date().getTime()
+        // Get metadata of a node and its peer + track progress
+        function mapMetaPair(url, index, arr) {
+            return AEM.metaPair(url).progress(function() {
+                status(null, 49 / arr.length)
+            })
+        }
 
-            async.parallel([
+        // Convert meta pair to response data pair
+        function mapDataPair(metaPair) {
+            var dates = [
+                'gcModifiedOverride',
+                'gcIssued',
+                'gcLastPublished'
+            ]
 
-                function (cb) {
-                    status('Downloading AEM Sitemaps')
+            // Syncronize date fields between languages
+            dates.forEach(function (date) {
+                if (metaPair.en[date] || metaPair.fr[date]) {
+                    var en = new Date(metaPair.en[date] || null)
+                    var fr = new Date(metaPair.fr[date] || null)
+                    var last = en >= fr ? metaPair.en[date] : metaPair.fr[date]
+                    metaPair.en[date] = last
+                    metaPair.fr[date] = last
+                }
+            })
 
-                    async.parallel([
-                        get(config.map_en),
-                        get(config.map_fr)
-                    ], function (err, sitemaps) {
-                        status('Processing sitemaps', 2)
+            // Generate data fieldsfrom metadata
+            metaPair.en = fields.map(function (fn) { return fn(metaPair.en) })
+            metaPair.fr = fields.map(function (fn) { return fn(metaPair.fr) })
 
-                        nodes = $(sitemaps).find('loc').map(function () {
-                            // Extract URLs
-                            return this.innerHTML
-                        }).get().filter(function (url) {
-                            // Remove non article nodes
-                            return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
-                        })
+            return metaPair
+        }
 
-                        // Create download tasks
-                        var percent = 3
-                        var increment = 96 / nodes.length
-                        nodes = nodes.map(function (url) {
-                            return get(url.replace('.html', '/_jcr_content.json'), percent += increment)
-                        })
+        // Turn list of data pairs into a pair of data lists
+        function formatData(wp, aem) {
+            var data = wp[0]
 
-                        status('Downloading metadata (' + nodes.length + ' nodes)', 3)
-                        async.parallelLimit(nodes, 5, function (err, meta) {
-                            var data = { 'en': [], 'fr': [] }
+            aem.forEach(function (dataPair) {
+                data.en.push(dataPair.en)
+                data.fr.push(dataPair.fr)
+            })
+        
+            return data
+        }
 
-                            // Generate data using field definitions
-                            meta.forEach(function (jcr) {
-                                data[jcr['jcr:language']].push(fields.map(function (fn) {
-                                    return fn(jcr)
-                                }))
-                            })
+        // Format feeds and trigger downloads
+        function exportData(wp, aem) {
+            var data = formatData(wp, aem)
+            status('Done (' + data.en.length + ' articles in ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
 
-                            cb(err, data)
-                        })
-                    })
-                },
-
-                get(config.wp),
-
-            ], function (err, data) {
-
-                if (err) { return status('Error', 0) }
-
-                var en = data[0].en.concat(data[1].en)
-                var fr = data[0].fr.concat(data[1].fr)
-
-                var elapsed = Math.round((new Date().getTime() - start) / 100) / 10
-                status('Done (' + en.length + ' entries in ' + elapsed + ' seconds)', 100)
-
-                download(JSON.stringify({ data: en }, null, null), 'maple-en.json', 'text/plain;charset=UTF-8;')
-                download(JSON.stringify({ data: fr }, null, null), 'maple-fr.json', 'text/plain;charset=UTF-8;')
+            $.each(data, function (lang, list) {
+                download(JSON.stringify({ data: list }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
             })
         }
 
