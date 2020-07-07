@@ -17,7 +17,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
     <script src="../lib/aem.js"></script>
-
 </head>
 
 <body>
@@ -40,7 +39,7 @@
                 <li>Select both files and publish them</li>
                 <li>Refresh this page to verify that the status has changed</li>
             </ol>
-            <p>Note: <a href="feed1.html">Version 1</a> is still available if this version is not functioning properly</p>
+            <p>Note: <a href="feed1.html">Version 1</a> is still available temporarily if there are any issues</p>
         </div>
     </main>
 
@@ -135,6 +134,7 @@
             }
         ]
 
+        // Run program
         function main() {
             started = new Date().getTime()
             status('Initializing', 1)
