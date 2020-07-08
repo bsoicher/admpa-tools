@@ -27,7 +27,9 @@
                 <small class="text-muted">&gt; Maple Leaf &gt; Feed Generator v2</small>
             </h1>
             <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table. Data is loaded from both WordPress and AEM.</p>
-            <p class="mt-4 mb-0" id="published">Status: Published <abbr id="modified" class="text-primary">…</abbr> by <span id="modifiedby" class="text-primary">…</span></p>
+            <p class="mt-4 mb-0">maple-en.json: <span id="enstatus"></span></p>
+            <p class="mt-0 mb-0">maple-fr.json: <span id="frstatus"></span></p>
+
             <div id="progressbar" class="progress my-2" style="height: 5px">
                 <div id="progress" class="progress-bar" style="width:0%"></div>
             </div>
@@ -53,14 +55,6 @@
             'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr.json'
         }
 
-        // Display current publish status
-        AEM.asset(config.aem_en, function (jcr) {
-            $('#modified').text($.timeago(new Date(jcr['jcr:lastModified']))).attr('title', jcr['jcr:lastModified'])
-            $('#modifiedby').text(jcr['jcr:lastModifiedBy'])
-        }).fail(function () {
-            $('#modified,#modifiedby').text('ERROR')
-        })
-
         // Current progress percentage
         var progress = 0
         var started = null
@@ -70,13 +64,35 @@
         var $progress = $('#progress')
 
         // Set status message and/or progress
-        function status(message, percent) {
+        function status(message, percent, error) {
             if (typeof message === 'string') { $status.html(message) }
             if (typeof percent === 'number') {
                 progress = percent === 100 ? 100 : progress + percent
                 return $progress.width(progress + '%')
             }
         }
+
+        // Display current status of english JSON
+        AEM.asset(config.aem_en, function (jcr) {
+            var html = jcr['dam:assetState'] + ' '
+            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
+            html += ' by: <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
+            $('#enstatus').html(html)
+        }).fail(function (e) {
+            if (e === 'Not Found') { e = 'Not Published' }
+            $('#enstatus').html('Error (' + e + ')')
+        })
+
+        // Display current status of french JSON
+        AEM.asset(config.aem_fr).done(function (jcr) {
+            var html = jcr['dam:assetState'] + ' '
+            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
+            html += ' by: <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
+            $('#frstatus').html(html)
+        }).fail(function (e) {
+            if (e === 'Not Found') { e = 'Not Published' }
+            $('#frstatus').html('Error (' + e + ')')
+        })
 
         // Define response fields
         var fields = [
@@ -150,6 +166,8 @@
                 $.when.apply(null, urls.map(mapMetaPair)).done(function () {
                     aem.resolve(Array.prototype.slice.call(arguments).map(mapDataPair))
                 })
+            }).fail(function (e) {
+                status('Error (' + e + '): ' + config.root)
             })
 
             // Export data as downloads
@@ -163,8 +181,11 @@
 
         // Get metadata of a node and its peer + track progress
         function mapMetaPair(url, index, arr) {
-            return AEM.metaPair(url).progress(function() {
+            return AEM.metaPair(url).progress(function () {
                 status(null, 49 / arr.length)
+            }).fail(function (e) {
+                AEM.get.abort()
+                status('Error (' + e + '): ' + AEM.normalize(url).replace(config.root, ''), null)
             })
         }
 
@@ -202,14 +223,14 @@
                 data.en.push(dataPair.en)
                 data.fr.push(dataPair.fr)
             })
-        
+
             return data
         }
 
         // Format feeds and trigger downloads
         function exportData(wp, aem) {
             var data = formatData(wp, aem)
-            status('Done (' + data.en.length + ' articles in ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
+            status('Done (' + data.en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
 
             $.each(data, function (lang, list) {
                 download(JSON.stringify({ data: list }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
