@@ -4,6 +4,9 @@
 <head>
   <title>General &gt; Video Player</title>
 
+  <!-- Speed optimization -->
+  <link rel="dns-prefetch" href="https://www.canada.ca">
+
   <!-- Meta -->
   <meta charset="utf-8" />
   <meta name="author" content="Ben Soicher" />
@@ -38,7 +41,7 @@
       window.location = '?_=' + t
     } else {
       var m = s.match(/[?&]_=(\d+)/)
-      if(!m) {
+      if (!m) {
         window.location = s + '&_=' + t
       } else if (m[1] !== t) {
         window.location = s.replace(/([?&]_)=(\d+)/, '$1=' + t)
@@ -46,7 +49,7 @@
     }
   })(window.location.search)
 
-  $(document).on('click', 'a', function(e) {
+  $(document).on('click', 'a', function (e) {
     if (this.href.indexOf(window.location.pathname) > -1) {
       this.href = this.href + (this.href.indexOf('?') > -1 ? '&_=' : '?_=') + new Date().setSeconds(0, 0).toString()
     }
