@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Maple Leaf &gt; CDTS template generator</title>
+
+    <!-- Speed optimization -->
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta name="author" content="Ben Soicher" />
+
+    <!-- Style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <main>
+        <div class="container mb-5">
+            <h1 class="h4 mt-5">
+                <a href="../index.html">ADMPA Web Tools</a>
+                <small class="text-muted">&gt; General &gt; CDTS template generator</small>
+            </h1>
+            <p>Analyze a site section for freestyle pages</p>
+            <h2 class="h5 mt-4 mb-3">Progress</h2>
+            <div id="progressbar" class="progress my-2" style="height: 5px">
+                <div id="progress" class="progress-bar" style="width:0%"></div>
+            </div>
+            <p id="status"><a href="javascript:main()">Click here to start</a></p>
+            <pre id="list"></pre>
+        </div>
+    </main>
+
+    <script>
+
+        function latest(cb) {
+            return $.Deferred(function(d){
+                $.get({
+                    url: 'https://www.canada.ca/etc/designs/canada/cdts/gcweb/rn/cdts/compiled/wet-en.js',
+                    dataType: 'text',
+                }).done(function(file){
+                    d.resolve(file.match(/\/gcweb\/(v[0-9_]+)\//)[1])
+                }).fail(function(xhr, status, err){
+                    d.reject(err)
+                })
+            }).done(cb)
+        }
+        
+        latest(function(d){
+            console.log(d)
+        })
+
+    </script>
+
+</body>
+
+</html>
