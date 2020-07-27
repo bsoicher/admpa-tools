@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>ADMPA Web Tools &gt; CDTS template</title>
+
+    <!-- Speed optimization -->
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+    <link rel="dns-prefetch" href="https://ssl-templates.services.gc.ca">
+
+    <!-- Meta -->
+    <meta charset="utf-8" />
+    <meta name="author" content="Ben Soicher" />
+
+    <!-- Style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="../lib/aem.js"></script>
+</head>
+
+<body>
+    <main>
+        <div class="container mb-5">
+            <h1 class="h4 mt-5">
+                <a href="../index.html">ADMPA Web Tools</a>
+                <small class="text-muted">&gt; CDTS template</small>
+            </h1>
+            <p>Generate a <a href="https://cenw-wscoe.github.io/sgdc-cdts/docs/index-en.html" target="_blank">CDTS</a> template for AEM freestyle pages</p>
+
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="version">CDTS version</label>
+                    <select class="form-control" id="version">
+                        <option value="v4_0_32" selected>v4_0_32</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-9">
+                    <label for="node">Freestyle node</label>
+                    <div class="input-group">
+                        <input type="text" id="node" class="form-control"></input>
+                        <div class="input-group-append">
+                            <a id="start" class="btn btn-primary" href="javascript:main()" title="Click to start">Start</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+
+        var esdc = 'https://ssl-templates.services.gc.ca/app/cls/WET/gcweb/'
+        var cdts = 'https://www.canada.ca/etc/designs/canada/cdts/gcweb/'
+
+
+        $('#node').val('https://www.canada.ca/en/department-national-defence/maple-leaf/search.html')
+
+        function main() {
+            var node = $('#node').val()
+            var version = $('#version').val()
+
+            AEM.metaPair(node, function (meta) {
+
+
+
+            })
+
+        }
+
+        // https://ssl-templates.services.gc.ca/app/cls/WET/gcweb/v4_0_32/cdts/samples/content-en.shtml
+
+        // Get a list of available CDTS versions
+        $.Deferred(function (d) {
+            $.ajax({
+                url: esdc,
+                dataType: 'text',
+                success: function (html) { d.resolve($.unique(html.match(/(v[\d_]+)/g)).reverse()) },
+                error: function (xhr, status, err) { d.reject(err) }
+            })
+        }).done(function (list) {
+            $('#version').html(list.map(function (val, i) {
+                return '<option value="' + val + '"' + (i === 0 ? ' selected>' + val + ' - Latest' : '>' + val) + '</option>'
+            }).join())
+        })
+
+
+        var version = $('#version').val()
+
+
+        function content(cb) {
+            return $.Deferred(function (d) {
+                $.when(
+                    $.ajax(esdc + version + '/cdts/samples/content-en.shtml'),
+                    $.ajax(esdc + version + '/cdts/samples/content-fr.shtml')
+                ).done(function (en, fr) {
+                    d.resolve({ 
+                        en: en[0].replace(esdc, cdts), 
+                        fr: fr[0].replace(esdc, cdts)
+                    })
+                })
+            }).done(cb).promise()
+        }
+
+        content(function(d){
+            console.log(d)
+        })
+
+    </script>
+
+</body>
+
+</html>
