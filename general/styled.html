@@ -38,7 +38,8 @@
 
         // Configure data sources
         var config = {
-            'root': 'en/department-national-defence',
+            //'root': 'en/department-national-defence',
+            'root': 'fr/ministere-defense-nationale'
         }
 
         // Current progress percentage
@@ -69,7 +70,7 @@
 
     
                 urls.forEach(function(url, i, arr) {
-                    isFreestyle(url, function(b) {
+                    isStyled(url, function(b) {
                         if (b) {
                             $('#list').append(url + '<br/>')
                         }
@@ -88,10 +89,10 @@
            
         }
 
-        function isFreestyle(path, cb) {
+        function isStyled(path, cb) {
             return $.Deferred(function (d) {
-                AEM.meta(path).then(function (meta) {
-                    d.notify(100).resolve(meta['cq:template'] === '/apps/canada/templates/mwsfreestyletemplate')
+                AEM.html(path).then(function (html) {
+                    d.notify(100).resolve(/content\/dam\/[^\.]+\.css/.test(html))
                 }, function () {
                     d.notify(100).resolve(false)
                 })
