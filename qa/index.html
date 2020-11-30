@@ -5,6 +5,10 @@
     <meta charset="utf-8" />
     <title>QA Advanced</title>
 
+    <!-- Speed optimization -->
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+
     <!-- Stylesheet -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css">
 
@@ -49,7 +53,6 @@
         <h1 class="h4 mt-5">
             <a href="../index.html">ADMPA Web Tools</a>
             <small class="text-muted">&gt; Maple Leaf &gt; QA Advanced</small>
-            <span class="badge badge-warning">In Development</span>
         </h1>
         <p>Analyze an AEM node for common issues.  Send me a message on slack if there are any other common issues that could be added.</p>
         <p>Note: Tests marked as alternate are tests done on the alternate language node of the current node.</p>
@@ -106,12 +109,8 @@
     </script>
 
     <!-- Test cases -->
-    <!--<script src="test/main.js"></script>-->
     <script src="test/metadata.js"></script>
-    <!--<script src="test/date.js"></script>-->
-    <!--<script src="test/thumbnail.js"></script>-->
-    <!--<script src="test/tags.js"></script>-->
-    <script src="test/links.js"></script>
+    <script src="test/content.js"></script>
     <script src="test/migration.js"></script>
 
     <script>

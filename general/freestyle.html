@@ -4,6 +4,9 @@
 <head>
     <title>Maple Leaf &gt; Freestyle Finder</title>
 
+    <!-- Speed optimization -->
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+
     <!-- Meta -->
     <meta charset="utf-8" />
     <meta name="author" content="Ben Soicher" />
@@ -21,7 +24,7 @@
         <div class="container mb-5">
             <h1 class="h4 mt-5">
                 <a href="../index.html">ADMPA Web Tools</a>
-                <small class="text-muted">&gt; Maple Leaf &gt; Freestyle Finder</small>
+                <small class="text-muted">&gt; General &gt; Freestyle Finder</small>
             </h1>
             <p>Analyze a site section for freestyle pages (Nodes under "en/department-national-defence")</p>
             <p>Note: Might take a while to run.</p>
@@ -67,7 +70,6 @@
             AEM.descendants(config.root, function (urls) {
                 status('Downloading metadata (' + (urls.length) + ' nodes)')
 
-    
                 urls.forEach(function(url, i, arr) {
                     isFreestyle(url, function(b) {
                         if (b) {
@@ -77,15 +79,10 @@
                         status(null, 99 / arr.length)
                     })
                 })
-
-                //$.when.apply(null, urls.map(mapMetaPair)).done(function () {
-                //    aem.resolve(Array.prototype.slice.call(arguments).map(mapDataPair))
-                //})
             }).fail(function (e) {
                 status('Error (' + e + '): ' + config.root)
             })
 
-           
         }
 
         function isFreestyle(path, cb) {
