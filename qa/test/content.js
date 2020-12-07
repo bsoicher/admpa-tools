@@ -24,6 +24,7 @@ describe('Content links', function () {
 
 })
 
+/*
 describe('Image captions', function () {
 
   it('Captions in expand collapse', function() {
@@ -31,6 +32,7 @@ describe('Image captions', function () {
   })
  
 })
+*/
 
 /*
  data.doc.find('a[href*=".mil.ca"').get().should.have.lengthOf(0)
