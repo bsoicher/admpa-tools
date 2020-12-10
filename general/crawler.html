@@ -23,13 +23,15 @@
                 <a href="../index.html">ADMPA Web Tools</a>
                 <small class="text-muted">&gt; General &gt; AEM Crawler</small>
             </h1>
-            <p>Configurable AEM crawler</p>
-
-            <h2 class="h4">Options</h2>
-
+            <p>Customizable AEM crawler for canada.ca.  Allows searching page metadata and source code.</p>
             <div class="form-group">
-                <label for="inputNode">Starting Node</label>
-                <input type="email" class="form-control" id="inputNode" value="en/department-national-defence">
+                <label for="exampleFormControlTextarea1" class="h5">Configuration</label>
+                <textarea class="form-control" id="inputConfig" rows="5">
+{
+    "StartNode": "en/department-national-defence",
+    "rate": 3,
+}
+                </textarea>
             </div>
 
             <p>Note: Might take a while to run.</p>
