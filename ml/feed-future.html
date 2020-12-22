@@ -4,6 +4,9 @@
 <head>
     <title>Maple Leaf &gt; Feed Generator</title>
 
+    <!-- Speed optimization -->
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+
     <!-- Meta -->
     <meta charset="utf-8" />
     <meta name="author" content="Ben Soicher" />
@@ -24,13 +27,14 @@
         <div class="container mb-5">
             <h1 class="h4 mt-5">
                 <a href="../index.html">ADMPA Web Tools</a>
-                <small class="text-muted">&gt; Maple Leaf &gt; Feed v2</small>
-                <span class="badge badge-warning">Temporary Fix </span>
+                <small class="text-muted">&gt; Maple Leaf &gt; Feed Generator</small>
             </h1>
-            <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table. Data is loaded from both WordPress and AEM.</p>
+            <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
             <h2 class="h5 mt-4">File status</h2>
-            <p class="mb-0">maple-en.json: <span id="enstatus"></span></p>
-            <p class="mt-0 mb-4">maple-fr.json: <span id="frstatus"></span></p>
+            
+            <p class="mb-0">maple-en.json - <span id="enstatus">...</span></p>
+            <p class="mt-0 mb-4">maple-fr.json - <span id="frstatus">...</span></p>
+
             <h2 class="h5 mt-4 mb-3">Progress</h2>
             <div id="progressbar" class="progress my-2" style="height: 5px">
                 <div id="progress" class="progress-bar" style="width:0%"></div>
@@ -65,7 +69,7 @@
         var $progress = $('#progress')
 
         // Set status message and/or progress
-        function status(message, percent, error) {
+        function status(message, percent) {
             if (typeof message === 'string') { $status.html(message) }
             if (typeof percent === 'number') {
                 progress = percent === 100 ? 100 : progress + percent
@@ -156,10 +160,7 @@
             started = new Date().getTime()
             status('Initializing', 1)
 
-            // Dont load WP
-            var wp = $.Deferred();
-            wp.resolve({ en: [], fr: [] })
-
+            var wp = $.get(config.wp)
             var aem = $.Deferred()
 
             // Get AEM articles and process them
@@ -221,7 +222,7 @@
 
         // Turn list of data pairs into a pair of data lists
         function formatData(wp, aem) {
-            var data = wp
+            var data = wp[0]
 
             aem.forEach(function (dataPair) {
                 data.en.push(dataPair.en)

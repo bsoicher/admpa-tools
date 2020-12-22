@@ -4,9 +4,6 @@
 <head>
     <title>Maple Leaf &gt; Freestyle Finder</title>
 
-    <!-- Speed optimization -->
-    <link rel="dns-prefetch" href="https://www.canada.ca">
-
     <!-- Meta -->
     <meta charset="utf-8" />
     <meta name="author" content="Ben Soicher" />
@@ -24,9 +21,9 @@
         <div class="container mb-5">
             <h1 class="h4 mt-5">
                 <a href="../index.html">ADMPA Web Tools</a>
-                <small class="text-muted">&gt; General &gt; Freestyle Finder</small>
+                <small class="text-muted">&gt; Maple Leaf &gt; Alerts Finder</small>
             </h1>
-            <p>Analyze a site section for freestyle pages (Nodes under "en/department-national-defence")</p>
+            <p>Analyze a site section for alerts (Nodes under "en/department-national-defence")</p>
             <p>Note: Might take a while to run.</p>
             <h2 class="h5 mt-4 mb-3">Progress</h2>
             <div id="progressbar" class="progress my-2" style="height: 5px">
@@ -41,7 +38,9 @@
 
         // Configure data sources
         var config = {
-            'root': 'en/department-national-defence',
+            //'root': 'en/department-national-defence',
+            //'root': 'en/department-national-defence/services/contact-us',
+            'root': 'fr/ministere-defense-nationale'
         }
 
         // Current progress percentage
@@ -70,8 +69,9 @@
             AEM.descendants(config.root, function (urls) {
                 status('Downloading metadata (' + (urls.length) + ' nodes)')
 
+    
                 urls.forEach(function(url, i, arr) {
-                    isFreestyle(url, function(b) {
+                    isAlerts(url, function(b) {
                         if (b) {
                             $('#list').append(url + '<br/>')
                         }
@@ -79,16 +79,36 @@
                         status(null, 99 / arr.length)
                     })
                 })
+
+                //$.when.apply(null, urls.map(mapMetaPair)).done(function () {
+                //    aem.resolve(Array.prototype.slice.call(arguments).map(mapDataPair))
+                //})
             }).fail(function (e) {
                 status('Error (' + e + '): ' + config.root)
             })
 
+           
         }
 
-        function isFreestyle(path, cb) {
+        function isAlerts(path, cb) {
             return $.Deferred(function (d) {
-                AEM.meta(path).then(function (meta) {
-                    d.notify(100).resolve(meta['cq:template'] === '/apps/canada/templates/mwsfreestyletemplate')
+                AEM.html(path).then(function (html) {
+                    html = html.replace(/<img[^>]*>/g,"").replace(/<source[^>]*>/g,"").replace(/<link[^>]*>/g,"");
+
+                    var $html = $(html);
+                    var done = false;
+
+                    $html.find('div.alert').each(function(){
+                        if(!done && $(this).text().trim() === '') {
+                            d.notify(100).resolve(true)
+                            done = true;
+                        }
+                    })
+
+                    if (!done) {
+                        d.notify(100).resolve(false)
+                    }
+                   
                 }, function () {
                     d.notify(100).resolve(false)
                 })

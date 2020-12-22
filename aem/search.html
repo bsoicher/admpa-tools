@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>AEM - Search</title>
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+
+    <meta charset="utf-8" />
+    <meta name="author" content="Ben Soicher" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/url-search-params/1.1.0/url-search-params.js"></script>
+    <script src="../lib/aem.js"></script>
+</head>
+
+<body>
+    <main>
+        <div class="container my-5">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 h5">
+                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
+                    <li class="breadcrumb-item"><a href="index.html">AEM</a></li>
+                    <li class="breadcrumb-item" aria-current="page">Search</li>
+                </ol>
+            </nav>
+            <p>Customizable node search using html and/or metadata.</p>
+
+            <label for="opts">JSON Options</label>
+            <textarea class="form-control" id="opts" rows="10"></textarea>
+
+            <div id="progressbar" class="progress mb-2 mt-4" style="height: 5px">
+                <div id="progress" class="progress-bar" style="width:0%"></div>
+            </div>
+            <p id="status"><a href="javascript:main()">Click here to start</a></p>
+            <ul id="list" class="list-unstyled"></ul>
+        </div>
+    </main>
+
+    <script>
+
+        // Default options
+        var opts = {
+            root: 'https://www.canada.ca/en/department-national-defence.html',
+            bilingual: false,
+            start: false,
+            meta: {
+                'cq:template': '/apps/canada/templates/mwsfreestyletemplate'
+            }
+        }
+
+        // Extend options with URL params
+        var params = new URLSearchParams(window.location.search)
+        params.forEach(function (value, key) {
+            try {
+                opts[key] = JSON.parse(value)
+            } catch (e) {
+                opts[key] = value
+            }
+        })
+
+        // Populate text field with options
+        $('#opts').val(JSON.stringify(opts, null, '\t')).on('change keyup paste', function () {
+            opts = JSON.parse($(this).val())
+        });
+
+        // Current progress percentage
+        var progress = 0
+        var started = null
+
+        // Preselect elements
+        var $status = $('#status')
+        var $progress = $('#progress')
+
+        // Set status message and/or progress
+        function status(message, percent, error) {
+            if (typeof message === 'string') { $status.html(message) }
+            if (typeof percent === 'number') {
+                progress = percent === 100 ? 100 : progress + percent
+                return $progress.width(progress + '%')
+            }
+        }
+
+        // Run program
+        function main() {
+
+            $('#opts').prop('disabled', true)
+
+            started = new Date().getTime()
+            status('Initializing', 1)
+
+            var nodes = $.Deferred()
+            if (Boolean(opts.bilingual)) {
+                AEM.peer(opts.root, function (peer) {
+                    $.when(
+                        AEM.descendants(opts.root),
+                        AEM.descendants(peer)
+                    ).done(function (root, alt) {
+                        nodes.resolve(root.concat(alt))
+                    })
+                })
+            } else {
+                nodes = AEM.descendants(opts.root)
+            }
+
+            nodes.done(function (urls) {
+                status('Downloading metadata (' + (urls.length) + ' nodes)')
+
+                urls.forEach(function (url, i, arr) {
+
+                    status(null,)
+
+                    AEM.meta(url, function (meta) {
+                        for (var key in opts.meta) {
+                            if (!meta[key].match(opts.meta[key])) {
+                                return
+                            }
+                        }
+
+                        $('#list').append(url + '<br/>')
+                    }).always(function () {
+                        status(null, 99 / urls.length)
+                    })
+
+                })
+            })
+
+        }
+
+        if (Boolean(opts.start)) {
+            main()
+        }
+
+    </script>
+
+</body>
+
+</html>

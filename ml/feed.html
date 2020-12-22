@@ -27,12 +27,14 @@
         <div class="container mb-5">
             <h1 class="h4 mt-5">
                 <a href="../index.html">ADMPA Web Tools</a>
-                <small class="text-muted">&gt; Maple Leaf &gt; Feed v2</small>
+                <small class="text-muted">&gt; Maple Leaf &gt; Feed Generator</small>
             </h1>
             <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table. Data is loaded from both WordPress and AEM.</p>
             <h2 class="h5 mt-4">File status</h2>
-            <p class="mb-0">maple-en.json: <span id="enstatus"></span></p>
-            <p class="mt-0 mb-4">maple-fr.json: <span id="frstatus"></span></p>
+            
+            <p class="mb-0">maple-en.json - <span id="enstatus">...</span></p>
+            <p class="mt-0 mb-4">maple-fr.json - <span id="frstatus">...</span></p>
+
             <h2 class="h5 mt-4 mb-3">Progress</h2>
             <div id="progressbar" class="progress my-2" style="height: 5px">
                 <div id="progress" class="progress-bar" style="width:0%"></div>
@@ -45,7 +47,6 @@
                 <li>Select both files and publish them</li>
                 <li>Refresh this page to verify that the file status has changed</li>
             </ol>
-            <p class="mt-4">Note: <a href="feed1.html">Version 1</a> is still available temporarily if there are any problems</p>
         </div>
     </main>
 
@@ -68,7 +69,7 @@
         var $progress = $('#progress')
 
         // Set status message and/or progress
-        function status(message, percent, error) {
+        function status(message, percent) {
             if (typeof message === 'string') { $status.html(message) }
             if (typeof percent === 'number') {
                 progress = percent === 100 ? 100 : progress + percent
