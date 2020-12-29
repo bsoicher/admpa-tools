@@ -9,7 +9,6 @@
 
     <!-- Meta -->
     <meta charset="utf-8" />
-    <meta name="author" content="Ben Soicher" />
 
     <!-- Styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css">
@@ -29,12 +28,14 @@
 </head>
 
 <body id="body">
-    <div class="container">
-
-        <h1 class="h4 mt-5">
-            <a href="../index.html">ADMPA Web Tools</a>
-            <small class="text-muted">&gt; Maple Leaf &gt; Gallery</small>
-        </h1>
+    <div class="container my-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent p-0 h5">
+                <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
+                <li class="breadcrumb-item"><a href="../index.html">Maple Leaf</a></li>
+                <li class="breadcrumb-item" aria-current="page">Gallery</li>
+            </ol>
+        </nav>
 
         <p>Use this page to generate the HTML of an image gallery.</p><p>Images must first be published to canada.ca DAM in the folder ( <code>dam/dnd-mdn/images/maple-leaf/articles/</code> )</p>
 

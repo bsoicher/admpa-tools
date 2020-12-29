@@ -9,7 +9,6 @@
 
     <!-- Meta -->
     <meta charset="utf-8" />
-    <meta name="author" content="Ben Soicher" />
 
     <!-- Style -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css">
@@ -24,12 +23,14 @@
 
 <body>
     <main>
-        <div class="container mb-5">
-            <h1 class="h4 mt-5">
-                <a href="../index.html">ADMPA Web Tools</a>
-                <small class="text-muted">&gt; Western Sentinel &gt; Feed</small>
-                <span class="badge badge-warning">In Development</span>
-            </h1>
+        <div class="container my-5">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 h5">
+                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
+                    <li class="breadcrumb-item"><a href="index.html">Western Sentinel</a></li>
+                    <li class="breadcrumb-item" aria-current="page">Feed Generator</li>
+                </ol>
+            </nav>
             <p>Compiles a listing of Western Sentinel article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/corporate/news/regional-news/western-sentinel.html" target="_blank">search</a> table.</p>
             <h2 class="h5 mt-4">File status</h2>
             <p class="mb-0">ws-en.json: <span id="enstatus"></span></p>

@@ -6,7 +6,6 @@
     <link rel="dns-prefetch" href="https://www.canada.ca">
 
     <meta charset="utf-8" />
-    <meta name="author" content="Ben Soicher" />
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css">
 
@@ -51,14 +50,14 @@
         }
 
         // Extend options with URL params
-        var params = new URLSearchParams(window.location.search)
-        params.forEach(function (value, key) {
-            try {
-                opts[key] = JSON.parse(value)
-            } catch (e) {
-                opts[key] = value
-            }
-        })
+        var json = new URLSearchParams(window.location.search).get('json')
+
+        if (param) {
+            $.extend(opts, JSON.parse(json))
+        }
+        
+        
+  
 
         // Populate text field with options
         $('#opts').val(JSON.stringify(opts, null, '\t')).on('change keyup paste', function () {
@@ -113,7 +112,7 @@
 
                     AEM.meta(url, function (meta) {
                         for (var key in opts.meta) {
-                            if (!meta[key].match(opts.meta[key])) {
+                            if (!(meta[key] || "").match(opts.meta[key])) {
                                 return
                             }
                         }
