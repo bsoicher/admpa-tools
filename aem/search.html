@@ -50,19 +50,18 @@
         }
 
         // Extend options with URL params
-        var json = new URLSearchParams(window.location.search).get('json')
+        var opts_url = new URLSearchParams(window.location.search).get('opts')
 
-        if (param) {
-            $.extend(opts, JSON.parse(json))
+        if (opts_url) {
+            try {
+                $.extend(opts, JSON.parse(opts_url))
+                $('#opts').val(JSON.stringify(opts, null, '\t'))
+            } catch (e) {
+                $('#opts').val(opts_url).addClass('is-invalid')
+            }
+        } else {
+            $('#opts').val(JSON.stringify(opts, null, '\t'))
         }
-        
-        
-  
-
-        // Populate text field with options
-        $('#opts').val(JSON.stringify(opts, null, '\t')).on('change keyup paste', function () {
-            opts = JSON.parse($(this).val())
-        });
 
         // Current progress percentage
         var progress = 0
@@ -84,7 +83,8 @@
         // Run program
         function main() {
 
-            $('#opts').prop('disabled', true)
+            opts = $('#opts').prop('disabled', true).val()
+            
 
             started = new Date().getTime()
             status('Initializing', 1)
