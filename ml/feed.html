@@ -31,8 +31,8 @@
                     <li class="breadcrumb-item" aria-current="page">Feed Generator</li>
                 </ol>
             </nav>
-         
-            <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table. Data is loaded from both WordPress and AEM.</p>
+
+            <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
             <h2 class="h5 mt-4">File status</h2>
             
             <p class="mb-0">maple-en.json - <span id="enstatus">...</span></p>
@@ -57,10 +57,9 @@
 
         // Configure data sources
         var config = {
-            'wp': 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/migrate.php',
-            'root': 'en/department-national-defence/maple-leaf',
             'aem_en': 'content/dam/dnd-mdn/documents/json/maple-en.json',
-            'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr.json'
+            'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr.json',
+            'root': 'en/department-national-defence/maple-leaf',
         }
 
         // Current progress percentage
@@ -163,23 +162,26 @@
             started = new Date().getTime()
             status('Initializing', 1)
 
-            var wp = $.get(config.wp)
-            var aem = $.Deferred()
-
-            // Get AEM articles and process them
-            AEM.descendants(config.root, function (urls) {
+            AEM.descendants(config.root).done(function (urls) {
                 urls = urls.filter(isArticle)
                 status('Downloading metadata (' + (urls.length * 2) + ' nodes)')
 
+                // Download all nodes while pairing them
                 $.when.apply(null, urls.map(mapMetaPair)).done(function () {
-                    aem.resolve(Array.prototype.slice.call(arguments).map(mapDataPair))
+                    // Process node data
+                    var pairs = Array.prototype.slice.call(arguments).map(mapDataPair)
+
+                    // Split the pairs into 2 feeds
+                    var en = pairs.map(function(pair){return pair.en})
+                    var fr = pairs.map(function(pair){return pair.fr})
+
+                    // Export
+                    exportData(en, fr)
                 })
+
             }).fail(function (e) {
                 status('Error (' + e + '): ' + config.root)
             })
-
-            // Export data as downloads
-            $.when(wp, aem).done(exportData)
         }
 
         // Test if URL is an article
@@ -223,26 +225,12 @@
             return metaPair
         }
 
-        // Turn list of data pairs into a pair of data lists
-        function formatData(wp, aem) {
-            var data = wp[0]
-
-            aem.forEach(function (dataPair) {
-                data.en.push(dataPair.en)
-                data.fr.push(dataPair.fr)
-            })
-
-            return data
-        }
-
         // Format feeds and trigger downloads
-        function exportData(wp, aem) {
-            var data = formatData(wp, aem)
-            status('Done (' + data.en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
+        function exportData(en, fr) {
+            status('Done (' + en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
 
-            $.each(data, function (lang, list) {
-                download(JSON.stringify({ data: list }, null, null), 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
-            })
+            download(JSON.stringify({ data: en }, null, null), 'maple-en.json', 'text/plain;charset=UTF-8;')
+            download(JSON.stringify({ data: fr }, null, null), 'maple-fr.json', 'text/plain;charset=UTF-8;')
         }
 
     </script>
