@@ -21,7 +21,7 @@
                     <li class="breadcrumb-item" aria-current="page">Snapshot</li>
                 </ol>
             </nav>
-            <p>Save a snapshop of a section of canada.ca for analysis.</p>
+            <p>Save a snapshot of a section of canada.ca for analysis.</p>
             <br />
             <div class="form-group row">
                 <label for="root" class="col-sm-2 col-form-label">Root node</label>
@@ -156,7 +156,7 @@
                         status('Done (' + arguments.length + ' files, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
                         download(JSON.stringify(data, null, null), 'data.json', 'text/plain;charset=UTF-8;')
                     })
-                    
+
                 })
 
             } catch (e) {
