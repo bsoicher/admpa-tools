@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>AEM - Snapshot</title>
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+    <script src="../lib/aem.js"></script>
+</head>
+
+<body>
+    <main>
+        <div class="container my-5">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 h5">
+                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
+                    <li class="breadcrumb-item"><a href="index.html">AEM</a></li>
+                    <li class="breadcrumb-item" aria-current="page">Snapshot Search</li>
+                </ol>
+            </nav>
+            <p>Analyze an AEM <a href="snapshot.html">snapshot</a> file.</p>
+
+            <div class="custom-file">
+                <input type="file" class="custom-file-input" id="file" accept=".json" value="" />
+                <label class="custom-file-label" for="file" id="file-label"></label>
+            </div>
+
+            <div class="input-group mt-3">
+                <select class="form-control" id="field" disabled="disabled"></select>
+                <input type="text" class="form-control" id="field-value" disabled="disabled"/>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-primary" type="button" onclick="main()" disabled="disabled" id="search">Search</button>
+                </div>
+            </div>
+
+            <table id="results">
+
+            </table>
+        </div>
+    </main>
+
+    <script>
+
+        // Default options
+        var opts = {
+
+            'html': [
+                'ml-fd.caf-fac.ca'
+            ]
+
+        }
+
+        // Extend options with URL params
+        var opts_url = new URLSearchParams(window.location.search).get('opts')
+
+        if (opts_url) {
+            try {
+                $.extend(opts, JSON.parse(opts_url))
+                $('#opts').val(JSON.stringify(opts, null, '  '))
+            } catch (e) {
+                $('#opts').val(opts_url).addClass('is-invalid')
+            }
+        } else {
+            $('#opts').val(JSON.stringify(opts, null, '  '))
+        }
+
+        // Current progress percentage
+        var progress = 0
+        var started = null
+
+        // Preselect elements
+        var $status = $('#status')
+        var $progress = $('#progress')
+
+        // Set status message and/or progress
+        function status(message, percent) {
+            if (typeof message === 'string') { $status.html(message) }
+            if (typeof percent === 'number') {
+                progress = percent === 100 ? 100 : progress + percent
+                return $progress.width(progress + '%')
+            }
+        }
+
+        var data = []
+
+        // Run program
+        function main() {
+
+          
+            $('#results').empty()
+
+            started = new Date().getTime()
+
+            if (!data) {
+                return status('Snapshot file must be selected first')
+            }
+
+            var key = $('#field').val()
+            var val = $('#field-value').val()
+
+            data.forEach(function (node) {
+                if (key == 'Any field') {
+                    var add = false
+                    Object.keys(node).forEach(function (k) {
+                        if (typeof node[k] === 'string' && node[k].match(val)) {
+                            add = true
+                        }
+                    })
+                    if(add) addMatch(node)
+                } else if ((node[key] || "").match(val)) {
+                    addMatch(node)
+                }
+            })
+
+        }
+
+        // Human readable byte count
+        function formatSize(bytes) {
+            if (bytes == 0) return '0 Byte'
+
+            var sizes = ['Bytes', 'KB', 'MB', 'GB']
+            var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+
+            return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i]
+        }
+
+        // Get list of available fields in data
+        function setAvailableFields() {
+            var e = $('#field').empty()
+            var a = ['Any field']
+
+            data.forEach(function (node) {
+                Object.keys(node).forEach(function (key) {
+                    if (a.indexOf(key) == -1) a.push(key)
+                })
+            })
+
+            a.sort().forEach(function (key) {
+                $('#field').append('<option>' + key + '</option>')
+            })
+        }
+
+        // Start search on pressing enter
+        $('#field-value').keypress(function (e) {
+            if (e.which == 13) {
+                main()
+                return false
+            }
+        })
+
+        function clear() {
+            data = []
+            $('#results').empty()
+        }
+
+        function enable() {
+            $('#field,#field-value,#search').prop('disabled', '')
+        }
+
+        function disable() {
+            $('#field,#field-value,#search').prop('disabled', 'disabled')
+        }
+
+
+        function addMatch(node) {
+
+            var html = '<tr>'
+            html += '<td>' + node._self + '</td>'
+            html += '<td><a href="' + node._self + '" target="_blank"><i class="fas fa-external-link-alt"></i></a></td>'
+            html += '<td><a href="' + node._self.replace('.html', '/_jcr_content.json') + '" target="_blank"><i class="fas fa-code"></i></a></td>'
+            html += '</tr>'
+
+            $('#results').append(html)
+
+        }
+
+        $('#file').change(function () {
+
+            $(this).removeClass('is-valid is-invalid')
+
+            var file = $(this).prop('files')[0]
+            var read = new FileReader()
+
+            if (file.type !== 'application/json') {
+                throw 'Invalid file type ' + file.type
+            }
+
+            $('#file-label').html(file.name + ' - ' + formatSize(file.size))
+
+            read.readAsText(file)
+
+            read.onload = function () {
+                data = JSON.parse(read.result)
+                setAvailableFields()
+                enable()
+            }
+
+            read.onerror = function () {
+                setAvailableFields()
+                clear()
+                disable()
+            }
+        })
+
+
+
+    </script>
+
+</body>
+
+</html>

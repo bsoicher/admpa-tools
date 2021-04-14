@@ -38,7 +38,6 @@
         </div>
     </main>
 
-  
     <script>
 
         // Default options
@@ -112,17 +111,35 @@
 
                     status(null,)
 
-                    AEM.meta(url, function (meta) {
-                        for (var key in opts.meta) {
-                            if (!(meta[key] || "").match(opts.meta[key])) {
+                    if (opts.meta) {
+
+                        AEM.meta(url, function (meta) {
+                            for (var key in opts.meta) {
+                                if (!(meta[key] || "").match(opts.meta[key])) {
+                                    return
+                                }
+                            }
+
+                            $('#list').append(url + '<br/>')
+                        }).always(function () {
+                            status(null, 99 / urls.length)
+                        })
+                    }
+
+                    if (opts.html) {
+                        regex = new RegExp(opts.html)
+
+                        AEM.html(url, function (html) {
+                           
+                            if (!html.match(regex)) {
                                 return
                             }
-                        }
 
-                        $('#list').append(url + '<br/>')
-                    }).always(function () {
-                        status(null, 99 / urls.length)
-                    })
+                            $('#list').append(url + '<br/>')
+                        }).always(function () {
+                            status(null, 99 / urls.length)
+                        })
+                    }
 
                 })
             })
