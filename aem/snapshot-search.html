@@ -5,10 +5,16 @@
     <title>AEM - Snapshot</title>
     <link rel="dns-prefetch" href="https://www.canada.ca">
     <meta charset="utf-8" />
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/css/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+
     <script src="../lib/aem.js"></script>
 </head>
 
@@ -43,6 +49,7 @@
 
     <script>
 
+    
         // Default options
         var opts = {
 
@@ -166,6 +173,9 @@
 
         function addMatch(node) {
 
+    
+            console.log(node)
+
             var html = '<tr>'
             html += '<td>' + node._self + '</td>'
             html += '<td><a href="' + node._self + '" target="_blank"><i class="fas fa-external-link-alt"></i></a></td>'
@@ -204,7 +214,7 @@
             }
         })
 
-
+        
 
     </script>
 

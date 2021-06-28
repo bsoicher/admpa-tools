@@ -33,14 +33,10 @@
             </nav>
 
             <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
-            
-            <h2 class="h5 mt-4 mb-3">Single year JSON files</h2>
-            <p>This tool will only load pages from a single year.  By default it will run for the current year, but if you need to update a past years JSON, modify the URL with a year parameter: <a href="?y=2019">https://caf-fac.ca/tools/ml/feed.html?y=2019</a></p>
-        
             <h2 class="h5 mt-4">File status</h2>
             
-            <p class="mb-0">maple-en<span class="curyear"></span>.json - <span id="enstatus">...</span></p>
-            <p class="mt-0 mb-4">maple-fr<span class="curyear"></span>.json - <span id="frstatus">...</span></p>
+            <p class="mb-0">maple-en.json - <span id="enstatus">...</span></p>
+            <p class="mt-0 mb-4">maple-fr.json - <span id="frstatus">...</span></p>
 
             <h2 class="h5 mt-4 mb-3">Progress</h2>
             <div id="progressbar" class="progress my-2" style="height: 5px">
@@ -59,32 +55,10 @@
 
     <script>
 
-        function shorten(text) {
-          if (text.length < 100) {
-            return text;
-          }
-          var length = text.substr(0, 100).lastIndexOf(' ') || 100;
-          return text.substr(0, length)
-        }
-
-        // Which year to create
-        var year = new URLSearchParams(window.location.search).get('y')
-        var cyear = new Date().getFullYear()
-        if (year) {
-            year = parseInt(year)
-            if (!year || year < 2019 || year > cyear) {
-                year = cyear
-            }
-        } else {
-            year = cyear
-        }
-
-        $('.curyear').text('-' + year)
-
         // Configure data sources
         var config = {
-            'aem_en': 'content/dam/dnd-mdn/documents/json/maple-en-' + year + '.json',
-            'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr-' + year + '.json',
+            'aem_en': 'content/dam/dnd-mdn/documents/json/maple-en.json',
+            'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr.json',
             'root': 'en/department-national-defence/maple-leaf',
         }
 
@@ -149,20 +123,13 @@
             // Thumbnail image URL
             function (jcr) {
                 if (!jcr['gcOGImage']) { return '' }
-                var val = utf8.encode($.trim(jcr['gcOGImage']))
-                return val.replace('/content/dam/dnd-mdn/images/maple-leaf', '{a}')
+                return utf8.encode($.trim(jcr['gcOGImage']))
             },
 
             // Title (containing link)
             function (jcr) {
                 if (!jcr['_self'] || !jcr['jcr:title']) { return '' }
-                var val = '<a href="/' + AEM.normalize(jcr['_self']) + '.html">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
-
-                if (year != cyear){
-                    val = val.replace('/fr/ministere-defense-nationale/feuille-derable', '{f}').replace('/en/department-national-defence/maple-leaf', '{e}')
-                }
-
-                return val
+                return '<a href="/' + AEM.normalize(jcr['_self']) + '.html">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
             },
 
             // Description
@@ -219,7 +186,7 @@
 
         // Test if URL is an article
         function isArticle(url) {
-            return new RegExp('\/' + year + '\/\\d{2}\/[^/]+$', 'i').test(url)
+            return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
         }
 
         // Get metadata of a node and its peer + track progress
@@ -262,8 +229,8 @@
         function exportData(en, fr) {
             status('Done (' + en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
 
-            download(JSON.stringify({ data: en }, null, 2), 'maple-en-' + year + '.json', 'text/plain;charset=UTF-8;')
-            download(JSON.stringify({ data: fr }, null, 2), 'maple-fr-' + year + '.json', 'text/plain;charset=UTF-8;')
+            download(JSON.stringify({ data: en }, null, null), 'maple-en.json', 'text/plain;charset=UTF-8;')
+            download(JSON.stringify({ data: fr }, null, null), 'maple-fr.json', 'text/plain;charset=UTF-8;')
         }
 
     </script>
