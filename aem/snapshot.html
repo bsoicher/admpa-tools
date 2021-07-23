@@ -112,14 +112,12 @@
                         AEM.meta(node),
                         AEM.html(node)
                     ).done(function (m, h) {
-                        d.resolve({
-                            'meta': m,
-                            'html': h.replace(/\s+/g, ' ')
-                        })
+                        m.html = h.replace(/\s+/g, ' ')
+                        d.resolve(m)
                     })
                 } else if (meta) {
                     AEM.meta(node).done(function (m) {
-                        d.resolve({ 'meta': m })
+                        d.resolve(m)
                     })
                 } else if (html) {
                     AEM.html(node).done(function (h) {
