@@ -121,7 +121,10 @@
                     })
                 } else if (html) {
                     AEM.html(node).done(function (h) {
-                        d.resolve({ 'html': h.replace(/\s+/g, ' ') })
+                        d.resolve({
+                            _self: node,
+                            html: h.replace(/\s+/g, ' ')
+                        })
                     })
                 } else {
                     d.resolve({})
