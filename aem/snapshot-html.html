@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>AEM - Snapshot</title>
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+    <meta charset="utf-8" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Datatable -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap4.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/buttons.print.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/buttons.colVis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/vfs_fonts.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
+
+    <script src="../lib/aem.js"></script>
+</head>
+
+<body>
+    <main>
+        <div class="container my-5">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 h5">
+                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
+                    <li class="breadcrumb-item"><a href="index.html">AEM</a></li>
+                    <li class="breadcrumb-item" aria-current="page">Snapshot HTML</li>
+                </ol>
+            </nav>
+            <p>Search a snapshot file using a JavaScript + jQuery matching function.</p>
+            <br />
+
+            <div class="form-group row">
+                <label for="root" class="col-sm-2 col-form-label">Snapshot file</label>
+                <div class="custom-file col-sm-10">
+                    <input type="file" class="custom-file-input" id="file" accept=".json" value="" />
+                    <label class="custom-file-label" for="file" id="file-label"></label>
+                </div>
+            </div>
+
+            <div class="form-group row" id="matchRow">
+                <label for="match" class="col-sm-2 col-form-label">JavaScript<br /><small>(return <strong>true</strong> or <strong>false</strong>)</small></label>
+                <div class="col-sm-10" style="height:250px">
+                    <code>function(url, html) {</code>
+
+                    <div id="match" style="position:absolute;top:0;right:0;bottom:0;left:0;height:250px">return $('span').filter(function(){ return /hello/i.test($(this).text()); }).length;</div>
+
+                    <code>}</code>
+
+                </div>
+            </div>
+            <div class="form-group row" id="matchRow">
+                <label class="col-sm-2 col-form-label">Actions</label>
+                <div class="col-sm-10 px-0">
+                    <a href="javascript:run()" class="btn btn-primary">Run</a>
+                    
+                </div>
+            </div>
+
+
+            <div class="table mb-5">
+                <table id="results" width="100%" class="table table-bordered table-sm"></table>
+            </div>
+        </div>
+
+
+
+    </main>
+
+    <script>
+
+        // Ace editor setup
+        ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12')
+        var editor = ace.edit("match");
+        editor.session.setMode("ace/mode/javascript");
+
+        var data = []
+
+
+        var table = $('#results').DataTable({
+            dom: 'frtipB',
+            //searching: false,
+            buttons: [
+                { extend: 'copy', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'csv', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'excel', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'pdf', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'print', className: 'btn btn-light', exportOptions: { columns: ':visible' } },
+            ],
+
+            columns: [
+                {
+                    title: 'SELF',
+                    data: '_self',
+                    defaultContent: '',
+                    width: 150,
+                    render: function (d) {
+                        a = '<a target="_blank" href="' + d + '">Link</a> '
+                        a += '<a target="_blank" href="' + d.replace('.html', '/_jcr_content.json') + '">Meta</a>'
+                        return a
+                    }
+                }, {
+                    title: 'Language',
+                    data: 'jcr:language',
+                    defaultContent: '?',
+                    width: 150,
+                    render: function (d, t, r) { return r['jcr:language'] ? r['jcr:language'] : r._self.match(/\/(en|fr)\//).pop() }
+                },
+                {
+                    title: 'Title',
+                    data: 'jcr:title',
+                    defaultContent: '?',
+                    render: function (d, t, r) { return r['jcr:title'] ? r['jcr:title'] : r.html.match(/<title>(.*)<\/title>/i).pop() },
+                },
+                { title: 'HTML', data: 'html', defaultContent: '', visible: false },
+            ]
+        });
+
+        $('#results_filter').appendTo('#tnav');
+
+        // Human readable byte count
+        function formatSize(bytes) {
+            if (bytes == 0) return '0 Byte'
+            var sizes = ['Bytes', 'KB', 'MB', 'GB']
+            var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+            return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i]
+        }
+
+        $('#file').change(function () {
+            var i = $(this).removeClass('is-valid is-invalid')
+
+            table.clear().draw()
+
+            var file = $(this).prop('files')[0]
+            var read = new FileReader()
+
+            $('#file-label').html(file.name + ' - ' + formatSize(file.size))
+
+            read.readAsText(file)
+            read.onload = function () {
+                try {
+                    data = JSON.parse(read.result)
+                    i.addClass('is-valid')
+                } catch (e) {
+                    console.log(e)
+                    i.addClass('is-invalid')
+                }
+            }
+        })
+
+        // Create a jQuery instance with forced context
+        function createContext(html) {
+            var fn = function (selector) { return $(selector, '<root>' + html + '</root>') }
+            $.extend(fn, jQuery);
+            return fn;
+        }
+
+        // Add row to table if it matches
+        function test(row) {
+            
+
+            try {
+                var fn = new Function('$', editor.getValue());
+
+                var val = fn(createContext(row.html));
+
+
+                if (val) {
+                    table.row.add(row)
+                }
+
+                console.log(val)
+                
+            } catch (e) {
+                console.log(e)
+            }
+
+        }
+
+        function run(){
+            if (!data.length) {
+                return alert('Snapshot file must be selected first')
+            }
+
+            table.clear().draw();
+
+            data.forEach(function(row){
+                test(row)
+            })
+
+            table.draw()
+
+
+        }
+
+    </script>
+
+</body>
+
+</html>
