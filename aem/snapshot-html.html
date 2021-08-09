@@ -54,7 +54,10 @@
                 <div class="col-sm-10" style="height:250px">
                     <code>function(url, html) {</code>
 
-                    <div id="match" style="position:absolute;top:0;right:0;bottom:0;left:0;height:250px">return $('span').filter(function(){ return /hello/i.test($(this).text()); }).length;</div>
+                    <div id="match" style="position:absolute;top:0;right:0;bottom:0;left:0;height:250px">
+return $('title').filter(function(){
+    return /honour/i.test($(this).text());
+}).length;</div>
 
                     <code>}</code>
 
@@ -106,8 +109,7 @@
                     defaultContent: '',
                     width: 150,
                     render: function (d) {
-                        a = '<a target="_blank" href="' + d + '">Link</a> '
-                        a += '<a target="_blank" href="' + d.replace('.html', '/_jcr_content.json') + '">Meta</a>'
+                        a = '<a target="_blank" href="' + d + '">' + d + '</a> '
                         return a
                     }
                 }, {
