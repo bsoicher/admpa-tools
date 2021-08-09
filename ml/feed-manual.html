@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Maple Leaf &gt; Manual Feed Update</title>
+
+    <!-- Speed optimization -->
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+
+    <!-- Meta -->
+    <meta charset="utf-8" />
+
+    <!-- Style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+    <script src="../lib/aem.js"></script>
+</head>
+
+<body>
+    <main>
+        <div class="container my-5">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 h5">
+                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
+                    <li class="breadcrumb-item"><a href="index.html">Maple Leaf</a></li>
+                    <li class="breadcrumb-item" aria-current="page">Manual Feed Update</li>
+                </ol>
+            </nav>
+
+            <p>Manually add an entry to the Maple Leaf feed incase the <a href="feed.html">automated tool</a> is not functioning properly</p>
+            
+            <h2 class="h5 mt-4">File status</h2>
+            <p class="mb-0">maple-en<span class="curyear"></span>.json - <span id="enstatus">...</span></p>
+            <p class="mt-0 mb-4">maple-fr<span class="curyear"></span>.json - <span id="frstatus">...</span></p>
+
+            <h2 class="h5 mt-4">Article URL</h2>
+            <div class="form-group row">
+                <label for="title-en" class="col-sm-2 col-form-label">English</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="title-en" value="">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="title-fr" class="col-sm-2 col-form-label">French</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="title-fr" value="">
+                </div>
+            </div>
+
+            <h2 class="h5 mt-4">Title</h2>
+            <div class="form-group row">
+                <label for="title-en" class="col-sm-2 col-form-label">English</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="title-en" value="">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="title-fr" class="col-sm-2 col-form-label">French</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="title-fr" value="">
+                </div>
+            </div>
+
+            <h2 class="h5 mt-4">Image</h2>
+            <div class="form-group row">
+                <label for="image-en" class="col-sm-2 col-form-label">English</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="image-en" value="">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="image-fr" class="col-sm-2 col-form-label">French</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="image-fr" value="">
+                </div>
+            </div>
+
+            <h2 class="h5 mt-4">Description</h2>
+            <div class="form-group row">
+                <label for="desc-en" class="col-sm-2 col-form-label">English</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="desc-en" value="">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="desc-fr" class="col-sm-2 col-form-label">French</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="desc-fr" value="">
+                </div>
+            </div>
+
+            <h2 class="h5 mt-4">Keywords (tags)</h2>
+            <div class="form-group row">
+                <label for="tags-en" class="col-sm-2 col-form-label">English</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="tags-en" value="">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="tags-fr" class="col-sm-2 col-form-label">French</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="tags-fr" value="">
+                </div>
+            </div>
+
+            <h2 class="h5 mt-4">Timestamp</h2>
+            <div class="form-group row">
+                <label for="tags-en" class="col-sm-2 col-form-label">English</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="time-en" value="">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="time-fr" class="col-sm-2 col-form-label">French</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="time-fr" value="">
+                </div>
+            </div>
+
+            <h2 class="h5 mt-5 mb-3">Progress</h2>
+            <div id="progressbar" class="progress my-2" style="height: 5px">
+                <div id="progress" class="progress-bar" style="width:0%"></div>
+            </div>
+
+            <p id="status"><a href="javascript:main()">Click here to start</a></p>
+            <h2 class="h5 mt-4">Instructions</h2>
+            <ol class="pl-3">
+                <li>Run the tool above. Two JSON files will be generated and downloaded automatically</li>
+                <li>Upload both files to AEM (replacing existing files) in <a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</a></li>
+                <li>Select both files and publish them</li>
+                <li>Refresh this page to verify that the file status has changed</li>
+            </ol>
+        </div>
+    </main>
+
+    <script>
+
+        function shorten(text) {
+          if (text.length < 100) {
+            return text;
+          }
+          var length = text.substr(0, 100).lastIndexOf(' ') || 100;
+          return text.substr(0, length)
+        }
+
+        // Which year to create
+        var year = new URLSearchParams(window.location.search).get('y')
+        var cyear = new Date().getFullYear()
+        if (year) {
+            year = parseInt(year)
+            if (!year || year < 2019 || year > cyear) {
+                year = cyear
+            }
+        } else {
+            year = cyear
+        }
+
+        $('.curyear').text('-' + year)
+
+        // Configure data sources
+        var config = {
+            'aem_en': 'content/dam/dnd-mdn/documents/json/maple-en-' + year + '.json',
+            'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr-' + year + '.json',
+            'root': 'en/department-national-defence/maple-leaf',
+        }
+
+        // Current progress percentage
+        var progress = 0
+        var started = null
+
+        // Preselect elements
+        var $status = $('#status')
+        var $progress = $('#progress')
+
+        // Set status message and/or progress
+        function status(message, percent) {
+            if (typeof message === 'string') { $status.html(message) }
+            if (typeof percent === 'number') {
+                progress = percent === 100 ? 100 : progress + percent
+                return $progress.width(progress + '%')
+            }
+        }
+
+        // Display current status of english JSON
+        AEM.assetMeta(config.aem_en, function (jcr) {
+            var html = jcr['dam:assetState'].charAt(0).toUpperCase() + jcr['dam:assetState'].slice(1) + ' '
+            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
+            html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
+            $('#enstatus').html(html)
+        }).fail(function (e) {
+            if (e === 'Not Found') { e = 'Not Published' }
+            $('#enstatus').html('Error (' + e + ')')
+        })
+
+        // Display current status of french JSON
+        AEM.assetMeta(config.aem_fr).done(function (jcr) {
+            var html = jcr['dam:assetState'].charAt(0).toUpperCase() + jcr['dam:assetState'].slice(1) + ' '
+            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
+            html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
+            $('#frstatus').html(html)
+        }).fail(function (e) {
+            if (e === 'Not Found') { e = 'Not Published' }
+            $('#frstatus').html('Error (' + e + ')')
+        })
+
+        // Define response fields
+        var fields = [
+
+            // Thumbnail image URL
+            function (jcr) {
+                if (!jcr['gcOGImage']) { return '' }
+                var val = utf8.encode($.trim(jcr['gcOGImage']))
+                return val.replace('/content/dam/dnd-mdn/images/maple-leaf', '{a}')
+            },
+
+            // Title (containing link)
+            function (jcr) {
+                if (!jcr['_self'] || !jcr['jcr:title']) { return '' }
+                var val = '<a href="/' + AEM.normalize(jcr['_self']) + '.html">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
+
+                if (year != cyear){
+                    val = val.replace('/fr/ministere-defense-nationale/feuille-derable', '{f}').replace('/en/department-national-defence/maple-leaf', '{e}')
+                }
+
+                return val
+            },
+
+            // Description
+            function (jcr) {
+                if (!jcr['gcDescription']) { return '' }
+                return utf8.encode($.trim(jcr['gcDescription'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
+            },
+
+            // Tags
+            function (jcr) {
+                if (!jcr['gcKeywords']) { return '' }
+                return utf8.encode(jcr['gcKeywords'].split(',').map(function (tag) {
+                    return tag.trim()
+                }).filter(function (tag) {
+                    return tag ? !tag.match(/(featured|vedette)$/i) : false
+                }).filter(function (tag, index, self) {
+                    return self.indexOf(tag) === index
+                }).join(','))
+            },
+
+            // Date
+            function (jcr) {
+                if (!jcr['gcModifiedOverride'] && !jcr['gcIssued'] && !jcr['gcLastPublished']) { return '' }
+                return new Date(jcr['gcModifiedOverride'] || jcr['gcIssued'] || jcr['gcLastPublished']).toISOString().replace('.000Z', '')
+            }
+        ]
+
+        // Run program
+        function main() {
+            started = new Date().getTime()
+            status('Initializing', 1)
+
+            $.when(
+                AEM.get('https://www.canada.ca/' + config.aem_en),
+                AEM.get('https://www.canada.ca/' + config.aem_fr)
+            ).done(function(en, fr){
+
+                en.data.push([
+                    $('#image-en').val(),
+                    $('#title-en').val(),
+                    $('#desc-en').val(),
+
+                    utf8.encode($('#tags-en').val().split(',').map(function (tag) {
+                        return tag.trim()
+                    }).filter(function (tag) {
+                        return tag ? !tag.match(/(featured|vedette)$/i) : false
+                    }).filter(function (tag, index, self) {
+                        return self.indexOf(tag) === index
+                    }).join(',')),
+
+                    new Date($('#time-en').val()).toISOString().replace('.000Z', ''),
+                ])
+
+                console.log(en)
+
+            }).fail(function (e) {
+                status('Error (' + e + '): ' + config.root)
+            })
+        }
+
+        // Test if URL is an article
+        function isArticle(url) {
+            return new RegExp('\/' + year + '\/\\d{2}\/[^/]+$', 'i').test(url)
+        }
+
+        // Get metadata of a node and its peer + track progress
+        function mapMetaPair(url, index, arr) {
+            return AEM.metaPair(url).progress(function () {
+                status(null, 49 / arr.length)
+            }).fail(function (e) {
+                AEM.get.abort()
+                status('Error (' + e + '): ' + AEM.normalize(url).replace(config.root, ''))
+            })
+        }
+
+        // Convert meta pair to response data pair
+        function mapDataPair(metaPair) {
+            var dates = [
+                'gcModifiedOverride',
+                'gcIssued',
+                'gcLastPublished'
+            ]
+
+            // Syncronize date fields between languages
+            dates.forEach(function (date) {
+                if (metaPair.en[date] || metaPair.fr[date]) {
+                    var en = new Date(metaPair.en[date] || null)
+                    var fr = new Date(metaPair.fr[date] || null)
+                    var last = en >= fr ? metaPair.en[date] : metaPair.fr[date]
+                    metaPair.en[date] = last
+                    metaPair.fr[date] = last
+                }
+            })
+
+            // Generate data fieldsfrom metadata
+            metaPair.en = fields.map(function (fn) { return fn(metaPair.en) })
+            metaPair.fr = fields.map(function (fn) { return fn(metaPair.fr) })
+
+            return metaPair
+        }
+
+        // Format feeds and trigger downloads
+        function exportData(en, fr) {
+            status('Done (' + en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
+
+            download(JSON.stringify({ data: en }, null, 2), 'maple-en-' + year + '.json', 'text/plain;charset=UTF-8;')
+            download(JSON.stringify({ data: fr }, null, 2), 'maple-fr-' + year + '.json', 'text/plain;charset=UTF-8;')
+        }
+
+    </script>
+
+</body>
+
+</html>
