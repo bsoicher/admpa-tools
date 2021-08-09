@@ -18,7 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-    <script src="../lib/aem2.js"></script>
+    <script src="../lib/aem.js"></script>
 </head>
 
 <body>
@@ -98,32 +98,31 @@
             $('#frstatus').html('Error (' + e + ')')
         })
 
-
         // Define response fields
         var fields = [
 
             // Thumbnail image URL
-            function (meta) {
-                if (!meta['og:image']) { return '' }
-                return utf8.encode($.trim(meta['og:image'])).replace('https://www.canada.ca/','/')
+            function (jcr) {
+                if (!jcr['gcOGImage']) { return '' }
+                return utf8.encode($.trim(jcr['gcOGImage']))
             },
 
             // Title (containing link)
-            function (meta) {
-                if (!meta['path'] || !meta['dcterms.title']) { return '' }
-                return '<a href="' + AEM.normalize(meta['path']).replace('https://www.canada.ca/','/') + '.html">' + utf8.encode($.trim(meta['dcterms.title'])) + '</a>'
+            function (jcr) {
+                if (!jcr['_self'] || !jcr['jcr:title']) { return '' }
+                return '<a href="/' + AEM.normalize(jcr['_self']) + '.html">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
             },
 
             // Description
-            function (meta) {
-                if (!meta['description']) { return '' }
-                return utf8.encode($.trim(meta['description'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
+            function (jcr) {
+                if (!jcr['gcDescription']) { return '' }
+                return utf8.encode($.trim(jcr['gcDescription'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
             },
 
             // Tags
-            function (meta) {
-                if (!meta['keywords']) { return '' }
-                return utf8.encode(meta['keywords'].split(',').map(function (tag) {
+            function (jcr) {
+                if (!jcr['gcKeywords']) { return '' }
+                return utf8.encode(jcr['gcKeywords'].split(',').map(function (tag) {
                     return tag.trim()
                 }).filter(function (tag) {
                     return tag ? !tag.match(/(featured|vedette)$/i) : false
@@ -132,102 +131,97 @@
                 }).join(','))
             },
 
-            function (meta) {
-                return meta['date'].toISOString().replace('.000Z', '')
+            // Date
+            function (jcr) {
+                if (!jcr['gcModifiedOverride'] && !jcr['gcIssued'] && !jcr['gcLastPublished']) { return '' }
+                return new Date(jcr['gcModifiedOverride'] || jcr['gcIssued'] || jcr['gcLastPublished']).toISOString().replace('.000Z', '')
             }
-
         ]
-
 
         // Run program
         function main() {
             started = new Date().getTime()
             status('Initializing', 1)
 
-            AEM.descendants(config.root).done(function (urls) {
+            var aem = $.Deferred()
+
+            // Get AEM articles and process them
+            AEM.descendants(config.root, function (urls) {
                 urls = urls.filter(isArticle)
                 status('Downloading metadata (' + (urls.length * 2) + ' nodes)')
 
-                withData(urls, function (data) {
-                    var en = []
-                    var fr = []
-
-                    data.forEach(function (d) {
-                        en.push(d[0])
-                        fr.push(d[1])
-                    })
-
-                    exportData(en, fr)
+                $.when.apply(null, urls.map(mapMetaPair)).done(function () {
+                    aem.resolve(Array.prototype.slice.call(arguments).map(mapDataPair))
                 })
-
             }).fail(function (e) {
                 status('Error (' + e + '): ' + config.root)
             })
 
+            // Export data as downloads
+            $.when(aem).done(exportData)
         }
-
-
 
         // Test if URL is an article
         function isArticle(url) {
             return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
         }
 
-
-
-
-        // Get all meta + dates
-        function withData(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when(
-                    withMeta(urls),
-                    withDate(urls)
-                ).done(function (meta, date) {
-                    d.resolve(meta.map(function (m, i) {
-                        m[0].date = date[i]
-                        m[1].date = date[i]
-                        m[0] = fields.map(function (fn) { return fn(m[0]) })
-                        m[1] = fields.map(function (fn) { return fn(m[1]) })
-                        return m
-                    }))
-                })
-            }).done(cb).promise()
+        // Get metadata of a node and its peer + track progress
+        function mapMetaPair(url, index, arr) {
+            return AEM.metaPair(url).progress(function () {
+                status(null, 49 / arr.length)
+            }).fail(function (e) {
+                AEM.get.abort()
+                status('Error (' + e + '): ' + AEM.normalize(url).replace(config.root, ''))
+            })
         }
 
-        // Get all html metadata
-        function withMeta(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when.apply(null, urls.map(function (url) {
-                    return AEM.htmlMetaPair(url).done(function () {
-                        status(null, 49 / urls.length)
-                    })
-                })).done(function () {
-                    d.resolve(Array.prototype.slice.call(arguments))
-                })
-            }).done(cb).promise()
+        // Convert meta pair to response data pair
+        function mapDataPair(metaPair) {
+            var dates = [
+                'gcModifiedOverride',
+                'gcIssued',
+                'gcLastPublished'
+            ]
+
+            // Syncronize date fields between languages
+            dates.forEach(function (date) {
+                if (metaPair.en[date] || metaPair.fr[date]) {
+                    var en = new Date(metaPair.en[date] || null)
+                    var fr = new Date(metaPair.fr[date] || null)
+                    var last = en >= fr ? metaPair.en[date] : metaPair.fr[date]
+                    metaPair.en[date] = last
+                    metaPair.fr[date] = last
+                }
+            })
+
+            // Generate data fieldsfrom metadata
+            metaPair.en = fields.map(function (fn) { return fn(metaPair.en) })
+            metaPair.fr = fields.map(function (fn) { return fn(metaPair.fr) })
+
+            return metaPair
         }
 
-        // get all page dates
-        function withDate(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when.apply(null, urls.map(function (url) {
-                    return AEM.date(url).done(function () {
-                        status(null, 49 / urls.length)
-                    })
-                })).done(function () {
-                    d.resolve(Array.prototype.slice.call(arguments))
-                })
-            }).done(cb).promise()
+        // Turn list of data pairs into a pair of data lists
+        function formatData(aem) {
+            var data = { en: [], fr: [] }
+
+            aem.forEach(function (dataPair) {
+                data.en.push(dataPair.en)
+                data.fr.push(dataPair.fr)
+            })
+
+            return data
         }
-
-
 
         // Format feeds and trigger downloads
-        function exportData(en, fr) {
-            status('Done (' + en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
+        function exportData(aem) {
+            var data = formatData(aem)
+            status('Done (' + data.en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
 
-            download(JSON.stringify({ data: en }, null, 2), 'ws-en.json', 'text/plain;charset=UTF-8;')
-            download(JSON.stringify({ data: fr }, null, 2), 'ws-fr.json', 'text/plain;charset=UTF-8;')
+            $.each(data, function (lang, list) {
+                download(JSON.stringify({ data: list }, null, null), 'ws-' + lang + '.json', 'text/plain;charset=UTF-8;')
+            })
         }
 
     </script>
