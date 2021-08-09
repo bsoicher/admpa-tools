@@ -18,7 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-    <script src="../lib/aem.js"></script>
+    <script src="../lib/aem2.js"></script>
 </head>
 
 <body>
@@ -33,12 +33,12 @@
             </nav>
 
             <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
-            
+
             <h2 class="h5 mt-4 mb-3">Single year JSON files</h2>
-            <p>This tool will only load pages from a single year.  By default it will run for the current year, but if you need to update a past years JSON, modify the URL with a year parameter: <a href="?y=2019">https://caf-fac.ca/tools/ml/feed.html?y=2019</a></p>
-        
+            <p>This tool will only load pages from a single year. By default it will run for the current year, but if you need to update a past years JSON, modify the URL with a year parameter: <a href="?y=2019">https://caf-fac.ca/tools/ml/feed.html?y=2019</a></p>
+
             <h2 class="h5 mt-4">File status</h2>
-            
+
             <p class="mb-0">maple-en<span class="curyear"></span>.json - <span id="enstatus">...</span></p>
             <p class="mt-0 mb-4">maple-fr<span class="curyear"></span>.json - <span id="frstatus">...</span></p>
 
@@ -60,11 +60,11 @@
     <script>
 
         function shorten(text) {
-          if (text.length < 100) {
-            return text;
-          }
-          var length = text.substr(0, 100).lastIndexOf(' ') || 100;
-          return text.substr(0, length)
+            if (text.length < 100) {
+                return text;
+            }
+            var length = text.substr(0, 100).lastIndexOf(' ') || 100;
+            return text.substr(0, length)
         }
 
         // Which year to create
@@ -85,7 +85,7 @@
         var config = {
             'aem_en': 'content/dam/dnd-mdn/documents/json/maple-en-' + year + '.json',
             'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr-' + year + '.json',
-            'root': 'en/department-national-defence/maple-leaf',
+            'root': 'en/department-national-defence/maple-leaf/defence',
         }
 
         // Current progress percentage
@@ -131,18 +131,18 @@
         var fields = [
 
             // Thumbnail image URL
-            function (jcr) {
-                if (!jcr['gcOGImage']) { return '' }
-                var val = utf8.encode($.trim(jcr['gcOGImage']))
-                return val.replace('/content/dam/dnd-mdn/images/maple-leaf', '{a}')
+            function (meta) {
+                if (!meta['og:image']) { return '' }
+                var val = utf8.encode($.trim(meta['og:image']))
+                return val.replace('https://www.canada.ca/content/dam/dnd-mdn/images/maple-leaf', '{a}')
             },
 
             // Title (containing link)
-            function (jcr) {
-                if (!jcr['_self'] || !jcr['jcr:title']) { return '' }
-                var val = '<a href="/' + AEM.normalize(jcr['_self']) + '.html">' + utf8.encode($.trim(jcr['jcr:title'])) + '</a>'
+            function (meta) {
+                if (!meta['path'] || !meta['dcterms.title']) { return '' }
+                var val = '<a href="' + AEM.normalize(meta['path']).replace('https://www.canada.ca/','/') + '.html">' + utf8.encode($.trim(meta['dcterms.title'])) + '</a>'
 
-                if (year != cyear){
+                if (year != cyear) {
                     val = val.replace('/fr/ministere-defense-nationale/feuille-derable', '{f}').replace('/en/department-national-defence/maple-leaf', '{e}')
                 }
 
@@ -150,15 +150,15 @@
             },
 
             // Description
-            function (jcr) {
-                if (!jcr['gcDescription']) { return '' }
-                return utf8.encode($.trim(jcr['gcDescription'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
+            function (meta) {
+                if (!meta['description']) { return '' }
+                return utf8.encode($.trim(meta['description'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
             },
 
             // Tags
-            function (jcr) {
-                if (!jcr['gcKeywords']) { return '' }
-                return utf8.encode(jcr['gcKeywords'].split(',').map(function (tag) {
+            function (meta) {
+                if (!meta['keywords']) { return '' }
+                return utf8.encode(meta['keywords'].split(',').map(function (tag) {
                     return tag.trim()
                 }).filter(function (tag) {
                     return tag ? !tag.match(/(featured|vedette)$/i) : false
@@ -167,11 +167,10 @@
                 }).join(','))
             },
 
-            // Date
-            function (jcr) {
-                if (!jcr['gcModifiedOverride'] && !jcr['gcIssued'] && !jcr['gcLastPublished']) { return '' }
-                return new Date(jcr['gcModifiedOverride'] || jcr['gcIssued'] || jcr['gcLastPublished']).toISOString().replace('.000Z', '')
+            function (meta) {
+                return meta['date'].toISOString().replace('.000Z', '')
             }
+
         ]
 
         // Run program
@@ -183,16 +182,15 @@
                 urls = urls.filter(isArticle)
                 status('Downloading metadata (' + (urls.length * 2) + ' nodes)')
 
-                // Download all nodes while pairing them
-                $.when.apply(null, urls.map(mapMetaPair)).done(function () {
-                    // Process node data
-                    var pairs = Array.prototype.slice.call(arguments).map(mapDataPair)
+                withData(urls, function (data) {
+                    var en = []
+                    var fr = []
 
-                    // Split the pairs into 2 feeds
-                    var en = pairs.map(function(pair){return pair.en})
-                    var fr = pairs.map(function(pair){return pair.fr})
+                    data.forEach(function (d) {
+                        en.push(d[0])
+                        fr.push(d[1])
+                    })
 
-                    // Export
                     exportData(en, fr)
                 })
 
@@ -206,40 +204,48 @@
             return new RegExp('\/' + year + '\/\\d{2}\/[^/]+$', 'i').test(url)
         }
 
-        // Get metadata of a node and its peer + track progress
-        function mapMetaPair(url, index, arr) {
-            return AEM.metaPair(url).progress(function () {
-                status(null, 49 / arr.length)
-            }).fail(function (e) {
-                AEM.get.abort()
-                status('Error (' + e + '): ' + AEM.normalize(url).replace(config.root, ''))
-            })
+        // Get all meta + dates
+        function withData(urls, cb) {
+            return $.Deferred(function (d) {
+                $.when(
+                    withMeta(urls),
+                    withDate(urls)
+                ).done(function (meta, date) {
+                    d.resolve(meta.map(function (m, i) {
+                        m[0].date = date[i]
+                        m[1].date = date[i]
+                        m[0] = fields.map(function (fn) { return fn(m[0]) })
+                        m[1] = fields.map(function (fn) { return fn(m[1]) })
+                        return m
+                    }))
+                })
+            }).done(cb).promise()
         }
 
-        // Convert meta pair to response data pair
-        function mapDataPair(metaPair) {
-            var dates = [
-                'gcModifiedOverride',
-                'gcIssued',
-                'gcLastPublished'
-            ]
+        // Get all html metadata
+        function withMeta(urls, cb) {
+            return $.Deferred(function (d) {
+                $.when.apply(null, urls.map(function (url) {
+                    return AEM.htmlMetaPair(url).done(function () {
+                        status(null, 49 / urls.length)
+                    })
+                })).done(function () {
+                    d.resolve(Array.prototype.slice.call(arguments))
+                })
+            }).done(cb).promise()
+        }
 
-            // Syncronize date fields between languages
-            dates.forEach(function (date) {
-                if (metaPair.en[date] || metaPair.fr[date]) {
-                    var en = new Date(metaPair.en[date] || null)
-                    var fr = new Date(metaPair.fr[date] || null)
-                    var last = en >= fr ? metaPair.en[date] : metaPair.fr[date]
-                    metaPair.en[date] = last
-                    metaPair.fr[date] = last
-                }
-            })
-
-            // Generate data fieldsfrom metadata
-            metaPair.en = fields.map(function (fn) { return fn(metaPair.en) })
-            metaPair.fr = fields.map(function (fn) { return fn(metaPair.fr) })
-
-            return metaPair
+        // get all page dates
+        function withDate(urls, cb) {
+            return $.Deferred(function (d) {
+                $.when.apply(null, urls.map(function (url) {
+                    return AEM.date(url).done(function () {
+                        status(null, 49 / urls.length)
+                    })
+                })).done(function () {
+                    d.resolve(Array.prototype.slice.call(arguments))
+                })
+            }).done(cb).promise()
         }
 
         // Format feeds and trigger downloads
