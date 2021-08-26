@@ -173,13 +173,10 @@
 
         function addMatch(node) {
 
-    
-            console.log(node)
-
             var html = '<tr>'
-            html += '<td>' + node._self + '</td>'
-            html += '<td><a href="' + node._self + '" target="_blank"><i class="fas fa-external-link-alt"></i></a></td>'
-            html += '<td><a href="' + node._self.replace('.html', '/_jcr_content.json') + '" target="_blank"><i class="fas fa-code"></i></a></td>'
+            html += '<td>' + node.path + '</td>'
+            html += '<td><a href="' + node.path + '" target="_blank"><i class="fas fa-external-link-alt"></i></a></td>'
+            html += '<td><a href="' + node.path.replace('.html', '/_jcr_content.json') + '" target="_blank"><i class="fas fa-code"></i></a></td>'
             html += '</tr>'
 
             $('#results').append(html)

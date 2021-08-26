@@ -13,6 +13,8 @@
 
     <!-- Datatable -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.5.4/css/colReorder.dataTables.min.css">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap4.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/dataTables.buttons.min.js"></script>
@@ -22,6 +24,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/vfs_fonts.min.js"></script>
+
+    <script src="https://cdn.datatables.net/colreorder/1.5.4/js/dataTables.colReorder.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
 
@@ -55,9 +59,9 @@
                     <code>function(url, html) {</code>
 
                     <div id="match" style="position:absolute;top:0;right:0;bottom:0;left:0;height:250px">
-return $('title').filter(function(){
-    return /honour/i.test($(this).text());
-}).length;</div>
+                        return $('title').filter(function(){
+                        return /honour/i.test($(this).text());
+                        }).length;</div>
 
                     <code>}</code>
 
@@ -67,11 +71,11 @@ return $('title').filter(function(){
                 <label class="col-sm-2 col-form-label">Actions</label>
                 <div class="col-sm-10 px-0">
                     <a href="javascript:run()" class="btn btn-primary">Run</a>
-                    
+
                 </div>
             </div>
 
-
+            
             <div class="table mb-5">
                 <table id="results" width="100%" class="table table-bordered table-sm"></table>
             </div>
@@ -90,9 +94,10 @@ return $('title').filter(function(){
 
         var data = []
 
-
         var table = $('#results').DataTable({
             dom: 'frtipB',
+            colReorder: true,
+
             //searching: false,
             buttons: [
                 { extend: 'copy', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
@@ -104,26 +109,26 @@ return $('title').filter(function(){
 
             columns: [
                 {
-                    title: 'SELF',
-                    data: '_self',
-                    defaultContent: '',
-                    width: 150,
+                    title: 'Path',
+                    data: 'path',
+                    name: 'path',
                     render: function (d) {
-                        a = '<a target="_blank" href="' + d + '">' + d + '</a> '
-                        return a
+                        d = 'https://www.canada.ca' + d
+                        return '<a target="_blank" href="' + d + '">' + d + '</a> ' 
                     }
                 }, {
                     title: 'Language',
-                    data: 'jcr:language',
-                    defaultContent: '?',
+                    data: 'dcterms\\.language',
+                    name: 'language',
                     width: 150,
-                    render: function (d, t, r) { return r['jcr:language'] ? r['jcr:language'] : r._self.match(/\/(en|fr)\//).pop() }
+                    render: function (d) { return d.substr(0, 2) }
                 },
                 {
                     title: 'Title',
-                    data: 'jcr:title',
-                    defaultContent: '?',
-                    render: function (d, t, r) { return r['jcr:title'] ? r['jcr:title'] : r.html.match(/<title>(.*)<\/title>/i).pop() },
+                    data: 'dcterms\\.title',
+                    name: 'title',
+                    visible: false,
+                    //render: function (d, t, r) { return r['dcterms.title'] },
                 },
                 { title: 'HTML', data: 'html', defaultContent: '', visible: false },
             ]
@@ -170,34 +175,29 @@ return $('title').filter(function(){
 
         // Add row to table if it matches
         function test(row) {
-            
 
             try {
                 var fn = new Function('$', editor.getValue());
-
                 var val = fn(createContext(row.html));
-
 
                 if (val) {
                     table.row.add(row)
                 }
 
-                console.log(val)
-                
             } catch (e) {
                 console.log(e)
             }
 
         }
 
-        function run(){
+        function run() {
             if (!data.length) {
                 return alert('Snapshot file must be selected first')
             }
 
             table.clear().draw();
 
-            data.forEach(function(row){
+            data.forEach(function (row) {
                 test(row)
             })
 

@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
-    <script src="../lib/aem.js"></script>
+    <script src="../lib/aem2.js"></script>
 </head>
 
 <body>
@@ -35,15 +35,11 @@
                 <div class="col-sm-10">
                     <div class="form-group form-check">
                         <input type="checkbox" class="form-check-input" id="lang" checked="checked">
-                        <label class="form-check-label" for="lang">Bilingual data (Include both english and nodes)</label>
-                    </div>
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="meta" checked="checked">
-                        <label class="form-check-label" for="meta">JSON Metadata</label>
+                        <label class="form-check-label" for="lang">Bilingual data (Include alternate language nodes)</label>
                     </div>
                     <div class="form-group form-check">
                         <input type="checkbox" class="form-check-input" id="html" checked="checked">
-                        <label class="form-check-label" for="html">HTML document</label>
+                        <label class="form-check-label" for="html">Save full HTML</label>
                     </div>
                 </div>
             </div>
@@ -59,7 +55,6 @@
         // Globals
         var progress = 0
         var start = null
-        var meta = false
         var html = false
 
         // Set status message and/or progress
@@ -92,6 +87,7 @@
             return $.Deferred(function (d) {
                 status('Analyzing root nodes')
                 withRoots(function (roots) {
+                    console.log(roots)
                     status('Searching for child nodes')
                     // Download and merge sitemaps
                     $.when.apply(null, roots.map(AEM.descendants, AEM)).done(function () {
@@ -107,35 +103,22 @@
         // Get meta and/or html data of a node
         function withData(node, cb) {
             return $.Deferred(function (d) {
-                if (meta && html) {
-                    $.when(
-                        AEM.meta(node),
-                        AEM.html(node)
-                    ).done(function (m, h) {
-                        m.html = h.replace(/\s+/g, ' ')
+                AEM.html(node).done(function (h) {
+                    AEM.htmlMeta(node).done(function(m){
+                        if (html) {
+                            m.html = h
+                        }
+                        delete m['fb:pages']
+                        delete m['viewport']
                         d.resolve(m)
                     })
-                } else if (meta) {
-                    AEM.meta(node).done(function (m) {
-                        d.resolve(m)
-                    })
-                } else if (html) {
-                    AEM.html(node).done(function (h) {
-                        d.resolve({
-                            _self: node,
-                            html: h.replace(/\s+/g, ' ')
-                        })
-                    })
-                } else {
-                    d.resolve({})
-                }
+                })
             }).done(cb)
         }
 
         // Run program
         function main() {
             start = new Date().getTime()
-            meta = $('#meta').is(':checked')
             html = $('#html').is(':checked')
 
             withNodes(function (nodes) {
