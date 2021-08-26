@@ -47,22 +47,7 @@
             </form>
         </div>
 
-        <div>
-            Toggle columns:
-            <a class="toggle-vis" data-column="path:name">Path</a>
-            <a class="toggle-vis" data-column="peer:name">Peer</a>
-
-            <a class="toggle-vis" data-column="language:name">Language</a>
-            <a class="toggle-vis" data-column="title:name">Title</a>
-            <a class="toggle-vis" data-column="description:name">Description</a>
-            <a class="toggle-vis" data-column="keywords:name">Keywords</a>
-            <a class="toggle-vis" data-column="author:name">Author</a>
-            <a class="toggle-vis" data-column="image:name">Image</a>
-
-            <a class="toggle-vis" data-column="issued:name">Issued</a>
-            <a class="toggle-vis" data-column="modified:name">Modified</a>
-
-        </div>
+        <div id="toggles">Toggle columns: </div>
 
         <div class="table-responsive mb-5">
             <table id="results" width="100%" class="table table-bordered table-sm"></table>
@@ -70,8 +55,86 @@
     </main>
 
     <script>
+        var columns = [
+            // Location
+            {
+                title: 'Path',
+                data: 'path',
+                name: 'path',
+                render: function (d) {
+                    d = 'https://www.canada.ca' + d
+                    return '<a target="_blank" href="' + d + '">' + d + '</a>'
+                }
+            }, {
+                title: 'Peer',
+                data: 'peer',
+                name: 'peer',
+                visible: false,
+                render: function (d) {
+                    d = 'https://www.canada.ca' + d
+                    return '<a target="_blank" href="' + d + '">' + d + '</a>'
+                }
+            },
 
+            // Content
+            {
+                title: 'Language',
+                name: 'language',
+                data: 'dcterms\\.language',
+                visible: false,
+                render: function (d) { return d.substr(0, 2) }
+            }, {
+                title: 'Title',
+                name: 'title',
+                data: 'dcterms\\.title',
+                defaultContent: '',
+            }, {
+                title: 'Description',
+                name: 'description',
+                data: 'description',
+                defaultContent: '',
+            }, {
+                title: 'Keywords',
+                name: 'keywords',
+                data: 'keywords',
+                defaultContent: '',
+            }, {
+                title: 'Author',
+                name: 'author',
+                data: 'author',
+                defaultContent: '',
+                visible: false,
+            }, {
+                title: 'Image',
+                name: 'image',
+                data: 'og:image',
+                defaultContent: '',
+                visible: false,
+                render: function (d) {
+                    return d ? '<a target="_blank" href="' + d + '">' + d + '</a>' : ''
+                }
+            },
 
+            // Dates
+            {
+                title: 'Issued',
+                name: 'issued',
+                data: 'dcterms\\.issued',
+                defaultContent: '',
+                type: 'date',
+                visible: false,
+            }, {
+                title: 'Modified',
+                name: 'modified',
+                data: 'dcterms\\.modified',
+                defaultContent: '',
+                type: 'date',
+                visible: false,
+            },
+
+        ]
+
+        // Setup table
         var table = $('#results').DataTable({
             dom: 'frtipB',
             colReorder: true,
@@ -83,91 +146,28 @@
                 { extend: 'pdf', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
                 { extend: 'print', className: 'btn btn-light', exportOptions: { columns: ':visible' } },
             ],
-            columns: [
-                // Location
-                {
-                    title: 'Path',
-                    data: 'path',
-                    name: 'path',
-                    render: function (d) {
-                        d = 'https://www.canada.ca' + d
-                        return '<a target="_blank" href="' + d + '">' + d + '</a>' 
-                    }
-                }, {
-                    title: 'Peer',
-                    data: 'peer',
-                    name: 'peer',
-                    visible: false,
-                    render: function (d) {
-                        d = 'https://www.canada.ca' + d
-                        return '<a target="_blank" href="' + d + '">' + d + '</a>' 
-                    }
-                }, 
-
-                // Content
-                {
-                    title: 'Language',
-                    name: 'language',
-                    data: 'dcterms\\.language',
-                    visible: false,
-                    render: function (d) { return d.substr(0, 2) }
-                }, { 
-                    title: 'Title',
-                    name: 'title',
-                    data: 'dcterms\\.title',
-                    defaultContent: '',
-                },{ 
-                    title: 'Description',
-                    name: 'description',
-                    data: 'description',
-                    defaultContent: '',
-                },{ 
-                    title: 'Keywords',
-                    name: 'keywords',
-                    data: 'keywords',
-                    defaultContent: '',
-                }, { 
-                    title: 'Author',
-                    name: 'author',
-                    data: 'author',
-                    defaultContent: '',
-                    visible: false,
-                }, {
-                    title: 'Image',
-                    name: 'image',
-                    data: 'og:image',
-                    defaultContent: '',
-                    visible: false,
-                    render: function (d) {
-                        return d ? '<a target="_blank" href="' + d + '">' + d + '</a>' : '' 
-                    }
-                },
-
-                // Dates
-                {
-                    title: 'Issued',
-                    name: 'issued',
-                    data: 'dcterms\\.issued',
-                    defaultContent: '',
-                    type: 'date',
-                    visible: false,
-                },{
-                    title: 'Modified',
-                    name: 'modified',
-                    data: 'dcterms\\.modified',
-                    defaultContent: '',
-                    type: 'date',
-                    visible: false,
-                },
-
-            ]
+            columns: columns
         });
+
+        // Create toggles
+        columns.forEach(function(col){
+            var color = typeof col.visible !== 'boolean' || col.visible === true ? 'text-primary' : 'text-secondary'
+            $('#toggles').append('<a href="#" class="toggle-vis ' + color + '" data-column="' + col.name + ':name">' + col.title + '</a> ')
+        })
 
         // Toggle column visibility
         $('a.toggle-vis').on('click', function (e) {
             e.preventDefault();
             var column = table.column($(this).attr('data-column'));
-            column.visible(!column.visible());
+            var set = !column.visible()
+            
+            if (set) {
+                $(this).addClass('text-primary').removeClass('text-secondary')
+            } else {
+                $(this).addClass('text-secondary').removeClass('text-primary')
+            }
+
+            column.visible(set);
         });
 
 
