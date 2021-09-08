@@ -22,7 +22,7 @@
                     <li class="breadcrumb-item" aria-current="page">Snapshot</li>
                 </ol>
             </nav>
-            <p>Save a snapshot of a section of canada.ca for <a href="snapshot-search.html">analysis</a>.</p>
+            <p>Save a snapshot of a section of canada.ca. The snapshots can be used for <a href="snapshot-search.html">metadata</a> or <a href="snapshot-html.html">HTML</a> searches analysis</a>.</p>
             <br />
             <div class="form-group row">
                 <label for="root" class="col-sm-2 col-form-label">Root nodes <small>(1&nbsp;per&nbsp;line)</small></label>
@@ -39,7 +39,7 @@
                     </div>
                     <div class="form-group form-check">
                         <input type="checkbox" class="form-check-input" id="html" checked="checked">
-                        <label class="form-check-label" for="html">Save full HTML</label>
+                        <label class="form-check-label" for="html">Save full HTML (may run into memory limit doing large sections of the site)</label>
                     </div>
                 </div>
             </div>
@@ -93,7 +93,7 @@
                     $.when.apply(null, roots.map(AEM.descendants, AEM)).done(function () {
                         d.resolve(Array.prototype.slice.call(arguments).flat().filter(function (val, i, arr) {
                             // Filter out non canada.ca URLs (redirects) and duplicates
-                            return val.substr(0, 22) === 'https://www.canada.ca/' && arr.indexOf(val) === i
+                            return val && val.substr(0, 22) === 'https://www.canada.ca/' && arr.indexOf(val) === i
                         }))
                     })
                 }).fail(d.reject)
@@ -103,15 +103,13 @@
         // Get meta and/or html data of a node
         function withData(node, cb) {
             return $.Deferred(function (d) {
-                AEM.html(node).done(function (h) {
-                    AEM.htmlMeta(node).done(function(m){
-                        if (html) {
-                            m.html = h
-                        }
-                        delete m['fb:pages']
-                        delete m['viewport']
-                        d.resolve(m)
-                    })
+                AEM.htmlMeta(node).done(function (m) {
+                    if (!html) {
+                        delete m['html']
+                    }
+                    delete m['fb:pages']
+                    delete m['viewport']
+                    d.resolve(m)
                 })
             }).done(cb)
         }
@@ -134,15 +132,24 @@
 
                 // Process responses
                 $.when.apply(null, nodes).then(function () {
-                    var data = Array.prototype.slice.call(arguments)
-                    var json = utf8.encode(JSON.stringify(data, null, null))
+                    try{
+                        var data = Array.prototype.slice.call(arguments)
+                        var json = utf8.encode(JSON.stringify(data, null, null))
 
-                    status('Done (' + data.length + ' nodes, ' + (Math.round((new Date().getTime() - start) / 100) / 10) + ' seconds)', 100)
+                        status('Done (' + data.length + ' nodes, ' + (Math.round((new Date().getTime() - start) / 100) / 10) + ' seconds)', 100)
 
-                    download(json, 'data.json', 'text/plain;charset=UTF-8;')
+                        download(json, 'data.json', 'text/plain;charset=UTF-8;')
+                    } catch (e) {
+                        console.log(e)
+                    }
                 })
             })
         }
+
+
+      
+
+     
 
     </script>
 

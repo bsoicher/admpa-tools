@@ -29,7 +29,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
 
-    <script src="../lib/aem.js"></script>
+    <script src="../lib/aem2.js"></script>
 </head>
 
 <body>
@@ -121,6 +121,7 @@
                     data: 'dcterms\\.language',
                     name: 'language',
                     width: 150,
+                    visible: false,
                     render: function (d) { return d.substr(0, 2) }
                 },
                 {
@@ -128,7 +129,6 @@
                     data: 'dcterms\\.title',
                     name: 'title',
                     visible: false,
-                    //render: function (d, t, r) { return r['dcterms.title'] },
                 },
                 { title: 'HTML', data: 'html', defaultContent: '', visible: false },
             ]
@@ -177,6 +177,7 @@
         function test(row) {
 
             try {
+
                 var fn = new Function('$', editor.getValue());
                 var val = fn(createContext(row.html));
 
@@ -205,6 +206,11 @@
 
 
         }
+
+        AEM.metaPair('en/department-national-defence/maple-leaf/defence/2021/08', 'test', function(){
+            console.log(arguments)
+        })
+
 
     </script>
 
