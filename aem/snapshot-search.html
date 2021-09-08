@@ -5,123 +5,175 @@
     <title>AEM - Snapshot</title>
     <link rel="dns-prefetch" href="https://www.canada.ca">
     <meta charset="utf-8" />
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+
+    <!-- Datatable -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap4.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/buttons.print.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/buttons.colVis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/vfs_fonts.min.js"></script>
+
+    <script src="https://cdn.datatables.net/colreorder/1.5.4/js/dataTables.colReorder.min.js"></script>
 
     <script src="../lib/aem2.js"></script>
 </head>
 
 <body>
     <main>
-        <div class="container my-5">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb bg-transparent p-0 h5">
-                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
-                    <li class="breadcrumb-item"><a href="index.html">AEM</a></li>
-                    <li class="breadcrumb-item" aria-current="page">Snapshot Search &nbsp;<span class="badge badge-warning badge-pill">In Development</span></li>
-                </ol>
-            </nav>
-            <p>Analyze an AEM <a href="snapshot.html">snapshot</a> file.</p>
 
-            <div class="custom-file">
-                <input type="file" class="custom-file-input" id="file" accept=".json" value="" />
-                <label class="custom-file-label" for="file" id="file-label"></label>
-            </div>
+        <div class="row">
 
-            <div class="input-group mt-3">
-                <select class="form-control" id="field" disabled="disabled"></select>
-                <input type="text" class="form-control" id="field-value" disabled="disabled"/>
-                <div class="input-group-append">
-                    <button class="btn btn-outline-primary" type="button" onclick="main()" disabled="disabled" id="search">Search</button>
+
+            <form class="form-inline">
+                <div class="form-group mb-2">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="file" accept=".json" value="" />
+                        <label class="custom-file-label" for="file" id="file-label"></label>
+                    </div>
                 </div>
-            </div>
+                <div class="form-group mb-2">
 
-            <table id="results"></table>
+                </div>
+            </form>
+        </div>
+
+        <div id="toggles">Toggle columns: </div>
+
+        <div class="table-responsive mb-5">
+            <table id="results" width="100%" class="table table-bordered table-sm"></table>
         </div>
     </main>
 
     <script>
-
-    
-        // Default options
-        var opts = {
-
-            'html': [
-                'ml-fd.caf-fac.ca'
-            ]
-
-        }
-
-        // Extend options with URL params
-        var opts_url = new URLSearchParams(window.location.search).get('opts')
-
-        if (opts_url) {
-            try {
-                $.extend(opts, JSON.parse(opts_url))
-                $('#opts').val(JSON.stringify(opts, null, '  '))
-            } catch (e) {
-                $('#opts').val(opts_url).addClass('is-invalid')
-            }
-        } else {
-            $('#opts').val(JSON.stringify(opts, null, '  '))
-        }
-
-        // Current progress percentage
-        var progress = 0
-        var started = null
-
-        // Preselect elements
-        var $status = $('#status')
-        var $progress = $('#progress')
-
-        // Set status message and/or progress
-        function status(message, percent) {
-            if (typeof message === 'string') { $status.html(message) }
-            if (typeof percent === 'number') {
-                progress = percent === 100 ? 100 : progress + percent
-                return $progress.width(progress + '%')
-            }
-        }
-
-        var data = []
-
-        // Run program
-        function main() {
-
-          
-            $('#results').empty()
-
-            started = new Date().getTime()
-
-            if (!data) {
-                return status('Snapshot file must be selected first')
-            }
-
-            var key = $('#field').val()
-            var val = $('#field-value').val()
-
-            data.forEach(function (node) {
-                if (key == 'Any field') {
-                    var add = false
-                    Object.keys(node).forEach(function (k) {
-                        if (typeof node[k] === 'string' && node[k].match(val)) {
-                            add = true
-                        }
-                    })
-                    if(add) addMatch(node)
-                } else if ((node[key] || "").match(val)) {
-                    addMatch(node)
+        var columns = [
+            // Location
+            {
+                title: 'Path',
+                data: 'path',
+                name: 'path',
+                render: function (d) {
+                    d = 'https://www.canada.ca' + d
+                    return '<a target="_blank" href="' + d + '">' + d + '</a>'
                 }
-            })
+            }, {
+                title: 'Peer',
+                data: 'peer',
+                name: 'peer',
+                visible: false,
+                render: function (d) {
+                    d = 'https://www.canada.ca' + d
+                    return '<a target="_blank" href="' + d + '">' + d + '</a>'
+                }
+            },
 
-        }
+            // Content
+            {
+                title: 'Language',
+                name: 'language',
+                data: 'dcterms\\.language',
+                visible: false,
+                render: function (d) { return d.substr(0, 2) }
+            }, {
+                title: 'Title',
+                name: 'title',
+                data: 'dcterms\\.title',
+                defaultContent: '',
+            }, {
+                title: 'Description',
+                name: 'description',
+                data: 'description',
+                defaultContent: '',
+            }, {
+                title: 'Keywords',
+                name: 'keywords',
+                data: 'keywords',
+                defaultContent: '',
+            }, {
+                title: 'Author',
+                name: 'author',
+                data: 'author',
+                defaultContent: '',
+                visible: false,
+            }, {
+                title: 'Image',
+                name: 'image',
+                data: 'og:image',
+                defaultContent: '',
+                visible: false,
+                render: function (d) {
+                    return d ? '<a target="_blank" href="' + d + '">' + d + '</a>' : ''
+                }
+            },
+
+            // Dates
+            {
+                title: 'Issued',
+                name: 'issued',
+                data: 'dcterms\\.issued',
+                defaultContent: '',
+                type: 'date',
+                visible: false,
+            }, {
+                title: 'Modified',
+                name: 'modified',
+                data: 'dcterms\\.modified',
+                defaultContent: '',
+                type: 'date',
+                visible: false,
+            },
+
+        ]
+
+        // Setup table
+        var table = $('#results').DataTable({
+            dom: 'frtipB',
+            colReorder: true,
+            regex: true,
+            buttons: [
+                { extend: 'copy', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'csv', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'excel', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'pdf', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'print', className: 'btn btn-light', exportOptions: { columns: ':visible' } },
+            ],
+            columns: columns
+        });
+
+        // Create toggles
+        columns.forEach(function(col){
+            var color = typeof col.visible !== 'boolean' || col.visible === true ? 'text-primary' : 'text-secondary'
+            $('#toggles').append('<a href="#" class="toggle-vis ' + color + '" data-column="' + col.name + ':name">' + col.title + '</a> ')
+        })
+
+        // Toggle column visibility
+        $('a.toggle-vis').on('click', function (e) {
+            e.preventDefault();
+            var column = table.column($(this).attr('data-column'));
+            var set = !column.visible()
+            
+            if (set) {
+                $(this).addClass('text-primary').removeClass('text-secondary')
+            } else {
+                $(this).addClass('text-secondary').removeClass('text-primary')
+            }
+
+            column.visible(set);
+        });
+
+
+        $('#results_filter').appendTo('#tnav');
+
+
 
         // Human readable byte count
         function formatSize(bytes) {
@@ -133,55 +185,6 @@
             return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i]
         }
 
-        // Get list of available fields in data
-        function setAvailableFields() {
-            var e = $('#field').empty()
-            var a = ['Any field']
-
-            data.forEach(function (node) {
-                Object.keys(node).forEach(function (key) {
-                    if (a.indexOf(key) == -1) a.push(key)
-                })
-            })
-
-            a.sort().forEach(function (key) {
-                $('#field').append('<option>' + key + '</option>')
-            })
-        }
-
-        // Start search on pressing enter
-        $('#field-value').keypress(function (e) {
-            if (e.which == 13) {
-                main()
-                return false
-            }
-        })
-
-        function clear() {
-            data = []
-            $('#results').empty()
-        }
-
-        function enable() {
-            $('#field,#field-value,#search').prop('disabled', '')
-        }
-
-        function disable() {
-            $('#field,#field-value,#search').prop('disabled', 'disabled')
-        }
-
-
-        function addMatch(node) {
-
-            var html = '<tr>'
-            html += '<td>' + node.path + '</td>'
-            html += '<td><a href="' + node.path + '" target="_blank"><i class="fas fa-external-link-alt"></i></a></td>'
-            html += '<td><a href="' + node.path.replace('.html', '/_jcr_content.json') + '" target="_blank"><i class="fas fa-code"></i></a></td>'
-            html += '</tr>'
-
-            $('#results').append(html)
-
-        }
 
         $('#file').change(function () {
 
@@ -194,24 +197,23 @@
                 throw 'Invalid file type ' + file.type
             }
 
+            table.clear().draw()
+
             $('#file-label').html(file.name + ' - ' + formatSize(file.size))
 
             read.readAsText(file)
 
             read.onload = function () {
                 data = JSON.parse(read.result)
-                setAvailableFields()
-                enable()
+                data.forEach(function (v) {
+                    table.row.add(v)
+                })
+                table.draw()
             }
 
-            read.onerror = function () {
-                setAvailableFields()
-                clear()
-                disable()
-            }
         })
 
-        
+
 
     </script>
 
