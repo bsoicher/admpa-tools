@@ -24,17 +24,3 @@ describe('Content links', function () {
 
 })
 
-/*
-describe('Image captions', function () {
-
-  it('Captions in expand collapse', function() {
-    assert(data.doc.find('.mwsadaptiveimage').next().is('.mwsaccordion-html'), 'ergred')
-  })
- 
-})
-*/
-
-/*
- data.doc.find('a[href*=".mil.ca"').get().should.have.lengthOf(0)
- data.doc.find('a[href*="intranet.canada.ca"').get().should.have.lengthOf(0)
- */

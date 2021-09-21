@@ -13,14 +13,7 @@
   var start = new Date().getTime()
 
   // Will be populated
-  var data = {
-    meta: null,
-    doc: null,
-    wp: null
-  }
-
-  // Prevent loading cached data
-  $.ajaxSetup({ cache: false })
+  var data = {}
 
   // Start downloading data on page load
   $(function () {
@@ -42,78 +35,48 @@
     }
 
     // Try loading node metadata first
-    loadJCR(url).fail(function (e) {
-      $('<div class="alert alert-danger">AJAX Error: Failed to load with response \'' + e + '\'</div>').appendTo('#mocha')
-    }).done(function (meta) {
-      data.url = url
 
-      // Load WordPress export, HTML document, and alt language meta
-      $.when(
-        loadWP(url),
-        loadDoc(url),
-        loadJCR(meta['gcAltLanguagePeer'])
-      ).done(function (wp, doc, alt) {
-        meta.alt = alt
-
-        data.meta = meta
-        data.doc = doc
-        data.wp = wp
+    load(url, function (obj) {
+      load(obj.peer, function (altobj) {
+        window.data = obj
+        window.data.alt = altobj
         data.duration = new Date().getTime() - start
-
-        console.log(data)
-
+      
+        console.log(window.data)
         window.run()
-      }).fail(function (e) {
-        $('<div class="alert alert-danger">AJAX Error: Failed to load with response \'' + e + '\'</div>').appendTo('#mocha')
       })
     })
 
   })
 
   /**
-   * Get metadata of an AEM node
-   */
-  function loadJCR(url) {
-    var d = $.Deferred()
-
-    $.get({
-      url: url.replace('/content/canadasite/', 'https://www.canada.ca/').replace('.html', '/_jcr_content.json'),
-      success: function (jcr) { d.resolve(jcr) },
-      error: function (xhr, status, err) { d.reject(err) }
-    })
-
-    return d.promise()
-  }
-
-  /**
    * Get HTML document of AEM page
    */
-  function loadDoc(url) {
-    var d = $.Deferred()
+  function load(url, cb) {
+    return $.Deferred(function (d) {
+      $.get({
+        cache: false,
+        timeout: 5000,
+        url: url.replace('/content/canadasite/', 'https://www.canada.ca/'),
+        
+        success: function (html) {
+          var obj = { 
+            path: url,
+            peer: 'https://www.canada.ca' + /<a[^>]+href="(\/[^"]+)"/.exec(html)[1],
+            doc: $(html)
+          }
+  
+          html.match(/<meta[^>]*>/g).forEach(function (e) {
+            var name = /(name|property)="([^"]*)"/.exec(e)
+            var value = /content="([^"]*)"/.exec(e)
+            if (name && value) { obj[name[2]] = $.trim(value[1]) }
+          })
 
-    $.get({
-      url: url.replace('/content/canadasite/', 'https://www.canada.ca/'),
-      dataFilter: function (data) { return data.replace(/src="/ig, ' src="https://www.canada.ca/') },
-      success: function (html) { d.resolve($(html)) },
-      error: function () { d.resolve(null) }
-    })
-
-    return d.promise()
-  }
-
-  /**
-   * Get WordPress version of AEM page if it exists
-   */
-  function loadWP(url) {
-    var d = $.Deferred()
-
-    $.get({
-      url: 'https://ml-fd.caf-fac.ca/wp-content/themes/canada/old_article.php?url=' + url,
-      success: function (jcr) { d.resolve(jcr) },
-      error: function () { d.resolve(null) }
-    })
-
-    return d.promise()
+          d.notify(100).resolve(obj)
+        },
+        error: function (xhr, status) { d.reject(status) }
+      })
+    }).done(cb).promise()
   }
 
   // export object
