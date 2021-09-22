@@ -10,8 +10,6 @@
   }
 }(this, function (Mocha, assert, $) {
 
-  var start = new Date().getTime()
-
   // Will be populated
   var data = {}
 
@@ -40,7 +38,6 @@
       load(obj.peer, function (altobj) {
         window.data = obj
         window.data.alt = altobj
-        data.duration = new Date().getTime() - start
       
         console.log(window.data)
         window.run()
