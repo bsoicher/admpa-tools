@@ -86,6 +86,7 @@
                 json[lang].forEach(function (obj) {
                     obj[4].split(',').forEach(function (tag) {
                         if (tag) {
+                            var tag = tag.toLowerCase()
                             data[lang][tag] = data[lang][tag] ? data[lang][tag] + 1 : 1
                         }
                     })
