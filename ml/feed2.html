@@ -43,6 +43,12 @@
 
             <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
 
+
+            <div id="progressbar" class="progress my-2" style="height: 5px">
+                <div id="progress" class="progress-bar" style="width:0%"></div>
+
+            </div>
+
         </div>
     </main>
 
@@ -55,6 +61,16 @@
             root: 'en/department-national-defence/maple-leaf',
             match: /\/\d{4}\/\d{2}\/[^/]+$/,
         }
+
+
+        function status(text) {
+            var p = aem.progress()
+            $('#progress').width(aem.progress())
+        }
+
+        setInterval(status, 100)
+
+
   
      /*
         AEM.descendantsObj(config.root).done(function (list) {
