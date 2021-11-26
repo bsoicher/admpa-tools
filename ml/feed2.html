@@ -13,6 +13,7 @@
 
     <!-- Style -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+    <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon"/>
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -26,7 +27,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/eventemitter3/4.0.7/index.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
 
-    <script src="../lib/node.js"></script>
+    <script src="../lib/aem-ml.js"></script>
 
 </head>
 
@@ -45,9 +46,10 @@
 
 
             <div id="progressbar" class="progress my-2" style="height: 5px">
-                <div id="progress" class="progress-bar" style="width:0%"></div>
-
+                <div id="complete" class="progress-bar" style="width:0%"></div>
+                <div id="active" class="progress-bar bg-warning" style="width:0%"></div>
             </div>
+            <p id="status"><a href="javascript:main()">Click here to start</a></p>
 
         </div>
     </main>
@@ -56,19 +58,63 @@
 
         // Configure data sources
         var config = {
-            'aem_en': 'content/dam/dnd-mdn/documents/json/maple-en-2021.json',
-            'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr-2021.json',
-            root: 'en/department-national-defence/maple-leaf',
+            roots: [
+                'en/department-national-defence/maple-leaf',
+                'fr/ministere-defense-nationale/feuille-derable',
+            ],
+            feeds: [
+                'content/dam/dnd-mdn/documents/json/maple-en-2021.json',
+                'content/dam/dnd-mdn/documents/json/maple-fr-2021.json',
+                'content/dam/dnd-mdn/documents/json/maple-en-2020.json',
+                'content/dam/dnd-mdn/documents/json/maple-fr-2020.json',
+                'content/dam/dnd-mdn/documents/json/maple-en-2019.json',
+                'content/dam/dnd-mdn/documents/json/maple-fr-2019.json',
+            ],
             match: /\/\d{4}\/\d{2}\/[^/]+$/,
         }
 
-
-        function status(text) {
+        function status(message) {
+            if (message) { $('#status').html(message) }
+            
             var p = aem.progress()
-            $('#progress').width(aem.progress())
+            $('#complete').width(p.complete)
+            $('#active').width(p.active)
         }
 
-        setInterval(status, 100)
+  
+        status('Finding nodes')
+
+        // Load feeds & sitemaps
+        var lists = aem.children(config.roots).feed(config.feeds).drain()
+        
+        // Filter out non matching
+        var x = lists.then(function () {
+            aem.filter(config.match)
+            status('Found ' + aem.nodes().length + ' nodes')
+            return aem
+        })
+
+        console.log(x)
+
+        // Load nodes missing from feeds
+        lists.then(function() {
+            var list = aem.nodes().filter(function(path){
+                return !aem.data[path].live
+            })
+
+            //aem.htmlmeta(list) //.meta(list, 'gcModifiedOverride')
+
+            console.log('Missing', list)
+        })
+       
+
+        
+        setInterval(status, 250)
+
+
+     
+
+
 
 
   
