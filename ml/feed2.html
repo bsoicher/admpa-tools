@@ -22,8 +22,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
 
 
-
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/eventemitter3/4.0.7/index.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
 
@@ -38,14 +36,25 @@
                 <ol class="breadcrumb bg-transparent p-0 h5">
                     <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
                     <li class="breadcrumb-item"><a href="index.html">Maple Leaf</a></li>
-                    <li class="breadcrumb-item" aria-current="page">Feed Generator</li>
+                    <li class="breadcrumb-item" aria-current="page">Feed Generator 2 &nbsp;<span class="badge rounded-pill bg-warning">In Development</span></li>
                 </ol>
             </nav>
 
-            <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
+            <h2 class="h5">Type of scan</h2>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" value="new">
+                <label class="form-check-label" for="flexCheckDefault">very fast <small class="text-muted"> - new articles only</small></label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" checked="checked" value="smart">
+                <label class="form-check-label" for="flexCheckDefault">fast <small class="text-muted"> - new & modified articles (recommended)</small></label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" value="full">
+                <label class="form-check-label" for="flexCheckDefault">full <small class="text-muted"> - all articles</small></label>
+            </div>
 
-
-            <div id="progressbar" class="progress my-2" style="height: 5px">
+            <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
                 <div id="complete" class="progress-bar" style="width:0%"></div>
                 <div id="active" class="progress-bar bg-warning" style="width:0%"></div>
             </div>
@@ -56,7 +65,7 @@
 
     <script>
 
-        // Configure data sources
+        // Configuration
         var config = {
             roots: [
                 'en/department-national-defence/maple-leaf',
@@ -70,102 +79,108 @@
                 'content/dam/dnd-mdn/documents/json/maple-en-2019.json',
                 'content/dam/dnd-mdn/documents/json/maple-fr-2019.json',
             ],
-            match: /\/\d{4}\/\d{2}\/[^/]+$/,
+            preFilter: function (node) {
+                return /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path)
+            },
+            preNormalize: function (path) {
+                return path
+                    .replace('{e}', '/en/department-national-defence/maple-leaf')
+                    .replace('{f}', '/fr/ministere-defense-nationale/feuille-derable')
+            }
         }
 
+    
+        aem.preNormalize = config.preNormalize
+
+        var start = new Date().getTime()
+
         function status(message) {
-            if (message) { $('#status').html(message) }
+            if (message) {
+                var time = ((new Date().getTime() - start) / 1000).toFixed(2)
+
+                $('#status').html(message)
+                console.info(time, message)
+            }
             
             var p = aem.progress()
             $('#complete').width(p.complete)
             $('#active').width(p.active)
         }
+      
 
-  
+
+
+        var type = $('input[name="type"]:checked').val()
+        console.log(type)
+
+        // Load sitemaps & feeds
         status('Finding nodes')
-
-        // Load feeds & sitemaps
-        var lists = aem.children(config.roots).feed(config.feeds).drain()
-        
-        // Filter out non matching
-        var x = lists.then(function () {
-            aem.filter(config.match)
-            status('Found ' + aem.nodes().length + ' nodes')
-            return aem
+        var setup = aem.addRoot(config.roots).addFeed(config.feeds).wait()
+      
+        // Pre filter node list
+        setup.then(function () {
+            if (typeof config.preFilter === 'function') {
+                status('Prefiltering nodes')
+                aem.filter(config.preFilter)
+            }
         })
+        
+        // Populate missing data
+        setup.then(function() {
 
-        console.log(x)
-
-        // Load nodes missing from feeds
-        lists.then(function() {
-            var list = aem.nodes().filter(function(path){
+            // Find nodes not in feed
+            var list = aem.nodes().filter(function (path) {
                 return !aem.data[path].live
             })
 
-            //aem.htmlmeta(list) //.meta(list, 'gcModifiedOverride')
-
             console.log('Missing', list)
+
+            status('Loading ' + list.length + ' new nodes')
+
+            return aem.htmlmeta(list).meta(list).wait()
+
+        }).then(function(){
+            console.log(aem.data)
         })
-       
+        
+        
+        /*.then(function(){
+
+            var list = aem.nodes().filter(function(path) {
+                if (!aem.data[path].peer) {
+                    return false
+                }
+
+                return aem.data[aem.data[path].peer]
+            })
+
+            console.log('done', list)
+
+            console.log(aem.data)
+        })*/
+
+        
+
 
         
         setInterval(status, 250)
+        
 
-
-     
+       
 
 
 
 
   
      /*
-        AEM.descendantsObj(config.root).done(function (list) {
-         
-            // Filter out paths that don't match
-            list = list.filter(function (node) {
-                return config.match.test(node.path)
-            })
-
-            AEM.htmlMeta(list[10].path, function (meta) {
-                $.extend(list[10], meta)
-
-                console.log(list[10])
-
-            })
-
-
-        }).fail(function (e) {
-            status('Error (' + e + '): ' + config.root)
-        })
-
-
-
-
-
-
-
-
-
-
-
+     
 
        
-        // Current progress percentage
-        var progress = 0
-        var started = null
-
         // Preselect elements
         var $status = $('#status')
         var $progress = $('#progress')
 
-        // Set status message and/or progress
-        function status(message, percent) {
-            if (typeof message === 'string') { $status.html(message) }
-            if (typeof percent === 'number') {
-                progress = percent === 100 ? 100 : progress + percent
-                return $progress.width(progress + '%')
-            }
-        }
+        
 
         // Display current status of english JSON
         AEM.assetMeta(config.aem_en, function (jcr) {
@@ -261,54 +276,7 @@
             })
         }
 
-        // Test if URL is an article
-        function isArticle(url) {
-            return new RegExp('\/' + year + '\/\\d{2}\/[^/]+$', 'i').test(url)
-        }
-
-        // Get all meta + dates
-        function withData(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when(
-                    withMeta(urls),
-                    withDate(urls)
-                ).done(function (meta, date) {
-                    d.resolve(meta.map(function (m, i) {
-                        m[0].date = date[i]
-                        m[1].date = date[i]
-                        m[0] = fields.map(function (fn) { return fn(m[0]) })
-                        m[1] = fields.map(function (fn) { return fn(m[1]) })
-                        return m
-                    }))
-                })
-            }).done(cb).promise()
-        }
-
-        // Get all html metadata
-        function withMeta(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when.apply(null, urls.map(function (url) {
-                    return AEM.htmlMetaPair(url).done(function () {
-                        status(null, 49 / urls.length)
-                    })
-                })).done(function () {
-                    d.resolve(Array.prototype.slice.call(arguments))
-                })
-            }).done(cb).promise()
-        }
-
-        // get all page dates
-        function withDate(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when.apply(null, urls.map(function (url) {
-                    return AEM.date(url).done(function () {
-                        status(null, 49 / urls.length)
-                    })
-                })).done(function () {
-                    d.resolve(Array.prototype.slice.call(arguments))
-                })
-            }).done(cb).promise()
-        }
+ 
 
         // Format feeds and trigger downloads
         function exportData(en, fr) {
