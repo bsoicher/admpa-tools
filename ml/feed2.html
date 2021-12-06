@@ -13,7 +13,7 @@
 
     <!-- Style -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
-    <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon"/>
+    <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -25,7 +25,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/eventemitter3/4.0.7/index.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
 
-    <script src="../lib/aem-ml.js"></script>
+    <script src="../lib/aem-ml-simple.js"></script>
 
 </head>
 
@@ -89,10 +89,8 @@
             }
         }
 
-    
         aem.preNormalize = config.preNormalize
-
-        var start = new Date().getTime()
+        var start = 0
 
         function status(message) {
             if (message) {
@@ -101,191 +99,137 @@
                 $('#status').html(message)
                 console.info(time, message)
             }
-            
+
             var p = aem.progress()
             $('#complete').width(p.complete)
             $('#active').width(p.active)
         }
-      
 
-
-
-        var type = $('input[name="type"]:checked').val()
-        console.log(type)
-
-        // Load sitemaps & feeds
-        status('Finding nodes')
-        var setup = aem.addRoot(config.roots).addFeed(config.feeds).wait()
-      
-        // Pre filter node list
-        setup.then(function () {
-            if (typeof config.preFilter === 'function') {
-                status('Prefiltering nodes')
-                aem.filter(config.preFilter)
-            }
-        })
-        
-        // Populate missing data
-        setup.then(function() {
-
-            // Find nodes not in feed
-            var list = aem.nodes().filter(function (path) {
-                return !aem.data[path].live
-            })
-
-            console.log('Missing', list)
-
-            status('Loading ' + list.length + ' new nodes')
-
-            return aem.htmlmeta(list).meta(list).wait()
-
-        }).then(function(){
-            console.log(aem.data)
-        })
-        
-        
-        /*.then(function(){
-
-            var list = aem.nodes().filter(function(path) {
-                if (!aem.data[path].peer) {
-                    return false
-                }
-
-                return aem.data[aem.data[path].peer]
-            })
-
-            console.log('done', list)
-
-            console.log(aem.data)
-        })*/
-
-        
-
-
-        
-        setInterval(status, 250)
-        
-
-       
-
-
-
-
-  
-     /*
-     
-
-       
-        // Preselect elements
-        var $status = $('#status')
-        var $progress = $('#progress')
-
-        
-
-        // Display current status of english JSON
-        AEM.assetMeta(config.aem_en, function (jcr) {
-            var html = jcr['dam:assetState'].charAt(0).toUpperCase() + jcr['dam:assetState'].slice(1) + ' '
-            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
-            html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
-            $('#enstatus').html(html)
-        }).fail(function (e) {
-            if (e === 'Not Found') { e = 'Not Published' }
-            $('#enstatus').html('Error (' + e + ')')
-        })
-
-        // Display current status of french JSON
-        AEM.assetMeta(config.aem_fr).done(function (jcr) {
-            var html = jcr['dam:assetState'].charAt(0).toUpperCase() + jcr['dam:assetState'].slice(1) + ' '
-            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
-            html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
-            $('#frstatus').html(html)
-        }).fail(function (e) {
-            if (e === 'Not Found') { e = 'Not Published' }
-            $('#frstatus').html('Error (' + e + ')')
-        })
-
-        // Define response fields
-        var fields = [
-
-            // Thumbnail image URL
-            function (meta) {
-                if (!meta['og:image']) { return '' }
-                var val = utf8.encode($.trim(meta['og:image']))
-                return val.replace('https://www.canada.ca/content/dam/dnd-mdn/images/maple-leaf', '{a}')
-            },
-
-            // Title (containing link)
-            function (meta) {
-                if (!meta['path'] || !meta['dcterms.title']) { return '' }
-                var val = '<a href="' + AEM.normalize(meta['path']).replace('https://www.canada.ca/','/') + '.html">' + utf8.encode($.trim(meta['dcterms.title'])) + '</a>'
-
-                if (year != cyear) {
-                    val = val.replace('/fr/ministere-defense-nationale/feuille-derable', '{f}').replace('/en/department-national-defence/maple-leaf', '{e}')
-                }
-
-                return val
-            },
-
-            // Description
-            function (meta) {
-                if (!meta['description']) { return '' }
-                return utf8.encode($.trim(meta['description'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
-            },
-
-            // Tags
-            function (meta) {
-                if (!meta['keywords']) { return '' }
-                return utf8.encode(meta['keywords'].split(',').map(function (tag) {
-                    return tag.trim()
-                }).filter(function (tag) {
-                    return tag ? !tag.match(/(featured|vedette)$/i) : false
-                }).filter(function (tag, index, self) {
-                    return self.indexOf(tag) === index
-                }).join(','))
-            },
-
-            function (meta) {
-                return meta['date'].toISOString().replace('.000Z', '')
-            }
-
-        ]
-
-        // Run program
         function main() {
-            started = new Date().getTime()
-            status('Initializing', 1)
 
-            AEM.descendants(config.root).done(function (urls) {
-                urls = urls.filter(isArticle)
-                status('Downloading metadata (' + (urls.length * 2) + ' nodes)')
+            start = new Date().getTime()
+            var type = $('input[name="type"]:checked').val()
 
-                withData(urls, function (data) {
-                    var en = []
-                    var fr = []
+            // Load sitemaps & feeds
+            status('Downloading node lists')
+            var chain = aem.addRoot(config.roots).addFeed(config.feeds).wait()
 
-                    data.forEach(function (d) {
-                        en.push(d[0])
-                        fr.push(d[1])
+            // Pre filter node list
+            chain.then(function () {
+                if (typeof config.preFilter === 'function') {
+                    status('Prefiltering nodes')
+                    aem.filter(config.preFilter)
+                }
+            })
+
+            // Option: clear data for modified nodes
+            if (type === 'smart') {
+                chain.then(function () {
+                    var now = Date.now() / 1000
+                    aem.map(function (node) {
+                        if (node.live && node.lastmod > now - 86400) {
+                            console.log('Update needed', node.path, node.lastmod, node.live[4])
+                            delete node.live
+                            return node
+                        }
                     })
+                })
+            }
 
-                    exportData(en, fr)
+            // Option: clear all data
+            if (type === 'full') {
+                chain.then(function () {
+                    aem.map(function (node) {
+                        delete node.live
+                        return node
+                    })
+                })
+            }
+
+            // Load new node data
+            chain = chain.then(function () {
+
+                // Find nodes not in feed
+                var list = aem.nodes().filter(function (path) {
+                    return !aem.data[path].live
                 })
 
-            }).fail(function (e) {
-                status('Error (' + e + '): ' + config.root)
+                status('Downloading nodes')
+                return aem.meta(list).wait().then(function () {
+
+                    // Verify peers exists, loading peers if needed
+                    list.forEach(function (path) {
+                        var peer = aem.data[path].peer
+                        if (!aem.data[peer]) {
+                            console.warn('Missing peer', path)
+                            delete aem.data[path]
+                        } else if (!aem.data[peer].peer) {
+                            aem.meta(peer)
+                        }
+                    })
+
+                    // Verify circular peer reference
+                    return aem.wait().then(function () {
+                        list.forEach(function (path) {
+                            if (aem.data[path]) {
+                                var peer = aem.data[path].peer
+                                if (aem.data[peer].peer !== path) {
+                                    console.warn('Peer mismatch', path)
+                                    delete aem.data[path]
+                                }
+                            }
+                        })
+                    })
+
+                })
             })
+
+            // Format feed data
+            chain.then(function () {
+                status('Formatting feed entries')
+                var now = Math.floor(Date.now() / 1000)
+
+                aem.map(function (node) {
+                    if (node.peer) {
+                        var peer = aem.data[node.peer]
+
+                        node.live = [
+                            (node.gcOGImage || '').trim(),
+                            '<a href="/' + node.path + '.html">' + node['jcr:title'].trim() + '</a>',
+                            (node.gcDescription || '').replace(/[\n\r]+/g, ' ').trim(),
+                            (node.gcKeywords || '').trim(),
+                            aem.date(node, peer),
+                            now
+                        ]
+                        return node
+                    }
+                })
+            })
+
+            // Export data
+            chain.then(function () {
+                status('Exporting feeds')
+                feeds = { en: [], fr: [] }
+
+                // Sort nodes into feeds
+                aem.map(function (node) {
+                    if (node.live) {
+                        var lang = node['jcr:language'] || node.path.slice(0, 2)
+                        feeds[lang].push(node.live)
+                    }
+                })
+
+                for (lang in feeds) {
+                    var json = utf8.encode(JSON.stringify({ data: feeds[lang] }, null, 1))
+                    download(json, 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                }
+
+            })
+
         }
 
- 
+        setInterval(status, 250)
 
-        // Format feeds and trigger downloads
-        function exportData(en, fr) {
-            status('Done (' + en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
-
-            download(JSON.stringify({ data: en }, null, 2), 'maple-en-' + year + '.json', 'text/plain;charset=UTF-8;')
-            download(JSON.stringify({ data: fr }, null, 2), 'maple-fr-' + year + '.json', 'text/plain;charset=UTF-8;')
-        }
-        */
     </script>
 
 </body>
