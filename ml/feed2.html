@@ -118,6 +118,7 @@
 
             // Pre filter node list
             chain.then(function () {
+
                 if (typeof config.preFilter === 'function') {
                     aem.each(config.preFilter)
                 }
@@ -126,11 +127,7 @@
                 aem.each(function (node) {
                     return Boolean(node.lastmod)
                 })
-
-                // Limit for testing
-                //aem.each(function (node) {
-                //    return /\/2021\//.test(node.path)
-                //})
+                
             })
 
             // Option: clear all feed data
