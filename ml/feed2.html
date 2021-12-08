@@ -72,12 +72,14 @@
                 'fr/ministere-defense-nationale/feuille-derable',
             ],
             feeds: [
-                'content/dam/dnd-mdn/documents/json/maple-en-2021.json',
-                'content/dam/dnd-mdn/documents/json/maple-fr-2021.json',
-                'content/dam/dnd-mdn/documents/json/maple-en-2020.json',
-                'content/dam/dnd-mdn/documents/json/maple-fr-2020.json',
-                'content/dam/dnd-mdn/documents/json/maple-en-2019.json',
-                'content/dam/dnd-mdn/documents/json/maple-fr-2019.json',
+                'content/dam/dnd-mdn/documents/json/maple-en.json',
+                'content/dam/dnd-mdn/documents/json/maple-fr.json',
+                //'content/dam/dnd-mdn/documents/json/maple-en-2021.json',
+                //'content/dam/dnd-mdn/documents/json/maple-fr-2021.json',
+                //'content/dam/dnd-mdn/documents/json/maple-en-2020.json',
+                //'content/dam/dnd-mdn/documents/json/maple-fr-2020.json',
+                //'content/dam/dnd-mdn/documents/json/maple-en-2019.json',
+                //'content/dam/dnd-mdn/documents/json/maple-fr-2019.json',
             ],
             preFilter: function (node) {
                 return /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path)
