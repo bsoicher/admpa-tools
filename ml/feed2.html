@@ -117,18 +117,36 @@
             // Pre filter node list
             chain.then(function () {
                 if (typeof config.preFilter === 'function') {
-                    status('Prefiltering nodes')
-                    aem.filter(config.preFilter)
+                    aem.each(config.preFilter)
                 }
+
+                // Remove nodes not in sitemap
+                aem.each(function (node) {
+                    return Boolean(node.lastmod)
+                })
+
+                // Limit for testing
+                //aem.each(function (node) {
+                //    return /\/2021\//.test(node.path)
+                //})
             })
+
+            // Option: clear all feed data
+            if (type === 'full') {
+                chain.then(function () {
+                    aem.each(function (node) {
+                        delete node.live
+                        return node
+                    })
+                })
+            }
 
             // Option: clear data for modified nodes
             if (type === 'smart') {
                 chain.then(function () {
                     var now = Date.now() / 1000
-                    aem.map(function (node) {
+                    aem.each(function (node) {
                         if (node.live && node.lastmod > now - 86400) {
-                            console.log('Update needed', node.path, node.lastmod, node.live[4])
                             delete node.live
                             return node
                         }
@@ -136,83 +154,80 @@
                 })
             }
 
-            // Option: clear all data
-            if (type === 'full') {
-                chain.then(function () {
-                    aem.map(function (node) {
-                        delete node.live
-                        return node
-                    })
-                })
-            }
+            // Load node data
+            chain.then(function () {
+                status('Downloading nodes')
 
-            // Load new node data
-            chain = chain.then(function () {
-
-                // Find nodes not in feed
+                // Find nodes to load
                 var list = aem.nodes().filter(function (path) {
                     return !aem.data[path].live
                 })
 
-                status('Downloading nodes')
-                return aem.meta(list).wait().then(function () {
+                return aem.meta(list).wait()
 
-                    // Verify peers exists, loading peers if needed
-                    list.forEach(function (path) {
-                        var peer = aem.data[path].peer
-                        if (!aem.data[peer]) {
-                            console.warn('Missing peer', path)
-                            delete aem.data[path]
-                        } else if (!aem.data[peer].peer) {
-                            aem.meta(peer)
+            }).then(function () {
+                status('Verifying node data')
+
+                // Verify peers exist and are loaded
+                aem.each(function (node) {
+                    if (node.peer) {
+                        if (!aem.data[node.peer]) {
+                            console.warn('Missing peer', node.path)
+                            return false
+                        } else if (!aem.data[node.peer].gcGuid) {
+                            aem.meta(node.peer)
                         }
-                    })
-
-                    // Verify circular peer reference
-                    return aem.wait().then(function () {
-                        list.forEach(function (path) {
-                            if (aem.data[path]) {
-                                var peer = aem.data[path].peer
-                                if (aem.data[peer].peer !== path) {
-                                    console.warn('Peer mismatch', path)
-                                    delete aem.data[path]
-                                }
-                            }
-                        })
-                    })
-
+                    }
                 })
-            })
 
-            // Format feed data
-            chain.then(function () {
+                // Verify circular peer reference
+                if (!aem.idle()) {
+                    return aem.wait()
+                }
+
+            }).then(function () {
+
+                // Verify circular peer reference
+                aem.each(function (node) {
+                    if (node.peer) {
+                        if (!aem.data[node.peer]) {
+                            return false
+                        } else if (node.path !== aem.data[node.peer].peer) {
+                            console.warn('Peer mismatch', node.path)
+                            return false
+                        }
+                    }
+                })
+
+            }).then(function () {
                 status('Formatting feed entries')
                 var now = Math.floor(Date.now() / 1000)
 
-                aem.map(function (node) {
+                aem.each(function (node) {
                     if (node.peer) {
-                        var peer = aem.data[node.peer]
+                        try {
+                            var peer = aem.data[node.peer]
 
-                        node.live = [
-                            (node.gcOGImage || '').trim(),
-                            '<a href="/' + node.path + '.html">' + node['jcr:title'].trim() + '</a>',
-                            (node.gcDescription || '').replace(/[\n\r]+/g, ' ').trim(),
-                            (node.gcKeywords || '').trim(),
-                            aem.date(node, peer),
-                            now
-                        ]
-                        return node
+                            node.live = [
+                                (node.gcOGImage || '').trim(),
+                                '<a href="/' + node.path + '.html">' + node['jcr:title'].trim() + '</a>',
+                                (node.gcDescription || '').replace(/[\n\r]+/g, ' ').trim(),
+                                (node.gcKeywords || '').trim(),
+                                aem.date(node, peer),
+                                now
+                            ]
+                            return node
+                        } catch (e) {
+                            console.warn('failed live', node)
+                        }
                     }
                 })
-            })
-
-            // Export data
-            chain.then(function () {
+            }).then(function () {
                 status('Exporting feeds')
                 feeds = { en: [], fr: [] }
 
                 // Sort nodes into feeds
-                aem.map(function (node) {
+                aem.each(function (node) {
                     if (node.live) {
                         var lang = node['jcr:language'] || node.path.slice(0, 2)
                         feeds[lang].push(node.live)
@@ -225,6 +240,7 @@
                 }
 
             })
+
 
         }
 
