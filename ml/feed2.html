@@ -36,30 +36,42 @@
                 <ol class="breadcrumb bg-transparent p-0 h5">
                     <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
                     <li class="breadcrumb-item"><a href="index.html">Maple Leaf</a></li>
-                    <li class="breadcrumb-item" aria-current="page">Feed Generator 2 &nbsp;<span class="badge rounded-pill bg-warning">In Development</span></li>
+                    <li class="breadcrumb-item" aria-current="page">Feed Generator v2 &nbsp;<span class="badge rounded-pill bg-warning">In Development</span></li>
                 </ol>
             </nav>
-
-            <h2 class="h5">Type of scan</h2>
+            <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
+            <h2 class="h5 mt-4">File status</h2>
+            <div id="feedstatus"></div>
+            <h2 class="h5 mt-4">Type of update</h2>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="type" value="new">
-                <label class="form-check-label" for="flexCheckDefault">very fast <small class="text-muted"> - new articles only</small></label>
+                <label class="form-check-label" for="flexCheckDefault">Quick <small class="text-muted"> - new articles only</small></label>
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="type" checked="checked" value="smart">
-                <label class="form-check-label" for="flexCheckDefault">fast <small class="text-muted"> - new & modified articles (recommended)</small></label>
+                <label class="form-check-label" for="flexCheckDefault">Smart <small class="text-muted"> - new & modified articles (recommended)</small></label>
             </div>
             <div class="form-check">
-                <input class="form-check-input" type="radio" name="type" value="full">
-                <label class="form-check-label" for="flexCheckDefault">full <small class="text-muted"> - all articles</small></label>
+                <input class="form-check-input" type="radio" name="type" checked="checked" value="year">
+                <label class="form-check-label" for="flexCheckDefault">Year <small class="text-muted"> - current year</small></label>
             </div>
-
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" value="all">
+                <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - all articles</small></label>
+            </div>
+            <h2 class="h5 mt-4 mb-3">Progress</h2>
             <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
                 <div id="complete" class="progress-bar" style="width:0%"></div>
                 <div id="active" class="progress-bar bg-warning" style="width:0%"></div>
             </div>
             <p id="status"><a href="javascript:main()">Click here to start</a></p>
-
+            <h2 class="h5 mt-4">Instructions</h2>
+            <ol class="pl-3">
+                <li>Run the tool above. Two JSON files will be generated and downloaded automatically</li>
+                <li>Upload both files to AEM (replacing existing files) in <a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</a></li>
+                <li>Select both files and publish them</li>
+                <li>Refresh this page to verify that the file status has changed</li>
+            </ol>
         </div>
     </main>
 
@@ -74,12 +86,6 @@
             feeds: [
                 'content/dam/dnd-mdn/documents/json/maple-en.json',
                 'content/dam/dnd-mdn/documents/json/maple-fr.json',
-                //'content/dam/dnd-mdn/documents/json/maple-en-2021.json',
-                //'content/dam/dnd-mdn/documents/json/maple-fr-2021.json',
-                //'content/dam/dnd-mdn/documents/json/maple-en-2020.json',
-                //'content/dam/dnd-mdn/documents/json/maple-fr-2020.json',
-                //'content/dam/dnd-mdn/documents/json/maple-en-2019.json',
-                //'content/dam/dnd-mdn/documents/json/maple-fr-2019.json',
             ],
             preFilter: function (node) {
                 return /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path)
@@ -92,6 +98,20 @@
         }
 
         aem.preNormalize = config.preNormalize
+
+        config.feeds.forEach(function(url) {
+            $('#feedstatus').append('<p class="mb-0">' + url + ' - <span data-feed="' + url + '">...</span></p>')
+            aem.assetMeta(url).then(function(jcr) {
+                var html = jcr['dam:assetState'] + ' '
+                html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
+                html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
+
+                $('[data-feed="' + url + '"]').html(html)
+            }, function(e){
+                $('[data-feed="' + url + '"]').html('Error (' + e + ')')
+            })
+        })
+
         var start = 0
 
         function status(message) {
@@ -127,18 +147,8 @@
                 aem.each(function (node) {
                     return Boolean(node.lastmod)
                 })
-                
-            })
 
-            // Option: clear all feed data
-            if (type === 'full') {
-                chain.then(function () {
-                    aem.each(function (node) {
-                        delete node.live
-                        return node
-                    })
-                })
-            }
+            })
 
             // Option: clear data for modified nodes
             if (type === 'smart') {
@@ -149,6 +159,29 @@
                             delete node.live
                             return node
                         }
+                    })
+                })
+            }
+
+            // Option: current year
+            if (type === 'year') {
+                chain.then(function () {
+                    var match = new RegExp('\/' + new Date().getFullYear() + '\/')
+                    aem.each(function (node) {
+                        if (match.test(node.path)) {
+                            delete node.live
+                            return node
+                        }
+                    })
+                })
+            }
+
+            // Option: clear all feed data
+            if (type === 'all') {
+                chain.then(function () {
+                    aem.each(function (node) {
+                        delete node.live
+                        return node
                     })
                 })
             }
@@ -221,6 +254,7 @@
                         }
                     }
                 })
+
             }).then(function () {
                 status('Exporting feeds')
                 feeds = { en: [], fr: [] }
@@ -234,7 +268,13 @@
                 })
 
                 for (lang in feeds) {
-                    var json = utf8.encode(JSON.stringify({ data: feeds[lang] }, null, 1))
+
+                    // Sort by date, newest first
+                    var feed = feeds[lang].sort(function (a, b) {
+                        return b[4] - a[4]
+                    })
+
+                    var json = utf8.encode(JSON.stringify({ data: feed }, null, 1))
                     download(json, 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
                 }
 
