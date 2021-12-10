@@ -152,9 +152,8 @@
             if (type === 'smart') {
                 // Option: clear data for modified nodes
                 chain.then(function () {
-                    var time = (Date.now() / 1000) - 86400
                     aem.each(function (node) {
-                        if (node.live && node.lastmod > time) {
+                        if (node.live && node.lastmod > node.live[5]) {
                             delete node.live
                             return node
                         }
