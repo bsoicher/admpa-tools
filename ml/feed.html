@@ -2,23 +2,31 @@
 <html lang="en">
 
 <head>
-    <title>Maple Leaf &gt; Feed Generator</title>
+    <title>Maple Leaf &gt; Feed Manager</title>
 
     <!-- Speed optimization -->
     <link rel="dns-prefetch" href="https://www.canada.ca">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
     <!-- Meta -->
     <meta charset="utf-8" />
 
     <!-- Style -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+    <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-    <script src="../lib/aem2.js"></script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/eventemitter3/4.0.7/index.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
+
+    <script src="../lib/aem-ml-simple.js"></script>
+
 </head>
 
 <body>
@@ -28,23 +36,33 @@
                 <ol class="breadcrumb bg-transparent p-0 h5">
                     <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
                     <li class="breadcrumb-item"><a href="index.html">Maple Leaf</a></li>
-                    <li class="breadcrumb-item" aria-current="page">Feed Generator</li>
+                    <li class="breadcrumb-item" aria-current="page">Feed Generator v2</li>
                 </ol>
             </nav>
-
             <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
-
-            <h2 class="h5 mt-4 mb-3">Single year JSON files</h2>
-            <p>This tool will only load pages from a single year. By default it will run for the current year, but if you need to update a past years JSON, modify the URL with a year parameter: <a href="?y=2019">https://caf-fac.ca/tools/ml/feed.html?y=2019</a></p>
-
             <h2 class="h5 mt-4">File status</h2>
-
-            <p class="mb-0">maple-en<span class="curyear"></span>.json - <span id="enstatus">...</span></p>
-            <p class="mt-0 mb-4">maple-fr<span class="curyear"></span>.json - <span id="frstatus">...</span></p>
-
+            <div id="feedstatus"></div>
+            <h2 class="h5 mt-4">Type of update</h2>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" value="new">
+                <label class="form-check-label" for="flexCheckDefault">Quick <small class="text-muted"> - New pages only</small></label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" value="smart" checked="checked">
+                <label class="form-check-label" for="flexCheckDefault">Smart <small class="text-muted"> - New & modified pages (recommended)</small></label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" value="year">
+                <label class="form-check-label" for="flexCheckDefault">Year <small class="text-muted"> - Pages modified in the past year</small></label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" value="all">
+                <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - Every page</small></label>
+            </div>
             <h2 class="h5 mt-4 mb-3">Progress</h2>
-            <div id="progressbar" class="progress my-2" style="height: 5px">
-                <div id="progress" class="progress-bar" style="width:0%"></div>
+            <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
+                <div id="complete" class="progress-bar" style="width:0%"></div>
+                <div id="active" class="progress-bar bg-warning" style="width:0%"></div>
             </div>
             <p id="status"><a href="javascript:main()">Click here to start</a></p>
             <h2 class="h5 mt-4">Instructions</h2>
@@ -59,202 +77,220 @@
 
     <script>
 
-        function shorten(text) {
-            if (text.length < 100) {
-                return text;
-            }
-            var length = text.substr(0, 100).lastIndexOf(' ') || 100;
-            return text.substr(0, length)
-        }
+        // Force select default option
+        $('input[value="smart"]').click()
 
-        // Which year to create
-        var year = new URLSearchParams(window.location.search).get('y')
-        var cyear = new Date().getFullYear()
-        if (year) {
-            year = parseInt(year)
-            if (!year || year < 2019 || year > cyear) {
-                year = cyear
-            }
-        } else {
-            year = cyear
-        }
-
-        $('.curyear').text('-' + year)
-
-        // Configure data sources
+        // Configuration
         var config = {
-            'aem_en': 'content/dam/dnd-mdn/documents/json/maple-en-' + year + '.json',
-            'aem_fr': 'content/dam/dnd-mdn/documents/json/maple-fr-' + year + '.json',
-            'root': 'en/department-national-defence/maple-leaf/defence',
-        }
-
-        // Current progress percentage
-        var progress = 0
-        var started = null
-
-        // Preselect elements
-        var $status = $('#status')
-        var $progress = $('#progress')
-
-        // Set status message and/or progress
-        function status(message, percent) {
-            if (typeof message === 'string') { $status.html(message) }
-            if (typeof percent === 'number') {
-                progress = percent === 100 ? 100 : progress + percent
-                return $progress.width(progress + '%')
-            }
-        }
-
-        // Display current status of english JSON
-        AEM.assetMeta(config.aem_en, function (jcr) {
-            var html = jcr['dam:assetState'].charAt(0).toUpperCase() + jcr['dam:assetState'].slice(1) + ' '
-            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
-            html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
-            $('#enstatus').html(html)
-        }).fail(function (e) {
-            if (e === 'Not Found') { e = 'Not Published' }
-            $('#enstatus').html('Error (' + e + ')')
-        })
-
-        // Display current status of french JSON
-        AEM.assetMeta(config.aem_fr).done(function (jcr) {
-            var html = jcr['dam:assetState'].charAt(0).toUpperCase() + jcr['dam:assetState'].slice(1) + ' '
-            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
-            html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
-            $('#frstatus').html(html)
-        }).fail(function (e) {
-            if (e === 'Not Found') { e = 'Not Published' }
-            $('#frstatus').html('Error (' + e + ')')
-        })
-
-        // Define response fields
-        var fields = [
-
-            // Thumbnail image URL
-            function (meta) {
-                if (!meta['og:image']) { return '' }
-                var val = utf8.encode($.trim(meta['og:image']))
-                return val.replace('https://www.canada.ca/content/dam/dnd-mdn/images/maple-leaf', '{a}')
+            roots: [
+                'en/department-national-defence/maple-leaf',
+                'fr/ministere-defense-nationale/feuille-derable',
+            ],
+            feeds: [
+                'content/dam/dnd-mdn/documents/json/maple-en.json',
+                'content/dam/dnd-mdn/documents/json/maple-fr.json',
+            ],
+            placeholders: {
+                '{a}': '/content/dam/dnd-mdn/images/maple-leaf',
+                '{e}': '/en/department-national-defence/maple-leaf',
+                '{f}': '/fr/ministere-defense-nationale/feuille-derable',
             },
+            preFilter: function (node) {
+                return /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path)
+            },
+        }
 
-            // Title (containing link)
-            function (meta) {
-                if (!meta['path'] || !meta['dcterms.title']) { return '' }
-                var val = '<a href="' + AEM.normalize(meta['path']).replace('https://www.canada.ca/','/') + '.html">' + utf8.encode($.trim(meta['dcterms.title'])) + '</a>'
+        aem.preFilter = config.preFilter
+        aem.placeholders = config.placeholders
 
-                if (year != cyear) {
-                    val = val.replace('/fr/ministere-defense-nationale/feuille-derable', '{f}').replace('/en/department-national-defence/maple-leaf', '{e}')
+
+
+        config.feeds.forEach(function (url) {
+            $('#feedstatus').append('<p class="mb-0">' + url + ' - <span data-feed="' + url + '">...</span></p>')
+            aem.assetMeta(url).then(function (jcr) {
+                var html = jcr['dam:assetState'] + ' '
+                html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
+                html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
+
+                $('[data-feed="' + url + '"]').html(html)
+            }, function (e) {
+                $('[data-feed="' + url + '"]').html('Error (' + e + ')')
+            })
+        })
+
+        var start = 0
+
+        function status(message) {
+            if (message) {
+                var time = ((new Date().getTime() - start) / 1000).toFixed(2)
+
+                $('#status').html(message)
+                console.info(time, message)
+            }
+
+            var p = aem.progress()
+            $('#complete').width(p.complete)
+            $('#active').width(p.active)
+        }
+
+        function main() {
+
+            start = new Date().getTime()
+            var type = $('input[name="type"]:checked').val()
+
+            // Load sitemaps & feeds
+            status('Downloading node lists')
+            var chain = aem.addRoot(config.roots).addFeed(config.feeds).wait()
+
+            // Remove deleted nodes
+            chain.then(function () {
+                aem.each(function (node) {
+                    return Boolean(node.lastmod)
+                })
+            })
+
+            if (type === 'smart') {
+                // Option: clear data for modified nodes
+                chain.then(function () {
+                    aem.each(function (node) {
+                        if (node.live && node.lastmod > node.live[5]) {
+                            delete node.live
+                            return node
+                        }
+                    })
+                })
+            } else if (type === 'year') {
+                // Option: modified in last 365 days
+                chain.then(function () {
+                    var time = (Date.now() / 1000) - 31536000
+                    aem.each(function (node) {
+                        if (node.live && node.lastmod > time) {
+                            delete node.live
+                            return node
+                        }
+                    })
+                })
+            } else if (type === 'all') {
+                // Option: all nodes
+                chain.then(function () {
+                    aem.each(function (node) {
+                        if (node.live) {
+                            delete node.live
+                            return node
+                        }
+                    })
+                })
+            }
+
+            // Load node data
+            chain.then(function () {
+                status('Downloading nodes')
+
+                // Find nodes to load
+                var list = aem.nodes().filter(function (path) {
+                    return !aem.data[path].live
+                })
+
+                return aem.meta(list).wait()
+
+            }).then(function () {
+
+                // Verify peers exist and are loaded
+                aem.each(function (node) {
+                    if (node.peer) {
+                        if (!aem.data[node.peer]) {
+                            console.warn('Missing peer', node.path)
+                            return false
+                        } else if (!aem.data[node.peer].gcGuid) {
+                            aem.meta(node.peer)
+                        }
+                    }
+                })
+
+                if (!aem.idle()) {
+                    return aem.wait()
                 }
 
-                return val
-            },
+            }).then(function () {
 
-            // Description
-            function (meta) {
-                if (!meta['description']) { return '' }
-                return utf8.encode($.trim(meta['description'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
-            },
-
-            // Tags
-            function (meta) {
-                if (!meta['keywords']) { return '' }
-                return utf8.encode(meta['keywords'].split(',').map(function (tag) {
-                    return tag.trim()
-                }).filter(function (tag) {
-                    return tag ? !tag.match(/(featured|vedette)$/i) : false
-                }).filter(function (tag, index, self) {
-                    return self.indexOf(tag) === index
-                }).join(','))
-            },
-
-            function (meta) {
-                return meta['date'].toISOString().replace('.000Z', '')
-            }
-
-        ]
-
-        // Run program
-        function main() {
-            started = new Date().getTime()
-            status('Initializing', 1)
-
-            AEM.descendants(config.root).done(function (urls) {
-                urls = urls.filter(isArticle)
-                status('Downloading metadata (' + (urls.length * 2) + ' nodes)')
-
-                withData(urls, function (data) {
-                    var en = []
-                    var fr = []
-
-                    data.forEach(function (d) {
-                        en.push(d[0])
-                        fr.push(d[1])
-                    })
-
-                    exportData(en, fr)
+                // Verify circular peer reference
+                aem.each(function (node) {
+                    if (node.peer) {
+                        if (!aem.data[node.peer]) {
+                            return false
+                        } else if (node.path !== aem.data[node.peer].peer) {
+                            console.warn('Peer mismatch', node.path)
+                            return false
+                        }
+                    }
                 })
 
-            }).fail(function (e) {
-                status('Error (' + e + '): ' + config.root)
+            }).then(function () {
+                status('Formatting feed data')
+                var now = Math.floor(Date.now() / 1000)
+
+                aem.each(function (node) {
+                    if (node.peer) {
+                        try {
+                            var peer = aem.data[node.peer]
+
+                            node.live = [
+                                aem.format(node.gcOGImage || '', true).trim(),
+                                aem.format('<a href="/' + node.path + '.html">' + node['jcr:title'].trim() + '</a>', true),
+                                (node.gcDescription || '').trim().replace(/[\n\r]+/g, ' '),
+                                (node.gcKeywords || '').trim().replace(/(\s+,|,\s+)/g, ','),
+                                aem.date(node, peer),
+                                now
+                            ]
+                            return node
+                        } catch (e) {
+                            console.warn('failed live', node)
+                        }
+                    } else {
+                        // Insert placeholders
+                        node.live[0] = aem.format(node.live[0], true)
+                        node.live[1] = aem.format(node.live[1], true)
+                        return node
+                    }
+                })
+
+            }).then(function () {
+                status('Exporting feeds')
+                feeds = { en: [], fr: [] }
+
+                // Sort nodes into feeds by language
+                aem.each(function (node) {
+                    if (node.live) {
+                        var lang = node['jcr:language'] || node.path.slice(0, 2)
+                        feeds[lang].push(node.live)
+                    }
+                })
+
+                for (lang in feeds) {
+
+                    // Sort by date, newest first
+                    var feed = feeds[lang].sort(function (a, b) {
+                        return b[4] - a[4]
+                    })
+
+                    // Remove placeholders for newest 5
+                    for (var i = 0; i < 5; i++) {
+                        feed[i][0] = aem.format(feed[i][0])
+                        feed[i][1] = aem.format(feed[i][1])
+                    }
+
+                    // Format output
+                    feed = JSON.stringify({ data: feed }, null, 1)
+                    feed = utf8.encode(feed)
+
+                    // Initiate file doenload
+                    download(feed, 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                }
             })
+
         }
 
-        // Test if URL is an article
-        function isArticle(url) {
-            return new RegExp('\/' + year + '\/\\d{2}\/[^/]+$', 'i').test(url)
-        }
-
-        // Get all meta + dates
-        function withData(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when(
-                    withMeta(urls),
-                    withDate(urls)
-                ).done(function (meta, date) {
-                    d.resolve(meta.map(function (m, i) {
-                        m[0].date = date[i]
-                        m[1].date = date[i]
-                        m[0] = fields.map(function (fn) { return fn(m[0]) })
-                        m[1] = fields.map(function (fn) { return fn(m[1]) })
-                        return m
-                    }))
-                })
-            }).done(cb).promise()
-        }
-
-        // Get all html metadata
-        function withMeta(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when.apply(null, urls.map(function (url) {
-                    return AEM.htmlMetaPair(url).done(function () {
-                        status(null, 49 / urls.length)
-                    })
-                })).done(function () {
-                    d.resolve(Array.prototype.slice.call(arguments))
-                })
-            }).done(cb).promise()
-        }
-
-        // get all page dates
-        function withDate(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when.apply(null, urls.map(function (url) {
-                    return AEM.date(url).done(function () {
-                        status(null, 49 / urls.length)
-                    })
-                })).done(function () {
-                    d.resolve(Array.prototype.slice.call(arguments))
-                })
-            }).done(cb).promise()
-        }
-
-        // Format feeds and trigger downloads
-        function exportData(en, fr) {
-            status('Done (' + en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
-
-            download(JSON.stringify({ data: en }, null, 2), 'maple-en-' + year + '.json', 'text/plain;charset=UTF-8;')
-            download(JSON.stringify({ data: fr }, null, 2), 'maple-fr-' + year + '.json', 'text/plain;charset=UTF-8;')
-        }
+        setInterval(status, 250)
 
     </script>
 
