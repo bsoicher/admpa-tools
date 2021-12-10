@@ -45,19 +45,19 @@
             <h2 class="h5 mt-4">Type of update</h2>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="type" value="new">
-                <label class="form-check-label" for="flexCheckDefault">Quick <small class="text-muted"> - new articles only</small></label>
+                <label class="form-check-label" for="flexCheckDefault">Quick <small class="text-muted"> - New pages only</small></label>
             </div>
             <div class="form-check">
-                <input class="form-check-input" type="radio" name="type" checked="checked" value="smart">
-                <label class="form-check-label" for="flexCheckDefault">Smart <small class="text-muted"> - new & modified articles (recommended)</small></label>
+                <input class="form-check-input" type="radio" name="type" value="smart" checked="checked">
+                <label class="form-check-label" for="flexCheckDefault">Smart <small class="text-muted"> - New & modified pages (recommended)</small></label>
             </div>
             <div class="form-check">
-                <input class="form-check-input" type="radio" name="type" checked="checked" value="year">
-                <label class="form-check-label" for="flexCheckDefault">Year <small class="text-muted"> - current year</small></label>
+                <input class="form-check-input" type="radio" name="type" value="year">
+                <label class="form-check-label" for="flexCheckDefault">Year <small class="text-muted"> - Pages modified in the past year</small></label>
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="type" value="all">
-                <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - all articles</small></label>
+                <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - Every page</small></label>
             </div>
             <h2 class="h5 mt-4 mb-3">Progress</h2>
             <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
@@ -77,6 +77,9 @@
 
     <script>
 
+        // Force select default option
+        $('input[value="smart"]').click()
+
         // Configuration
         var config = {
             roots: [
@@ -87,27 +90,30 @@
                 'content/dam/dnd-mdn/documents/json/maple-en.json',
                 'content/dam/dnd-mdn/documents/json/maple-fr.json',
             ],
+            placeholders: {
+                '{a}': '/content/dam/dnd-mdn/images/maple-leaf',
+                '{e}': '/en/department-national-defence/maple-leaf',
+                '{f}': '/fr/ministere-defense-nationale/feuille-derable',
+            },
             preFilter: function (node) {
                 return /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path)
             },
-            preNormalize: function (path) {
-                return path
-                    .replace('{e}', '/en/department-national-defence/maple-leaf')
-                    .replace('{f}', '/fr/ministere-defense-nationale/feuille-derable')
-            }
         }
 
-        aem.preNormalize = config.preNormalize
+        aem.preFilter = config.preFilter
+        aem.placeholders = config.placeholders
 
-        config.feeds.forEach(function(url) {
+
+
+        config.feeds.forEach(function (url) {
             $('#feedstatus').append('<p class="mb-0">' + url + ' - <span data-feed="' + url + '">...</span></p>')
-            aem.assetMeta(url).then(function(jcr) {
+            aem.assetMeta(url).then(function (jcr) {
                 var html = jcr['dam:assetState'] + ' '
                 html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
                 html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
 
                 $('[data-feed="' + url + '"]').html(html)
-            }, function(e){
+            }, function (e) {
                 $('[data-feed="' + url + '"]').html('Error (' + e + ')')
             })
         })
@@ -136,52 +142,43 @@
             status('Downloading node lists')
             var chain = aem.addRoot(config.roots).addFeed(config.feeds).wait()
 
-            // Pre filter node list
+            // Remove deleted nodes
             chain.then(function () {
-
-                if (typeof config.preFilter === 'function') {
-                    aem.each(config.preFilter)
-                }
-
-                // Remove nodes not in sitemap
                 aem.each(function (node) {
                     return Boolean(node.lastmod)
                 })
-
             })
 
-            // Option: clear data for modified nodes
             if (type === 'smart') {
+                // Option: clear data for modified nodes
                 chain.then(function () {
-                    var now = Date.now() / 1000
+                    var time = (Date.now() / 1000) - 86400
                     aem.each(function (node) {
-                        if (node.live && node.lastmod > now - 86400) {
+                        if (node.live && node.lastmod > time) {
                             delete node.live
                             return node
                         }
                     })
                 })
-            }
-
-            // Option: current year
-            if (type === 'year') {
+            } else if (type === 'year') {
+                // Option: modified in last 365 days
                 chain.then(function () {
-                    var match = new RegExp('\/' + new Date().getFullYear() + '\/')
+                    var time = (Date.now() / 1000) - 31536000
                     aem.each(function (node) {
-                        if (match.test(node.path)) {
+                        if (node.live && node.lastmod > time) {
                             delete node.live
                             return node
                         }
                     })
                 })
-            }
-
-            // Option: clear all feed data
-            if (type === 'all') {
+            } else if (type === 'all') {
+                // Option: all nodes
                 chain.then(function () {
                     aem.each(function (node) {
-                        delete node.live
-                        return node
+                        if (node.live) {
+                            delete node.live
+                            return node
+                        }
                     })
                 })
             }
@@ -198,7 +195,6 @@
                 return aem.meta(list).wait()
 
             }).then(function () {
-                status('Verifying node data')
 
                 // Verify peers exist and are loaded
                 aem.each(function (node) {
@@ -212,7 +208,6 @@
                     }
                 })
 
-                // Verify circular peer reference
                 if (!aem.idle()) {
                     return aem.wait()
                 }
@@ -241,10 +236,10 @@
                             var peer = aem.data[node.peer]
 
                             node.live = [
-                                (node.gcOGImage || '').trim(),
-                                '<a href="/' + node.path + '.html">' + node['jcr:title'].trim() + '</a>',
-                                (node.gcDescription || '').replace(/[\n\r]+/g, ' ').trim(),
-                                (node.gcKeywords || '').trim(),
+                                aem.format(node.gcOGImage || '', true).trim(),
+                                aem.format('<a href="/' + node.path + '.html">' + node['jcr:title'].trim() + '</a>', true),
+                                (node.gcDescription || '').trim().replace(/[\n\r]+/g, ' '),
+                                (node.gcKeywords || '').trim().replace(/(\s+,|,\s+)/g, ','),
                                 aem.date(node, peer),
                                 now
                             ]
@@ -274,12 +269,21 @@
                         return b[4] - a[4]
                     })
 
-                    var json = utf8.encode(JSON.stringify({ data: feed }, null, 1))
-                    download(json, 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                    // Reformat newest 5 for homepage feed
+                    for (var i = 0; i < 5; i++) {
+                        feed[i] = feed[i].map(function (text) {
+                            return aem.format(text)
+                        })
+                    }
+
+                    // Format output
+                    feed = JSON.stringify({ data: feed }, null, 1)
+                    feed = utf8.encode(feed)
+
+                    // Initiate file doenload
+                    download(feed, 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
                 }
-
             })
-
 
         }
 
