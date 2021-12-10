@@ -227,7 +227,7 @@
                 })
 
             }).then(function () {
-                status('Formatting feed entries')
+                status('Formatting feed data')
                 var now = Math.floor(Date.now() / 1000)
 
                 aem.each(function (node) {
@@ -247,6 +247,10 @@
                         } catch (e) {
                             console.warn('failed live', node)
                         }
+                    } else {
+                        node.live[0] = aem.format(node.live[0], true)
+                        node.live[1] = aem.format(node.live[1], true)
+                        return node
                     }
                 })
 
@@ -271,9 +275,8 @@
 
                     // Reformat newest 5 for homepage feed
                     for (var i = 0; i < 5; i++) {
-                        feed[i] = feed[i].map(function (text) {
-                            return aem.format(text)
-                        })
+                        feed[i][0] = aem.format(feed[i][0])
+                        feed[i][1] = aem.format(feed[i][1])
                     }
 
                     // Format output
