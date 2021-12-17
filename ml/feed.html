@@ -22,7 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
 
-    <script src="../lib/aem-ml-simple.js"></script>
+    <script src="../lib/aem-ml-simple.js?v=2021-12-16"></script>
 
 </head>
 
@@ -36,32 +36,45 @@
                     <li class="breadcrumb-item" aria-current="page">Feed Generator v2</li>
                 </ol>
             </nav>
-            <p>Compiles a listing of Maple Leaf article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
-            <h2 class="h5 mt-4">File status</h2>
-            <div id="feedstatus"></div>
-            <h2 class="h5 mt-4">Type of update</h2>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="type" value="new">
-                <label class="form-check-label" for="flexCheckDefault">Quick <small class="text-muted"> - New pages only</small></label>
+            <p>Compiles a listing of Maple Leaf articles used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h2 class="h5 mt-3">Type of update</h2>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type" value="smart" checked="checked">
+                        <label class="form-check-label" for="flexCheckDefault">Smart <small class="text-muted"> - New & modified pages (recommended)</small></label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type" value="month">
+                        <label class="form-check-label" for="flexCheckDefault">Month <small class="text-muted"> - Pages modified in the past month</small></label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type" value="year">
+                        <label class="form-check-label" for="flexCheckDefault">Year <small class="text-muted"> - Pages modified in the past year</small></label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type" value="all">
+                        <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - Every page</small></label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h2 class="h5 mt-3">File status</h2>
+                    <div id="feedstatus"></div>
+                </div>
+                
             </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="type" value="smart" checked="checked">
-                <label class="form-check-label" for="flexCheckDefault">Smart <small class="text-muted"> - New & modified pages (recommended)</small></label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="type" value="year">
-                <label class="form-check-label" for="flexCheckDefault">Year <small class="text-muted"> - Pages modified in the past year</small></label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="type" value="all">
-                <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - Every page</small></label>
-            </div>
+
             <h2 class="h5 mt-4 mb-3">Progress</h2>
             <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
                 <div id="complete" class="progress-bar" style="width:0%"></div>
                 <div id="active" class="progress-bar bg-warning" style="width:0%"></div>
             </div>
             <p id="status"><a href="javascript:main()">Click here to start</a></p>
+            <div id="warnings" class="d-none">
+                <h2 class="h5 mt-4">Warnings</h2>
+                <ol></ol>
+            </div>
             <h2 class="h5 mt-4">Instructions</h2>
             <ol class="pl-3">
                 <li>Run the tool above. Two JSON files will be generated and downloaded automatically</li>
@@ -69,6 +82,8 @@
                 <li>Select both files and publish them</li>
                 <li>Refresh this page to verify that the file status has changed</li>
             </ol>
+
+
         </div>
     </main>
 
@@ -103,7 +118,7 @@
 
 
         config.feeds.forEach(function (url) {
-            $('#feedstatus').append('<p class="mb-0">' + url + ' - <span data-feed="' + url + '">...</span></p>')
+            $('#feedstatus').append('<p class="mb-0"><a href="' + aem.domain + url + '" target="_blank">' + url.replace('content/dam/dnd-mdn/documents/json/', '') + '</a> - <span data-feed="' + url + '">...</span></p>')
             aem.assetMeta(url).then(function (jcr) {
                 var html = jcr['dam:assetState'] + ' '
                 html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
@@ -130,10 +145,19 @@
             $('#active').width(p.active)
         }
 
+
+        function warn(node, details) {
+            $('#warnings').removeClass('d-none')
+            $('#warnings ol').append('<li><a href="' + aem.domain + node.path + '.html" target="_blank">' + node.path + '</a><br/>' + details + '</li>')
+            console.warn(node.path, details)
+            return false
+        }
+
         function main() {
 
             start = new Date().getTime()
-            var type = $('input[name="type"]:checked').val()
+            var type = $('input[name="type"]').prop('disabled', true).filter(':checked').val()
+
 
             // Load sitemaps & feeds
             status('Downloading node lists')
@@ -152,7 +176,16 @@
                     aem.each(function (node) {
                         if (node.live && node.lastmod > node.live[5] - 86400) {
                             delete node.live
-                            return node
+                        }
+                    })
+                })
+            } else if (type === 'month') {
+                // Option: modified in last 30 days
+                chain.then(function () {
+                    var time = (Date.now() / 1000) - 2592000
+                    aem.each(function (node) {
+                        if (node.live && node.lastmod > time) {
+                            delete node.live
                         }
                     })
                 })
@@ -163,7 +196,6 @@
                     aem.each(function (node) {
                         if (node.live && node.lastmod > time) {
                             delete node.live
-                            return node
                         }
                     })
                 })
@@ -173,7 +205,6 @@
                     aem.each(function (node) {
                         if (node.live) {
                             delete node.live
-                            return node
                         }
                     })
                 })
@@ -192,33 +223,29 @@
 
             }).then(function () {
 
-                // Verify peers exist and are loaded
+                // Check for content issues
                 aem.each(function (node) {
-                    if (node.peer) {
-                        if (!aem.data[node.peer]) {
-                            console.warn('Missing peer', node.path)
-                            return false
-                        } else if (!aem.data[node.peer].gcGuid) {
-                            aem.meta(node.peer)
+                    if (node && node.peer) {
+                        var peer = aem.data[node.peer]
+
+                        if (!peer) {
+                            return warn(node, 'peer not found')
+                        } else if (node.path !== peer.peer) {
+                            return warn(node, 'links between peers do not match')
+                        } else if (node['jcr:language'] !== node.path.slice(0, 2)) {
+                            return warn(node, 'page language is inconsistent with URL path')
+                        } else if (!node.gcDescription || !node.gcKeywords) {
+                            return warn(node, 'missing description or keywords metadata')
+                        } else if (!node.gcOGImage && peer.gcOGImage) {
+                            return warn(node, 'thumbnail image is set in only one language')
                         }
+                    } else if (node && !node.peer && !node.live) {
+                        return warn(node, 'failed to download metadata')
                     }
-                })
 
-                if (!aem.idle()) {
-                    return aem.wait()
-                }
-
-            }).then(function () {
-
-                // Verify circular peer reference
-                aem.each(function (node) {
-                    if (node.peer) {
-                        if (!aem.data[node.peer]) {
-                            return false
-                        } else if (node.path !== aem.data[node.peer].peer) {
-                            console.warn('Peer mismatch', node.path)
-                            return false
-                        }
+                }).each(function(node) {
+                    if (node.peer && !aem.data[node.peer]) {
+                        return false
                     }
                 })
 
@@ -228,26 +255,21 @@
 
                 aem.each(function (node) {
                     if (node.peer) {
-                        try {
-                            var peer = aem.data[node.peer]
+                        var peer = aem.data[node.peer]
 
-                            node.live = [
-                                aem.format(node.gcOGImage || '', true).trim(),
-                                aem.format('<a href="/' + node.path + '.html">' + node['jcr:title'].trim() + '</a>', true),
-                                (node.gcDescription || '').trim().replace(/[\n\r]+/g, ' '),
-                                (node.gcKeywords || '').trim().replace(/(\s+,|,\s+)/g, ','),
-                                aem.date(node, peer),
-                                now
-                            ]
-                            return node
-                        } catch (e) {
-                            console.warn('failed live', node)
-                        }
+                        node.live = [
+                            aem.format(node.gcOGImage, true),
+                            aem.format('<a href="/' + node.path + '.html">' + node['jcr:title'] + '</a>', true),
+                            node.gcDescription.replace(/[\n\r]+/g, ' '),
+                            node.gcKeywords.replace(/(\s+,|,\s+)/g, ','),
+                            aem.date(node, peer),
+                            now
+                        ]
+
                     } else {
                         // Insert placeholders
                         node.live[0] = aem.format(node.live[0], true)
                         node.live[1] = aem.format(node.live[1], true)
-                        return node
                     }
                 })
 
@@ -264,24 +286,22 @@
                 })
 
                 for (lang in feeds) {
+                    // Sort feed by date, newest first
+                    feeds[lang].sort(function (a, b) { return b[4] - a[4] })
 
-                    // Sort by date, newest first
-                    var feed = feeds[lang].sort(function (a, b) {
-                        return b[4] - a[4]
-                    })
-
-                    // Remove placeholders for newest 5
+                    // Remove placeholders for latest 5
                     for (var i = 0; i < 5; i++) {
-                        feed[i][0] = aem.format(feed[i][0])
-                        feed[i][1] = aem.format(feed[i][1])
+                        feeds[lang][i][0] = aem.format(feeds[lang][i][0])
+                        feeds[lang][i][1] = aem.format(feeds[lang][i][1])
                     }
 
-                    // Format output
-                    feed = JSON.stringify({ data: feed }, null, 1)
-                    feed = utf8.encode(feed)
+                    // Format json
+                    feeds[lang] = utf8.encode(JSON.stringify({ data: feeds[lang] }, null, 1))
+                }
 
-                    // Initiate file doenload
-                    download(feed, 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                // Initiate file downloads
+                for (lang in feeds) {
+                    download(feeds[lang], 'maple-' + lang + '.json', 'text/plain;charset=UTF-8;')
                 }
             })
 
