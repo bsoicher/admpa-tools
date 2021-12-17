@@ -235,8 +235,10 @@
                         } else if (node['jcr:language'] !== node.path.slice(0, 2)) {
                             return warn(node, 'page language is inconsistent with URL path')
                         } else if (!node.gcDescription || !node.gcKeywords) {
+                            delete aem.data[node.peer]
                             return warn(node, 'missing description or keywords metadata')
                         } else if (!node.gcOGImage && peer.gcOGImage) {
+                            delete aem.data[node.peer]
                             return warn(node, 'thumbnail image is set in only one language')
                         }
                     } else if (node && !node.peer && !node.live) {
