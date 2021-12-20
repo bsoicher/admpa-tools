@@ -134,10 +134,7 @@
 
         function status(message) {
             if (message) {
-                var time = ((new Date().getTime() - start) / 1000).toFixed(2)
-
                 $('#status').html(message)
-                console.info(time, message)
             }
 
             var p = aem.progress()
