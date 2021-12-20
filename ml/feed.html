@@ -223,6 +223,19 @@
 
             }).then(function () {
 
+                // Verify peers are loaded
+                aem.each(function (node) {
+                    if (node.peer && aem.data[node.peer] && !aem.data[node.peer].peer) {
+                        aem.meta(node.peer)
+                    }
+                })
+
+                if (!aem.idle()) {
+                    return aem.wait()
+                }
+
+            }).then(function () {
+
                 // Check for content issues
                 aem.each(function (node) {
                     if (node && node.peer) {
