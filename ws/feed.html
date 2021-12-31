@@ -2,23 +2,29 @@
 <html lang="en">
 
 <head>
-    <title>Western Sentinel &gt; Feed Generator</title>
+    <title>Western Sentinel &gt; Feed Generator v2</title>
+
 
     <!-- Speed optimization -->
     <link rel="dns-prefetch" href="https://www.canada.ca">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
     <!-- Meta -->
     <meta charset="utf-8" />
 
     <!-- Style -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+    <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-    <script src="../lib/aem2.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
+
+    <script src="../lib/aem-ml-simple.js?v=2021-12-16"></script>
+
 </head>
 
 <body>
@@ -28,18 +34,47 @@
                 <ol class="breadcrumb bg-transparent p-0 h5">
                     <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
                     <li class="breadcrumb-item"><a href="index.html">Western Sentinel</a></li>
-                    <li class="breadcrumb-item" aria-current="page">Feed Generator</li>
+                    <li class="breadcrumb-item" aria-current="page">Feed Generator v2</li>
                 </ol>
             </nav>
             <p>Compiles a listing of Western Sentinel article metadata used in the <a href="https://www.canada.ca/en/department-national-defence/corporate/news/regional-news/western-sentinel.html" target="_blank">search</a> table.</p>
-            <h2 class="h5 mt-4">File status</h2>
-            <p class="mb-0">ws-en.json: <span id="enstatus"></span></p>
-            <p class="mt-0 mb-4">ws-fr.json: <span id="frstatus"></span></p>
+            <div class="row">
+                <div class="col-md-6">
+                    <h2 class="h5 mt-3">Type of update</h2>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type" value="smart" checked="checked">
+                        <label class="form-check-label" for="flexCheckDefault">Smart <small class="text-muted"> - New & modified (recommended)</small></label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type" value="month">
+                        <label class="form-check-label" for="flexCheckDefault">Month <small class="text-muted"> - Modified in the past month</small></label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type" value="year">
+                        <label class="form-check-label" for="flexCheckDefault">Year <small class="text-muted"> - Modified in the past year</small></label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="type" value="all">
+                        <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - Entire feed</small></label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h2 class="h5 mt-3">File status</h2>
+                    <div id="feedstatus"></div>
+                </div>
+                
+            </div>
+
             <h2 class="h5 mt-4 mb-3">Progress</h2>
-            <div id="progressbar" class="progress my-2" style="height: 5px">
-                <div id="progress" class="progress-bar" style="width:0%"></div>
+            <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
+                <div id="complete" class="progress-bar" style="width:0%"></div>
+                <div id="active" class="progress-bar bg-warning" style="width:0%"></div>
             </div>
             <p id="status"><a href="javascript:main()">Click here to start</a></p>
+            <div id="warnings" class="d-none">
+                <h2 class="h5 mt-4">Warnings</h2>
+                <ol></ol>
+            </div>
             <h2 class="h5 mt-4">Instructions</h2>
             <ol class="pl-3">
                 <li>Run the tool above. Two JSON files will be generated and downloaded automatically</li>
@@ -47,188 +82,231 @@
                 <li>Select both files and publish them</li>
                 <li>Refresh this page to verify that the file status has changed</li>
             </ol>
+
+
         </div>
     </main>
 
     <script>
 
-        // Configure data sources
+        // Force select default option
+        $('input[value="smart"]').click()
+
+        // Configuration
         var config = {
-            'root': 'en/department-national-defence/corporate/news/regional-news/western-sentinel',
-            'aem_en': 'content/dam/dnd-mdn/documents/json/western-sentinel/ws-en.json',
-            'aem_fr': 'content/dam/dnd-mdn/documents/json/western-sentinel/ws-fr.json'
+            roots: [
+                'en/department-national-defence/corporate/news/regional-news/western-sentinel',
+                'fr/ministere-defense-nationale/organisation/nouvelles/nouvelles-regionales/sentinelle-ouest',
+            ],
+            feeds: [
+                'content/dam/dnd-mdn/documents/json/western-sentinel/ws-en.json',
+                'content/dam/dnd-mdn/documents/json/western-sentinel/ws-fr.json',
+            ],
+            preFilter: function (node) {
+                return /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path)
+            },
         }
 
-        // Current progress percentage
-        var progress = 0
-        var started = null
+        aem.preFilter = config.preFilter
 
-        // Preselect elements
-        var $status = $('#status')
-        var $progress = $('#progress')
 
-        // Set status message and/or progress
-        function status(message, percent, error) {
-            if (typeof message === 'string') { $status.html(message) }
-            if (typeof percent === 'number') {
-                progress = percent === 100 ? 100 : progress + percent
-                return $progress.width(progress + '%')
+        config.feeds.forEach(function (url) {
+            $('#feedstatus').append('<p class="mb-0"><a href="' + aem.domain + url + '" target="_blank">' + url.replace('content/dam/dnd-mdn/documents/json/', '') + '</a> - <span data-feed="' + url + '">...</span></p>')
+            aem.assetMeta(url).then(function (jcr) {
+                var html = jcr['dam:assetState'] + ' '
+                html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
+                html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
+
+                $('[data-feed="' + url + '"]').html(html)
+            }, function (e) {
+                $('[data-feed="' + url + '"]').html('Error (' + e + ')')
+            })
+        })
+
+        var start = 0
+
+        function status(message) {
+            if (message) {
+                $('#status').html(message)
             }
+
+            var p = aem.progress()
+            $('#complete').width(p.complete)
+            $('#active').width(p.active)
         }
 
-        // Display current status of english JSON
-        AEM.assetMeta(config.aem_en, function (jcr) {
-            var html = jcr['dam:assetState'].charAt(0).toUpperCase() + jcr['dam:assetState'].slice(1) + ' '
-            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
-            html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
-            $('#enstatus').html(html)
-        }).fail(function (e) {
-            if (e === 'Not Found') { e = 'Not Published' }
-            $('#enstatus').html('Error (' + e + ')')
-        })
 
-        // Display current status of french JSON
-        AEM.assetMeta(config.aem_fr).done(function (jcr) {
-            var html = jcr['dam:assetState'].charAt(0).toUpperCase() + jcr['dam:assetState'].slice(1) + ' '
-            html += '<abbr title="' + jcr['jcr:lastModified'] + '" class="text-primary">' + $.timeago(new Date(jcr['jcr:lastModified'])) + '</abbr>'
-            html += ' by <span class="text-primary">' + jcr['jcr:lastModifiedBy'] + '</span>'
-            $('#frstatus').html(html)
-        }).fail(function (e) {
-            if (e === 'Not Found') { e = 'Not Published' }
-            $('#frstatus').html('Error (' + e + ')')
-        })
+        function warn(node, details) {
+            $('#warnings').removeClass('d-none')
+            $('#warnings ol').append('<li><a href="' + aem.domain + node.path + '.html" target="_blank">' + node.path + '</a><br/>' + details + '</li>')
+            console.warn(node.path, details)
+            return false
+        }
 
-
-        // Define response fields
-        var fields = [
-
-            // Thumbnail image URL
-            function (meta) {
-                if (!meta['og:image']) { return '' }
-                return utf8.encode($.trim(meta['og:image'])).replace('https://www.canada.ca/','/')
-            },
-
-            // Title (containing link)
-            function (meta) {
-                if (!meta['path'] || !meta['dcterms.title']) { return '' }
-                return '<a href="' + AEM.normalize(meta['path']).replace('https://www.canada.ca/','/') + '.html">' + utf8.encode($.trim(meta['dcterms.title'])) + '</a>'
-            },
-
-            // Description
-            function (meta) {
-                if (!meta['description']) { return '' }
-                return utf8.encode($.trim(meta['description'].replace(/[\r\n]+/gm, ' ')).replace(/\.$/, ''))
-            },
-
-            // Tags
-            function (meta) {
-                if (!meta['keywords']) { return '' }
-                return utf8.encode(meta['keywords'].split(',').map(function (tag) {
-                    return tag.trim()
-                }).filter(function (tag) {
-                    return tag ? !tag.match(/(featured|vedette)$/i) : false
-                }).filter(function (tag, index, self) {
-                    return self.indexOf(tag) === index
-                }).join(','))
-            },
-
-            function (meta) {
-                return meta['date'].toISOString().replace('.000Z', '')
-            }
-
-        ]
-
-
-        // Run program
         function main() {
-            started = new Date().getTime()
-            status('Initializing', 1)
 
-            AEM.descendants(config.root).done(function (urls) {
-                urls = urls.filter(isArticle)
-                status('Downloading metadata (' + (urls.length * 2) + ' nodes)')
+            start = new Date().getTime()
+            var type = $('input[name="type"]').prop('disabled', true).filter(':checked').val()
 
-                withData(urls, function (data) {
-                    var en = []
-                    var fr = []
 
-                    data.forEach(function (d) {
-                        en.push(d[0])
-                        fr.push(d[1])
+            // Load sitemaps & feeds
+            status('Downloading node lists')
+            var chain = aem.addRoot(config.roots).addFeed(config.feeds).wait()
+
+            // Remove deleted nodes
+            chain.then(function () {
+                aem.each(function (node) {
+                    return Boolean(node.lastmod)
+                })
+            })
+
+            if (type === 'smart') {
+                // Option: clear data for modified nodes (and todays nodes just incase)
+                chain.then(function () {
+                    aem.each(function (node) {
+                        if (node.live && node.lastmod > node.live[5] - 86400) {
+                            delete node.live
+                        }
                     })
+                })
+            } else if (type === 'month') {
+                // Option: modified in last 30 days
+                chain.then(function () {
+                    var time = (Date.now() / 1000) - 2592000
+                    aem.each(function (node) {
+                        if (node.live && node.lastmod > time) {
+                            delete node.live
+                        }
+                    })
+                })
+            } else if (type === 'year') {
+                // Option: modified in last 365 days
+                chain.then(function () {
+                    var time = (Date.now() / 1000) - 31536000
+                    aem.each(function (node) {
+                        if (node.live && node.lastmod > time) {
+                            delete node.live
+                        }
+                    })
+                })
+            } else if (type === 'all') {
+                // Option: all nodes
+                chain.then(function () {
+                    aem.each(function (node) {
+                        if (node.live) {
+                            delete node.live
+                        }
+                    })
+                })
+            }
 
-                    exportData(en, fr)
+            // Load node data
+            chain.then(function () {
+                status('Downloading nodes')
+
+                // Find nodes to load
+                var list = aem.nodes().filter(function (path) {
+                    return !aem.data[path].live
                 })
 
-            }).fail(function (e) {
-                status('Error (' + e + '): ' + config.root)
+                return aem.meta(list).wait()
+
+            }).then(function () {
+
+                // Verify peers are loaded
+                aem.each(function (node) {
+                    if (node.peer && aem.data[node.peer] && !aem.data[node.peer].peer) {
+                        aem.meta(node.peer)
+                    }
+                })
+
+                if (!aem.idle()) {
+                    return aem.wait()
+                }
+
+            }).then(function () {
+
+                // Check for content issues
+                aem.each(function (node) {
+                    if (node && node.peer) {
+                        var peer = aem.data[node.peer]
+
+                        if (!peer) {
+                            return warn(node, 'peer not found')
+                        } else if (node.path !== peer.peer) {
+                            return warn(node, 'links between peers do not match')
+                        } else if (node['jcr:language'] !== node.path.slice(0, 2)) {
+                            return warn(node, 'page language is inconsistent with URL path')
+                        } else if (!node.gcDescription || !node.gcKeywords) {
+                            delete aem.data[node.peer]
+                            return warn(node, 'missing description or keywords metadata')
+                        } else if (!node.gcOGImage && peer.gcOGImage) {
+                            delete aem.data[node.peer]
+                            return warn(node, 'thumbnail image is set in only one language')
+                        }
+                    } else if (node && !node.peer && !node.live) {
+                        return warn(node, 'failed to download metadata')
+                    }
+
+                }).each(function(node) {
+                    if (node.peer && !aem.data[node.peer]) {
+                        return false
+                    }
+                })
+
+            }).then(function () {
+                status('Formatting feed data')
+                var now = Math.floor(Date.now() / 1000)
+
+                aem.each(function (node) {
+                    if (node.peer) {
+                        var peer = aem.data[node.peer]
+
+                        node.live = [
+                            aem.format(node.gcOGImage, true),
+                            aem.format('<a href="/' + node.path + '.html">' + node['jcr:title'] + '</a>', true),
+                            node.gcDescription.replace(/[\n\r]+/g, ' '),
+                            node.gcKeywords.replace(/(\s+,|,\s+)/g, ','),
+                            aem.date(node, peer),
+                            now
+                        ]
+
+                    } else {
+                        // Insert placeholders
+                        node.live[0] = aem.format(node.live[0], true)
+                        node.live[1] = aem.format(node.live[1], true)
+                    }
+                })
+
+            }).then(function () {
+                status('Exporting feeds')
+                feeds = { en: [], fr: [] }
+
+                // Sort nodes into feeds by language
+                aem.each(function (node) {
+                    if (node.live) {
+                        var lang = node['jcr:language'] || node.path.slice(0, 2)
+                        feeds[lang].push(node.live)
+                    }
+                })
+
+                for (lang in feeds) {
+                    // Sort feed by date, newest first
+                    feeds[lang].sort(function (a, b) { return b[4] - a[4] })
+
+                    // Format json
+                    feeds[lang] = utf8.encode(JSON.stringify({ data: feeds[lang] }, null, 1))
+                }
+
+                // Initiate file downloads
+                for (lang in feeds) {
+                    download(feeds[lang], 'ws-' + lang + '.json', 'text/plain;charset=UTF-8;')
+                }
             })
 
         }
 
-
-
-        // Test if URL is an article
-        function isArticle(url) {
-            return /\/\d{4}\/\d{2}\/[^/]+$/i.test(url)
-        }
-
-
-
-
-        // Get all meta + dates
-        function withData(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when(
-                    withMeta(urls),
-                    withDate(urls)
-                ).done(function (meta, date) {
-                    d.resolve(meta.map(function (m, i) {
-                        m[0].date = date[i]
-                        m[1].date = date[i]
-                        m[0] = fields.map(function (fn) { return fn(m[0]) })
-                        m[1] = fields.map(function (fn) { return fn(m[1]) })
-                        return m
-                    }))
-                })
-            }).done(cb).promise()
-        }
-
-        // Get all html metadata
-        function withMeta(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when.apply(null, urls.map(function (url) {
-                    return AEM.htmlMetaPair(url).done(function () {
-                        status(null, 49 / urls.length)
-                    })
-                })).done(function () {
-                    d.resolve(Array.prototype.slice.call(arguments))
-                })
-            }).done(cb).promise()
-        }
-
-        // get all page dates
-        function withDate(urls, cb) {
-            return $.Deferred(function (d) {
-                $.when.apply(null, urls.map(function (url) {
-                    return AEM.date(url).done(function () {
-                        status(null, 49 / urls.length)
-                    })
-                })).done(function () {
-                    d.resolve(Array.prototype.slice.call(arguments))
-                })
-            }).done(cb).promise()
-        }
-
-
-
-        // Format feeds and trigger downloads
-        function exportData(en, fr) {
-            status('Done (' + en.length + ' articles, ' + (Math.round((new Date().getTime() - started) / 100) / 10) + ' seconds)', 100)
-
-            download(JSON.stringify({ data: en }, null, 2), 'ws-en.json', 'text/plain;charset=UTF-8;')
-            download(JSON.stringify({ data: fr }, null, 2), 'ws-fr.json', 'text/plain;charset=UTF-8;')
-        }
+        setInterval(status, 250)
 
     </script>
 
