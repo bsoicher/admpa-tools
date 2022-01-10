@@ -89,8 +89,8 @@
 
     .control-panel {
       position: absolute;
-      left: 10px;
-      top: 10px;
+      right: 10px;
+      top: 60px;
     }
 
     .loading {
@@ -237,9 +237,7 @@
         effect: 'background',
       })
       .add([
-        new controls.StaticText({ title: 'MediaPipe Pose' }),
         fpsControl,
-        new controls.Toggle({ title: 'Selfie Mode', field: 'selfieMode' }),
         new controls.SourcePicker({
           onSourceChanged: () => {
             // Resets because this model gives better results when reset between
@@ -300,36 +298,46 @@
 </head>
 
 <body>
+  <style>
+    #nav-top {
+        background: -webkit-gradient(linear, left top, right top, color-stop(0%, #000), color-stop(100%, #1c639b));
+        background: -webkit-linear-gradient(left, #000, 0%, #1c639b, 100%);
+        border-bottom: 11px solid #7191ba;
+        outline: 11px solid #c8d4e2;
+        margin-bottom:11px;
 
-  <nav class="navbar fixed-top navbar-light bg-light">
+    }
+    
+        .square-box {
+          width: 33%;
+          height: 0;
+          padding-top: 33%;
+          position: absolute;
+          right: 20px;
+          top: 20px;
+        }
+    
+        .landmark-grid-container {
+          height: 100%;
+          width: 100%;
+          position: absolute;
+          top: 0;
+          left: 0;
+          background-color: #99999999;
+        }
+      </style>
+
+  <nav id="nav-top" class="navbar navbar-dark bg-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">Fixed top</a>
+      <span class="navbar-brand">Canadian Armed Forces - Fitness Kiosk</span>
     </div>
   </nav>
 
 
-  <style>
-    .square-box {
-      width: 33%;
-      height: 0;
-      padding-top: 33%;
-      position: absolute;
-      right: 20px;
-      top: 20px;
-    }
-
-    .landmark-grid-container {
-      height: 100%;
-      width: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      background-color: #99999999;
-    }
-  </style>
+  
   <div class="container">
     <video class="input_video"></video>
-    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <canvas class="output_canvas"></canvas>
     <div class="loading">
       <div class="spinner"></div>
       <div class="message">
@@ -339,7 +347,7 @@
   </div>
   <div class="control-panel">
   </div>
-  <div class='square-box'>
+  <div class='square-box invisible'>
     <div class="landmark-grid-container">
     </div>
   </div>
