@@ -1,8 +1,11 @@
+<!DOCTYPE html>
 <html>
 
 <head>
   <title>MP Web test</title>
   <meta charset="utf-8">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils_3d@0.2/landmark_grid.css">
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.6/control_utils.css">
@@ -132,39 +135,7 @@
 
   <script type="module">
 
-    import DeviceDetector from "https://cdn.skypack.dev/device-detector-js@2.2.10";
-    // Usage: testSupport({client?: string, os?: string}[])
-    // Client and os are regular expressions.
-    // See: https://cdn.jsdelivr.net/npm/device-detector-js@2.2.10/README.md for
-    // legal values for client and os
-    testSupport([
-      { client: 'Chrome' },
-    ]);
-    function testSupport(supportedDevices) {
-      const deviceDetector = new DeviceDetector();
-      const detectedDevice = deviceDetector.parse(navigator.userAgent);
-      let isSupported = false;
-      for (const device of supportedDevices) {
-        if (device.client !== undefined) {
-          const re = new RegExp(`^${device.client}$`);
-          if (!re.test(detectedDevice.client.name)) {
-            continue;
-          }
-        }
-        if (device.os !== undefined) {
-          const re = new RegExp(`^${device.os}$`);
-          if (!re.test(detectedDevice.os.name)) {
-            continue;
-          }
-        }
-        isSupported = true;
-        break;
-      }
-      if (!isSupported) {
-        alert(`This demo, running on ${detectedDevice.client.name}/${detectedDevice.os.name}, ` +
-          `is not well supported at this time, expect some flakiness while we improve our code.`);
-      }
-    }
+  
     const controls = window;
     const LandmarkGrid = window.LandmarkGrid;
     const drawingUtils = window;
@@ -329,6 +300,14 @@
 </head>
 
 <body>
+
+  <nav class="navbar fixed-top navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Fixed top</a>
+    </div>
+  </nav>
+
+
   <style>
     .square-box {
       width: 33%;
