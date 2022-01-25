@@ -6,10 +6,14 @@
     <meta charset="utf-8" />
     <link rel="dns-prefetch" href="https://www.canada.ca">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
-    <script src="../lib/aem2.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/string-strip-html/dist/string-strip-html.umd.js"></script>
+
+    <script src="../lib/aem-snapshot.js"></script>
 </head>
 
 <body>
@@ -35,16 +39,26 @@
                 <div class="col-sm-10">
                     <div class="form-group form-check">
                         <input type="checkbox" class="form-check-input" id="lang" checked="checked">
-                        <label class="form-check-label" for="lang">Bilingual data (Include alternate language nodes)</label>
+                        <label class="form-check-label" for="lang">Bilingual data (Include both languages)</label>
                     </div>
                     <div class="form-group form-check">
                         <input type="checkbox" class="form-check-input" id="html" checked="checked">
-                        <label class="form-check-label" for="html">Save full HTML (may run into memory limit doing large sections of the site)</label>
+                        <label class="form-check-label" for="html">Include HTML</label>
+                    </div>
+                    <div class="form-group form-check ms-3">
+                        <input type="checkbox" class="form-check-input" id="clean">
+                        <label class="form-check-label" for="clean">Content only (Removes <code>&lt;head&gt;</code>, <code>&lt;header&gt;</code>, <code>&lt;footer&gt;</code>, <code>&lt;details&gt;</code> and <code>&lt;script&gt;</code>)</label>
+                    </div>
+
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="meta" checked="checked">
+                        <label class="form-check-label" for="meta">Include metadata</label>
                     </div>
                 </div>
             </div>
-            <div id="progressbar" class="progress mb-2 mt-4" style="height: 5px">
-                <div id="progress" class="progress-bar" style="width:0%"></div>
+            <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
+                <div id="complete" class="progress-bar" style="width:0%"></div>
+                <div id="active" class="progress-bar bg-warning" style="width:0%"></div>
             </div>
             <p id="status"><a href="javascript:main()">Click here to start</a></p>
         </div>
@@ -57,99 +71,99 @@
         var start = null
         var html = false
 
-        // Set status message and/or progress
-        function status(message, percent) {
-            if (typeof message === 'string') { $('#status').html(message) }
-            if (typeof percent === 'number') {
-                progress = percent === 100 ? 100 : progress + percent
-                return $('#progress').width(progress + '%')
+        function status(message) {
+            if (message) {
+                $('#status').html(message)
             }
+
+            var p = aem.progress()
+            $('#complete').width(p.complete)
+            $('#active').width(p.active)
         }
 
-        // Get root nodes
-        function withRoots(cb) {
-            return $.Deferred(function (d) {
-                // Get textarea list
-                var roots = $.trim($('#roots').val()).split('\n').map($.trim)
-                if ($('#lang').is(':checked')) {
-                    // Get peer nodes and add them to the roots array
-                    $.when.apply(null, roots.map(AEM.peer, AEM)).done(function () {
-                        d.resolve(roots.concat(Array.prototype.slice.call(arguments)))
-                    })
-                } else {
-                    d.resolve(roots)
-                }
-            }).done(cb)
-        }
-
-        // Get child nodes of all root nodes
-        function withNodes(cb) {
-            return $.Deferred(function (d) {
-                status('Analyzing root nodes')
-                withRoots(function (roots) {
-                    console.log(roots)
-                    status('Searching for child nodes')
-                    // Download and merge sitemaps
-                    $.when.apply(null, roots.map(AEM.descendants, AEM)).done(function () {
-                        d.resolve(Array.prototype.slice.call(arguments).flat().filter(function (val, i, arr) {
-                            // Filter out non canada.ca URLs (redirects) and duplicates
-                            return val && val.substr(0, 22) === 'https://www.canada.ca/' && arr.indexOf(val) === i
-                        }))
-                    })
-                }).fail(d.reject)
-            }).done(cb)
-        }
-
-        // Get meta and/or html data of a node
-        function withData(node, cb) {
-            return $.Deferred(function (d) {
-                AEM.htmlMeta(node).done(function (m) {
-                    if (!html) {
-                        delete m['html']
-                    }
-                    delete m['fb:pages']
-                    delete m['viewport']
-                    d.resolve(m)
-                })
-            }).done(cb)
+        aem.preFilter = function (node) {
+            return !node.path.includes('en/department-national-defence/services/caf-jobs') && !node.path.includes('fr/ministere-defense-nationale/services/emplois-fac')
         }
 
         // Run program
         function main() {
-            start = new Date().getTime()
-            html = $('#html').is(':checked')
+            var input = {
+                roots: $('#roots').val().trim().split('\n'),
+                html: $('#html').is(':checked'),
+                clean: $('#clean').is(':checked'),
+                meta: $('#meta').is(':checked'),
+            }
 
-            withNodes(function (nodes) {
-                var l = nodes.length
-                var p = 99 / l
+            // Setup HTML filtering if needed
+            if (input.clean) {
+                aem.filterHtml = function (text) {
+                    return stringStripHtml.stripHtml(text, {
+                        onlyStripTags: ['head', 'script', 'header', 'footer', 'details'],
+                        stripTogetherWithTheirContents: ['head', 'script', 'header', 'footer', 'details']
+                    }).result
+                }
+            }
 
-                // Create data requests
-                nodes = nodes.map(function (val, i) {
-                    return withData(val, function () {
-                        status('Loading node ' + (i + 1) + ' of ' + l, p)
+            // Add alternate roots if selected
+            if ($('#lang').is(':checked')) {
+                var chain = aem.meta(input.roots).wait().then(function () {
+                    aem.each(function (node) {
+                        if (node.peer) {
+                            input.roots.push(node.peer)
+                        }
+                        return false
                     })
                 })
+            } else {
+                var chain = $.when()
+            }
 
-                // Process responses
-                $.when.apply(null, nodes).then(function () {
-                    try{
-                        var data = Array.prototype.slice.call(arguments)
-                        var json = utf8.encode(JSON.stringify(data, null, null))
+            chain.then(function () {
+                status('Downloading node lists')
 
-                        status('Done (' + data.length + ' nodes, ' + (Math.round((new Date().getTime() - start) / 100) / 10) + ' seconds)', 100)
-
-                        download(json, 'data.json', 'text/plain;charset=UTF-8;')
-                    } catch (e) {
-                        console.log(e)
-                    }
+                // Remove duplicates
+                input.roots = input.roots.filter(function (v, i, a) {
+                    return a.indexOf(v) === i;
                 })
+
+                // Find child nodes
+                return aem.addRoot(input.roots).wait()
+
+            }).then(function () {
+                status('Downloading data')
+                var nodes = aem.nodes()
+
+                // Load html if selected
+                if (input.html) {
+                    aem.html(nodes)
+                }
+
+                // Load metadata if selected
+                if (input.meta) {
+                    aem.meta(nodes)
+                }
+
+                if (!aem.idle()) {
+                    return aem.wait()
+                }
+            }).then(function () {
+                status('Exporting data')
+
+                // Convert to array
+                var data = aem.nodes().map(function (path) {
+                    return aem.data[path]
+                })
+
+                // Format data
+                var json = utf8.encode(JSON.stringify(data))
+
+                // Trigger file download
+                download(json, 'snapshot.json', 'text/plain;charset=UTF-8;')
             })
+
         }
 
-
-      
-
-     
+        setInterval(status, 250)
 
     </script>
 

@@ -25,6 +25,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/vfs_fonts.min.js"></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
+
     <script src="https://cdn.datatables.net/colreorder/1.5.4/js/dataTables.colReorder.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
@@ -56,26 +58,25 @@
             <div class="form-group row" id="matchRow">
                 <label for="match" class="col-sm-2 col-form-label">JavaScript<br /><small>(return <strong>true</strong> or <strong>false</strong>)</small></label>
                 <div class="col-sm-10" style="height:250px">
-                    <code>function(url, html) {</code>
 
                     <div id="match" style="position:absolute;top:0;right:0;bottom:0;left:0;height:250px">
-                        return $('title').filter(function(){
-                        return /honour/i.test($(this).text());
-                        }).length;</div>
+                        return /[^@]forces.gc.ca/i.test(html)
+                    </div>
 
-                    <code>}</code>
 
-                </div>
-            </div>
-            <div class="form-group row" id="matchRow">
-                <label class="col-sm-2 col-form-label">Actions</label>
-                <div class="col-sm-10 px-0">
-                    <a href="javascript:run()" class="btn btn-primary">Run</a>
 
                 </div>
             </div>
 
-            
+            <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
+                <div id="complete" class="progress-bar" style="width:0%"></div>
+
+            </div>
+            <div class="col-sm-10 px-0">
+                <a href="javascript:run()" class="btn btn-primary">Run</a>
+                <span id="status"></span>
+            </div>
+
             <div class="table mb-5">
                 <table id="results" width="100%" class="table table-bordered table-sm"></table>
             </div>
@@ -113,24 +114,10 @@
                     data: 'path',
                     name: 'path',
                     render: function (d) {
-                        d = 'https://www.canada.ca' + d
-                        return '<a target="_blank" href="' + d + '">' + d + '</a> ' 
+                        d = 'https://www.canada.ca/' + d
+                        return '<a target="_blank" href="' + d + '">' + d + '</a> '
                     }
-                }, {
-                    title: 'Language',
-                    data: 'dcterms\\.language',
-                    name: 'language',
-                    width: 150,
-                    visible: false,
-                    render: function (d) { return d.substr(0, 2) }
                 },
-                {
-                    title: 'Title',
-                    data: 'dcterms\\.title',
-                    name: 'title',
-                    visible: false,
-                },
-                { title: 'HTML', data: 'html', defaultContent: '', visible: false },
             ]
         });
 
@@ -173,43 +160,54 @@
             return fn;
         }
 
-        // Add row to table if it matches
-        function test(row) {
+
+
+        var q = async.queue(function (node, cb) {
 
             try {
+                var fn = new Function('html, $', editor.getValue())
 
-                var fn = new Function('$', editor.getValue());
-                var val = fn(createContext(row.html));
-
-                if (val) {
-                    table.row.add(row)
+                if (fn(node.html, createContext(node.html))) {
+                    table.row.add(node)
                 }
+            } catch (e) { }
 
-            } catch (e) {
-                console.log(e)
+            cb();
+        }, 2);
+
+        function status(message, percent) {
+            if (message) {
+                $('#status').html(message)
             }
-
+            $('#complete').width(percent + '%')
         }
 
         function run() {
-            if (!data.length) {
+
+            status(null, 0)
+
+            var keys = Object.keys(data)
+
+            if (!keys) {
                 return alert('Snapshot file must be selected first')
             }
 
             table.clear().draw();
 
-            data.forEach(function (row) {
-                test(row)
+            q.push(data)
+
+            q.drain().then(function(){
+                table.draw()
+                console.log('done')
             })
 
-            table.draw()
+        
+           
 
 
         }
 
-        AEM.metaPair('en/department-national-defence/maple-leaf/defence/2021/08', 'test', function(){
-            console.log(arguments)
-        })
+
 
 
     </script>
