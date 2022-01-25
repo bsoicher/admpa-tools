@@ -7,7 +7,6 @@
     <meta charset="utf-8" />
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
@@ -24,12 +23,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/vfs_fonts.min.js"></script>
+    <script src="https://cdn.datatables.net/colreorder/1.5.4/js/dataTables.colReorder.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
 
-    <script src="https://cdn.datatables.net/colreorder/1.5.4/js/dataTables.colReorder.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
+
 
 </head>
 
@@ -43,30 +42,22 @@
                     <li class="breadcrumb-item" aria-current="page">Snapshot HTML</li>
                 </ol>
             </nav>
-            <p>Search a snapshot file using a JavaScript + jQuery matching function.</p>
-            <br />
 
             <div class="form-group row">
-                <label for="root" class="col-sm-2 col-form-label">Snapshot file</label>
-                <div class="custom-file col-sm-10">
-                    <input type="file" class="custom-file-input" id="file" accept=".json" value="" />
-                    <label class="custom-file-label" for="file" id="file-label"></label>
+                <div class="col-sm-2">
+                    <label for="root" class="col-form-label">Snapshot file</label>
                 </div>
-            </div>
-
-            <div class="form-group row" id="matchRow">
-                <label for="match" class="col-sm-2 col-form-label">JavaScript<br /><small>(return <strong>true</strong> or <strong>false</strong>)</small></label>
-                <div class="col-sm-10" style="height:250px">
-
-                    <div id="match" style="position:absolute;top:0;right:0;bottom:0;left:0;height:250px">
-                        return /[^@]forces.gc.ca/i.test(html)
+                <div class="col-sm-10">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="file" accept=".json" value="" />
+                        <label class="custom-file-label" for="file" id="file-label"></label>
                     </div>
-
-
-
                 </div>
             </div>
-
+            <div class="row m-0 p-0">
+                <label for="opts">Matches (1 per line, string or regular expression)</label>
+                <textarea class="form-control" id="matches" rows="10"></textarea>
+            </div>
             <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
                 <div id="complete" class="progress-bar" style="width:0%"></div>
 
@@ -88,15 +79,16 @@
     <script>
 
         // Ace editor setup
-        ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12')
-        var editor = ace.edit("match");
-        editor.session.setMode("ace/mode/javascript");
+
+
 
         var data = []
 
         var table = $('#results').DataTable({
             dom: 'frtipB',
+            order: [],
             colReorder: true,
+            rowReorder: false,
 
             //searching: false,
             buttons: [
@@ -111,11 +103,14 @@
                 {
                     title: 'Path',
                     data: 'path',
-                    name: 'path',
                     render: function (d) {
                         d = 'https://www.canada.ca/' + d + '.html'
                         return '<a target="_blank" href="' + d + '">' + d + '</a> '
                     }
+                },
+                {
+                    title: 'Match',
+                    data: 'result',
                 },
             ]
         });
@@ -160,16 +155,24 @@
         }
 
 
+        var matches = []
 
         var q = async.queue(function (node, cb) {
 
-            try {
-                var fn = new Function('html, $', editor.getValue())
+            if (node.html){
+                matches.forEach(function(match) {
+                var result = node.html.match(match)
 
-                if (fn(node.html, createContext(node.html))) {
+                if (result) {
+                    node.result = result
                     table.row.add(node)
                 }
-            } catch (e) { }
+            })
+
+            }
+
+            
+      
 
             cb();
         }, 2);
@@ -185,17 +188,35 @@
 
             status(null, 0)
 
-            var keys = Object.keys(data)
+            matches = $('#matches').val().split('\n').filter(function(v, i, self){
+                return i == self.indexOf(v)
+            }).map(function (match) {
+                match = match.trim()
 
-            if (!keys) {
-                return alert('Snapshot file must be selected first')
-            }
+                if (!match) {
+                    return null
+                }
+
+                var re = match.match(/^\/(.*?)\/([gim]*)$/);
+
+                if (re) {
+                    match = new RegExp(re[1], re[2])
+                } else {
+                    match = new RegExp(match.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), 'i')
+                }
+
+                return match
+            }).filter(function (el) {
+                return Boolean(el)
+            }).reverse()
+
+            console.log(matches)
 
             table.clear().draw();
 
             q.push(data)
 
-            q.drain().then(function(){
+            q.drain().then(function () {
                 table.draw()
                 console.log('done')
             })
