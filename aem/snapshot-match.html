@@ -103,12 +103,14 @@
                 {
                     title: 'Path',
                     data: 'path',
+                    orderable: false,
                     render: function (d) {
                         d = 'https://www.canada.ca/' + d + '.html'
                         return '<a target="_blank" href="' + d + '">' + d + '</a> '
                     }
                 },
                 {
+                    orderable: false,
                     title: 'Match',
                     data: 'result',
                 },
@@ -157,22 +159,22 @@
 
         var matches = []
 
-        var q = async.queue(function (node, cb) {
+        var q = async.queue(function (match, cb) {
 
-            if (node.html){
-                matches.forEach(function(match) {
-                var result = node.html.match(match)
 
-                if (result) {
-                    node.result = result
-                    table.row.add(node)
+            data.forEach(function (node) {
+                if (node.html) {
+                    
+                    var result = node.html.match(match)
+
+                    if (result) {
+                        table.row.add({
+                            path: node.path,
+                            result: result
+                        })
+                    }
                 }
             })
-
-            }
-
-            
-      
 
             cb();
         }, 2);
@@ -188,7 +190,7 @@
 
             status(null, 0)
 
-            matches = $('#matches').val().split('\n').filter(function(v, i, self){
+            matches = $('#matches').val().split('\n').filter(function (v, i, self) {
                 return i == self.indexOf(v)
             }).map(function (match) {
                 match = match.trim()
@@ -208,13 +210,13 @@
                 return match
             }).filter(function (el) {
                 return Boolean(el)
-            }).reverse()
+            })
 
             console.log(matches)
 
             table.clear().draw();
 
-            q.push(data)
+            q.push(matches)
 
             q.drain().then(function () {
                 table.draw()
