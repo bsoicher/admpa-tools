@@ -13,47 +13,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/string-strip-html/dist/string-strip-html.umd.js"></script>
 
-    <script src="../lib/aem-snapshot.js"></script>
+    <script src="../lib/aem-snapshot.js?v=2022-02-09"></script>
 </head>
 
 <body>
     <main>
         <div class="container my-5">
-            <nav aria-label="breadcrumb">
+            <nav>
                 <ol class="breadcrumb bg-transparent p-0 h5">
                     <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
                     <li class="breadcrumb-item"><a href="index.html">AEM</a></li>
-                    <li class="breadcrumb-item" aria-current="page">Snapshot</li>
+                    <li class="breadcrumb-item">Snapshot</li>
                 </ol>
             </nav>
-            <p>Save a snapshot of a section of canada.ca. The snapshots can be used for <a href="snapshot-search.html">metadata</a> or <a href="snapshot-html.html">HTML</a> searches analysis</a>.</p>
-            <br />
-            <div class="form-group row">
-                <label for="root" class="col-sm-2 col-form-label">Root nodes <small>(1&nbsp;per&nbsp;line)</small></label>
-                <div class="col-sm-10">
-                    <textarea class="form-control" id="roots" rows="5">en/department-national-defence/maple-leaf/defence/2021/04</textarea>
+            <p>Create or update a snapshot of a section of canada.ca content. The snapshots can be used for <a href="snapshot-search.html">metadata</a> or <a href="snapshot-html.html">HTML</a> searches analysis</a>.</p>
+            <div class="form-group row mb-3">
+                <label for="file" class="col-md-2 col-form-label">Snapshot file <small>(optional)</small></label>
+                <div class="col-md-10">
+                    <div class="input-group">
+                        <input id="file" type="file" class="form-control" accept=".json" value="" />
+                    </div>
                 </div>
             </div>
-            <div class="form-group row">
-                <label for="root" class="col-sm-2 col-form-label">Options</label>
-                <div class="col-sm-10">
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="lang" checked="checked">
-                        <label class="form-check-label" for="lang">Bilingual data (Include both languages)</label>
-                    </div>
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="html" checked="checked">
-                        <label class="form-check-label" for="html">Include HTML</label>
-                    </div>
-                    <div class="form-group form-check ms-3">
-                        <input type="checkbox" class="form-check-input" id="clean">
-                        <label class="form-check-label" for="clean">Content only (Removes <code>&lt;head&gt;</code>, <code>&lt;header&gt;</code>, <code>&lt;footer&gt;</code>, <code>&lt;details&gt;</code> and <code>&lt;script&gt;</code>)</label>
-                    </div>
-
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="meta" checked="checked">
-                        <label class="form-check-label" for="meta">Include metadata</label>
-                    </div>
+            <div class="form-group row mb-4">
+                <label for="root" class="col-md-2 col-form-label">JSON Config</label>
+                <div class="col-md-10">
+                    <textarea id="config" class="form-control" rows="10"></textarea>
                 </div>
             </div>
             <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
@@ -66,36 +51,65 @@
 
     <script>
 
-        // Globals
-        var progress = 0
-        var start = null
-        var html = false
+        // Elements
+        var $file = $('#file').val(null)
+        var $config = $('#config').val(null)
+        var $status = $('#status')
+        var $complete = $('#complete')
+        var $active = $('#active')
 
+        // Default configuration
+        var config = {
+            roots: ['en/department-national-defence/maple-leaf/defence/2022/01'],
+            bilingual: true,
+            html: false,
+            clean_html: false,
+            meta: false,
+        }
+
+        // Updates textarea with current configuration
+        function updateConfig() {
+            $config.val(JSON.stringify(config, null, 2))
+        }
+        updateConfig()
+
+        // Update status text and progress bar
         function status(message) {
             if (message) {
-                $('#status').html(message)
+                $status.html(message)
             }
 
             var p = aem.progress()
-            $('#complete').width(p.complete)
-            $('#active').width(p.active)
+            $complete.width(p.complete)
+            $active.width(p.active)
         }
 
         aem.preFilter = function (node) {
             return !node.path.includes('en/department-national-defence/services/caf-jobs') && !node.path.includes('fr/ministere-defense-nationale/services/emplois-fac')
         }
 
+        // Limit number of requests if configured
+        if (config.limit && config.limit > 0) {
+            aem.limit = config.limit
+        }
+
         // Run program
         function main() {
-            var input = {
-                roots: $('#roots').val().trim().split('\n'),
-                html: $('#html').is(':checked'),
-                clean: $('#clean').is(':checked'),
-                meta: $('#meta').is(':checked'),
+
+            try {
+                $.extend(config, JSON.parse($config.val()))
+                $config.addClass('is-valid')
+            } catch (e) {
+                throw new Error('Failed to parse configuration')
+                $config.addClass('is-invalid')
             }
 
+            $file.prop('disabled', true)
+            $config.prop('disabled', true)
+            updateConfig()
+
             // Setup HTML filtering if needed
-            if (input.clean) {
+            if (config.clean_html) {
                 aem.filterHtml = function (text) {
                     return stringStripHtml.stripHtml(text, {
                         onlyStripTags: ['head', 'script', 'header', 'footer', 'details'],
@@ -104,12 +118,12 @@
                 }
             }
 
-            // Add alternate roots if selected
-            if ($('#lang').is(':checked')) {
-                var chain = aem.meta(input.roots).wait().then(function () {
+            // Add alternate roots
+            if (config.bilingual) {
+                var chain = aem.meta(config.roots).wait().then(function () {
                     aem.each(function (node) {
                         if (node.peer) {
-                            input.roots.push(node.peer)
+                            config.roots.push(node.peer)
                         }
                         return false
                     })
@@ -119,29 +133,70 @@
             }
 
             chain.then(function () {
-                status('Downloading node lists')
+                status('Finding nodes')
 
-                // Remove duplicates
-                input.roots = input.roots.filter(function (v, i, a) {
+                // Remove duplicate roots
+                config.roots = config.roots.filter(function (v, i, a) {
                     return a.indexOf(v) === i;
                 })
 
-                // Find child nodes
-                return aem.addRoot(input.roots).wait()
+                updateConfig()
+
+                // Add imported nodes if present
+                if (aem.temp) {
+                    aem.data = aem.temp
+                    delete aem.temp
+                }
+
+                // Find nodes
+                return aem.addRoot(config.roots).wait()
 
             }).then(function () {
-                status('Downloading data')
-                var nodes = aem.nodes()
 
-                // Load html if selected
-                if (input.html) {
-                    aem.html(nodes)
-                }
+                // Delete nodes not in sitemaps
+                aem.each(function (node) {
+                    return Boolean(node.lastmod)
+                })
 
-                // Load metadata if selected
-                if (input.meta) {
-                    aem.meta(nodes)
-                }
+                status('Downloading data (' + aem.length() + ' nodes)')
+
+                // Delete outdated data
+                aem.each(function (node) {
+                    var reset = false
+
+                    if (node.updated && node.lastmod > node.updated - 86400) {
+                        reset = true
+                    }
+
+                    if (!config.html && node.html) {
+                        reset = true
+                    }
+
+                    if (!config.meta && node.gcGuid) {
+                        reset = true
+                    }
+
+                    if (reset) {
+                        aem.data[node.path] = {
+                            path: node.path
+                        }
+                    }
+                })
+
+
+                aem.each(function (node) {
+                  
+                    // Queue html if needed
+                    if (config.html && !node.html) {
+                        aem.html(node.path)
+                    } else if (!config.html && node.html) {
+                        delete node.html
+                    }
+
+                    if (config.meta && !node.gcGuid) {
+                        aem.meta(node.path)
+                    }
+                })
 
                 if (!aem.idle()) {
                     return aem.wait()
@@ -149,12 +204,37 @@
             }).then(function () {
                 status('Exporting data')
 
-                // Convert to array
-                var data = aem.nodes().map(function (path) {
-                    return aem.data[path]
+                // Export format
+                var data = {
+                    config: config,
+                    data: []
+                }
+
+                var now = Math.floor(Date.now() / 1000)
+
+                // Create list
+                aem.each(function (node) {
+                    delete node.lastmod
+
+                    // If meta is missing
+                    if (config.meta && !node.gcGuid) {
+                        return false
+                    }
+
+                    // If html is missing
+                    if (config.html && !node.html) {
+                        return false
+                    }
+
+                    if (!node.updated) {
+                        node.updated = now
+                    }
+
+                    data.data.push(node)
+                    return false
                 })
 
-                // Format data
+                // Convert to text
                 var json = utf8.encode(JSON.stringify(data))
 
                 // Trigger file download
@@ -162,6 +242,50 @@
             })
 
         }
+
+
+
+
+        $file.change(function () {
+            $file.removeClass('is-valid is-invalid')
+
+            var file = $file.prop('files')[0]
+            var read = new FileReader()
+
+            if (file.type !== 'application/json') {
+                throw 'Invalid file type ' + file.type
+            }
+
+            read.readAsText(file)
+
+            read.onload = function () {
+                $file.addClass('is-valid')
+
+                var json = JSON.parse(read.result)
+
+                if (!json.config) {
+                    $file.addClass('is-invalid')
+                    throw new Error('Snapshot file does not contain a configuration')
+                }
+
+                $.extend(config, json.config)
+                updateConfig()
+
+                var data = {}
+                json.data.forEach(function (node) { data[node.path] = node })
+                aem.temp = data
+
+                console.log(read.result.length)
+            }
+
+            read.onerror = function (e) {
+                $file.addClass('is-invalid')
+                delete aem.temp
+            }
+
+        })
+
+
 
         setInterval(status, 250)
 
