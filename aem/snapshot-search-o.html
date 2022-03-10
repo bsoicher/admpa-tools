@@ -199,7 +199,7 @@
             read.readAsText(file)
 
             read.onload = function () {
-                data = JSON.parse(read.result)
+                data = JSON.parse(read.result).data
                 setAvailableFields()
                 enable()
             }

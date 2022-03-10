@@ -25,7 +25,6 @@
 
     <script src="https://cdn.datatables.net/colreorder/1.5.4/js/dataTables.colReorder.min.js"></script>
 
-    <script src="../lib/aem2.js"></script>
 </head>
 
 <body>
@@ -62,7 +61,7 @@
                 data: 'path',
                 name: 'path',
                 render: function (d) {
-                    d = 'https://www.canada.ca' + d
+                    d = 'https://www.canada.ca/' + d + '.html'
                     return '<a target="_blank" href="' + d + '">' + d + '</a>'
                 }
             }, {
@@ -71,7 +70,7 @@
                 name: 'peer',
                 visible: false,
                 render: function (d) {
-                    d = 'https://www.canada.ca' + d
+                    d = 'https://www.canada.ca/' + d + '.html'
                     return '<a target="_blank" href="' + d + '">' + d + '</a>'
                 }
             },
@@ -80,56 +79,42 @@
             {
                 title: 'Language',
                 name: 'language',
-                data: 'dcterms\\.language',
+                data: 'jcr:language',
                 visible: false,
-                render: function (d) { return d.substr(0, 2) }
+                render: function (d) { return d ? d : '' }
             }, {
                 title: 'Title',
                 name: 'title',
-                data: 'dcterms\\.title',
+                data: 'jcr:title',
                 defaultContent: '',
             }, {
                 title: 'Description',
                 name: 'description',
-                data: 'description',
+                data: 'gcDescription',
                 defaultContent: '',
             }, {
                 title: 'Keywords',
                 name: 'keywords',
-                data: 'keywords',
+                data: 'gcKeywords',
                 defaultContent: '',
-            }, {
-                title: 'Author',
-                name: 'author',
-                data: 'author',
-                defaultContent: '',
-                visible: false,
             }, {
                 title: 'Image',
                 name: 'image',
-                data: 'og:image',
+                data: 'gcOGImage',
                 defaultContent: '',
                 visible: false,
                 render: function (d) {
                     return d ? '<a target="_blank" href="' + d + '">' + d + '</a>' : ''
                 }
-            },
-
-            // Dates
-            {
-                title: 'Issued',
-                name: 'issued',
-                data: 'dcterms\\.issued',
+            },{
+                title: 'HTML',
+                name: 'html',
+                data: 'html',
                 defaultContent: '',
-                type: 'date',
                 visible: false,
-            }, {
-                title: 'Modified',
-                name: 'modified',
-                data: 'dcterms\\.modified',
-                defaultContent: '',
-                type: 'date',
-                visible: false,
+                render: function (d) {
+                    return d ? d : ''
+                }
             },
 
         ]
@@ -204,8 +189,8 @@
             read.readAsText(file)
 
             read.onload = function () {
-                data = JSON.parse(read.result)
-                data.forEach(function (v) {
+                json = JSON.parse(read.result)
+                json.data.forEach(function (v) {
                     table.row.add(v)
                 })
                 table.draw()

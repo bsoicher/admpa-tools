@@ -140,7 +140,7 @@
             read.readAsText(file)
             read.onload = function () {
                 try {
-                    data = JSON.parse(read.result)
+                    data = JSON.parse(read.result).data
                     i.addClass('is-valid')
                 } catch (e) {
                     console.log(e)

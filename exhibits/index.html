@@ -49,7 +49,6 @@
 
     .container {
       position: absolute;
-      background-color: #596e73;
       width: 100%;
       max-height: 100%;
     }
@@ -89,8 +88,8 @@
 
     .control-panel {
       position: absolute;
-      right: 10px;
-      top: 60px;
+      left: 5px;
+      top: 5px;
     }
 
     .loading {
@@ -228,7 +227,7 @@
     new controls
       .ControlPanel(controlsElement, {
         selfieMode: true,
-        modelComplexity: 1,
+        modelComplexity: 2,
         smoothLandmarks: true,
         enableSegmentation: false,
         smoothSegmentation: true,
@@ -327,11 +326,7 @@
         }
       </style>
 
-  <nav id="nav-top" class="navbar navbar-dark bg-dark">
-    <div class="container-fluid">
-      <span class="navbar-brand">Canadian Armed Forces - Fitness Kiosk</span>
-    </div>
-  </nav>
+  
 
 
   
@@ -347,7 +342,7 @@
   </div>
   <div class="control-panel">
   </div>
-  <div class='square-box invisible'>
+  <div class="square-box">
     <div class="landmark-grid-container">
     </div>
   </div>
