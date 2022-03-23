@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>AEM - Snapshot</title>
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+    <meta charset="utf-8" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Datatable -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.5.4/css/colReorder.dataTables.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/buttons.print.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables-buttons/2.2.0/js/buttons.colVis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.71/vfs_fonts.min.js"></script>
+    <script src="https://cdn.datatables.net/colreorder/1.5.4/js/dataTables.colReorder.min.js"></script>
+
+
+</head>
+
+<body>
+    <main>
+        <div class="container my-5">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 h5">
+                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
+                    <li class="breadcrumb-item"><a href="index.html">AEM</a></li>
+                    <li class="breadcrumb-item" aria-current="page">Snapshot HTML</li>
+                </ol>
+            </nav>
+
+            <div class="form-group row">
+                <div class="col-sm-2">
+                    <label for="root" class="col-form-label">Snapshot file</label>
+                </div>
+                <div class="col-sm-10">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="file" accept=".json" value="" />
+                        <label class="custom-file-label" for="file" id="file-label"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="row m-0 p-0">
+                <label for="opts">Matches (1 per line, string or regular expression)</label>
+                <textarea class="form-control" id="matches" rows="10"></textarea>
+            </div>
+            <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
+                <div id="complete" class="progress-bar" style="width:0%"></div>
+
+            </div>
+            <div class="col-sm-10 px-0">
+                <a href="javascript:run()" class="btn btn-primary">Run</a>
+                <span id="status"></span>
+            </div>
+
+            <div class="table mb-5">
+                <table id="results" width="100%" class="table table-bordered table-sm"></table>
+            </div>
+        </div>
+
+
+
+    </main>
+
+    <script>
+
+        var data = []
+
+        var table = $('#results').DataTable({
+            dom: 'frtipB',
+            order: [],
+            colReorder: true,
+            rowReorder: true,
+
+            //searching: false,
+            buttons: [
+                { extend: 'copy', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'csv', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'excel', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'pdf', className: 'btn btn-light mr-1', exportOptions: { columns: ':visible' } },
+                { extend: 'print', className: 'btn btn-light', exportOptions: { columns: ':visible' } },
+            ],
+
+            columns: [
+                {
+                    title: 'Path',
+                    data: 'path',
+                    orderable: false,
+                    render: function (d) {
+                        d = 'https://www.canada.ca/' + d + '.html'
+                        return '<a target="_blank" href="' + d + '">' + d + '</a> '
+                    }
+                },
+                {
+                    orderable: true,
+                    title: 'Count',
+                    data: 'result',
+                },
+            ]
+        });
+
+
+        $('#results_filter').appendTo('#tnav');
+
+
+   
+
+
+        $('#file').change(function () {
+            var i = $(this).removeClass('is-valid is-invalid')
+
+            table.clear().draw()
+
+            var file = $(this).prop('files')[0]
+            var read = new FileReader()
+
+            $('#file-label').html(file.name)
+
+            read.readAsText(file)
+            read.onload = function () {
+                try {
+                    data = JSON.parse(read.result).data
+                    i.addClass('is-valid')
+                } catch (e) {
+                    console.log(e)
+                    i.addClass('is-invalid')
+                }
+            }
+        })
+
+        var matches = []
+
+      
+        function status(message, percent) {
+            if (message) {
+                $('#status').html(message)
+            }
+            $('#complete').width(percent + '%')
+        }
+
+        function run() {
+
+            status(null, 0)
+
+            matches = $('#matches').val().split('\n').filter(function (v, i, self) {
+                return i == self.indexOf(v)
+            }).map(function (match) {
+                match = match.trim()
+
+                if (!match) {
+                    return null
+                }
+
+                var re = match.match(/^\/(.*?)\/([gim]*)$/);
+
+                if (re) {
+                    match = new RegExp(re[1], re[2])
+                } else {
+                    match = new RegExp(match.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), 'ig')
+                }
+
+                return match
+            }).filter(function (el) {
+                return Boolean(el)
+            })
+
+            console.log(matches)
+            table.clear().draw()
+
+            data.forEach(function(node){
+                var count = 0
+
+                if (!node.html) {
+                    return
+                }
+
+                matches.forEach(function(match) {
+                    count += ((node.html).match(match) || []).length
+                })
+
+                if (count) {
+                    table.row.add({
+                        path: node.path,
+                        result: count
+                    })
+                }
+            })
+         
+            table.draw()
+            console.log('done')
+         
+        }
+
+    </script>
+
+</body>
+
+</html>
