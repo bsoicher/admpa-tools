@@ -270,18 +270,14 @@
                         var peer = aem.data[node.peer]
 
                         node.live = [
-                            aem.format(node.gcOGImage, true),
-                            aem.format('<a href="/' + node.path + '.html">' + node['jcr:title'] + '</a>', true),
+                            node.gcOGImage || '',
+                            '<a href="/' + node.path + '.html">' + node['jcr:title'] + '</a>',
                             node.gcDescription.replace(/[\n\r]+/g, ' '),
                             node.gcKeywords.replace(/(\s+,|,\s+)/g, ','),
                             aem.date(node, peer),
                             now
                         ]
 
-                    } else {
-                        // Insert placeholders
-                        node.live[0] = aem.format(node.live[0], true)
-                        node.live[1] = aem.format(node.live[1], true)
                     }
                 })
 
