@@ -301,8 +301,8 @@
                     // Sort feed by date, newest first
                     feeds[lang].sort(function (a, b) { return b[4] - a[4] })
 
-                    // Remove placeholders for latest 5
-                    for (var i = 0; i < 5; i++) {
+                    // Remove placeholders
+                    for (var i = feeds[lang].length - 1; i >= 0; i--) {
                         feeds[lang][i][0] = aem.format(feeds[lang][i][0])
                         feeds[lang][i][1] = aem.format(feeds[lang][i][1])
                     }
