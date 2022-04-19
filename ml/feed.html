@@ -295,7 +295,7 @@
 
                 for (lang in feeds) {
                     // Sort feed by date, newest first
-                    feeds[lang].sort(function (a, b) { return new Date(b[4]) - new Date(a[4]) })
+                    feeds[lang].sort(function (a, b) { return b[4] - a[4] })
 
                     // Format json
                     feeds[lang] = utf8.encode(JSON.stringify({ data: feeds[lang] }, null, 1))

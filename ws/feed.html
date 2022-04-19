@@ -23,7 +23,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
 
-    <script src="../lib/aem-ml-simple.js?v=2022-02-01"></script>
+    <script src="../lib/aem-ml-simple.js?v=2022-04-20"></script>
 
 </head>
 
@@ -62,7 +62,7 @@
                     <h2 class="h5 mt-3">File status</h2>
                     <div id="feedstatus"></div>
                 </div>
-                
+
             </div>
 
             <h2 class="h5 mt-4 mb-3">Progress</h2>
@@ -164,7 +164,8 @@
                 // Option: clear data for modified nodes (and todays nodes just incase)
                 chain.then(function () {
                     aem.each(function (node) {
-                        if (node.live && node.lastmod > node.live[5] - 86400) {
+                        var updated = typeof node.live[5] === 'number' ? node.live[5] : node.live[6]
+                        if (node.lastmod > updated - 86400) {
                             delete node.live
                         }
                     })
@@ -248,7 +249,7 @@
                         return warn(node, 'failed to download metadata')
                     }
 
-                }).each(function(node) {
+                }).each(function (node) {
                     if (node.peer && !aem.data[node.peer]) {
                         return false
                     }
@@ -261,20 +262,17 @@
                 aem.each(function (node) {
                     if (node.peer) {
                         var peer = aem.data[node.peer]
+                        var realdate = aem.date(node, peer)
 
                         node.live = [
-                            aem.format(node.gcOGImage, true),
+                            node.gcOGImage ? '<img src="' + node.gcOGImage + '"/>' : null,
                             aem.format('<a href="/' + node.path + '.html">' + node['jcr:title'] + '</a>', true),
                             node.gcDescription.replace(/[\n\r]+/g, ' '),
                             node.gcKeywords.replace(/(\s+,|,\s+)/g, ','),
-                            aem.date(node, peer),
+                            Math.floor(realdate.getTime() / 1000),
+                            realdate.toISOString().substr(0, 10),
                             now
                         ]
-
-                    } else {
-                        // Insert placeholders
-                        node.live[0] = aem.format(node.live[0], true)
-                        node.live[1] = aem.format(node.live[1], true)
                     }
                 })
 
