@@ -22,7 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.2/async.min.js"></script>
 
-    <script src="../lib/aem-ml-simple.js?v=2021-12-16"></script>
+    <script src="../lib/aem-ml-simple.js?v=2022-04-13"></script>
 
 </head>
 
@@ -102,11 +102,6 @@
                 'content/dam/dnd-mdn/documents/json/maple-en.json',
                 'content/dam/dnd-mdn/documents/json/maple-fr.json',
             ],
-            placeholders: {
-                '{a}': '/content/dam/dnd-mdn/images/maple-leaf',
-                '{e}': '/en/department-national-defence/maple-leaf',
-                '{f}': '/fr/ministere-defense-nationale/feuille-derable',
-            },
             preFilter: function (node) {
                 return /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path)
             },
@@ -171,8 +166,11 @@
                 // Option: clear data for modified nodes (and todays nodes just incase)
                 chain.then(function () {
                     aem.each(function (node) {
-                        if (node.live && node.lastmod > node.live[5] - 86400) {
-                            delete node.live
+                        if (node.live) {
+                            var updated = typeof node.live[5] === 'number' ? node.live[5] : node.live[6]
+                            if (node.lastmod > updated - 86400) {
+                                delete node.live
+                            }
                         }
                     })
                 })
@@ -268,13 +266,15 @@
                 aem.each(function (node) {
                     if (node.peer) {
                         var peer = aem.data[node.peer]
+                        var realdate = aem.date(node, peer)
 
                         node.live = [
-                            node.gcOGImage || '',
+                            node.gcOGImage ? '<img src="' + node.gcOGImage + '"/>' : '',
                             '<a href="/' + node.path + '.html">' + node['jcr:title'] + '</a>',
                             node.gcDescription.replace(/[\n\r]+/g, ' '),
                             node.gcKeywords.replace(/(\s+,|,\s+)/g, ','),
-                            aem.date(node, peer),
+                            Math.floor(realdate.getTime() / 1000),
+                            realdate.toISOString().substr(0, 10),
                             now
                         ]
 
@@ -295,13 +295,7 @@
 
                 for (lang in feeds) {
                     // Sort feed by date, newest first
-                    feeds[lang].sort(function (a, b) { return b[4] - a[4] })
-
-                    // Remove placeholders
-                    for (var i = feeds[lang].length - 1; i >= 0; i--) {
-                        feeds[lang][i][0] = aem.format(feeds[lang][i][0])
-                        feeds[lang][i][1] = aem.format(feeds[lang][i][1])
-                    }
+                    feeds[lang].sort(function (a, b) { return new Date(b[4]) - new Date(a[4]) })
 
                     // Format json
                     feeds[lang] = utf8.encode(JSON.stringify({ data: feeds[lang] }, null, 1))
