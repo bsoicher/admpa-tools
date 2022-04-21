@@ -244,7 +244,11 @@
                         } else if (!node.gcOGImage && peer.gcOGImage) {
                             delete aem.data[node.peer]
                             return warn(node, 'thumbnail image is set in only one language')
+                        } else if (!aem.date(node, peer)) {
+                            delete aem.data[node.peer]
+                            return warn(node, 'unable to determine the date modified')
                         }
+                        
                     } else if (node && !node.peer && !node.live) {
                         return warn(node, 'failed to download metadata')
                     }
