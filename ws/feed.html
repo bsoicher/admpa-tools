@@ -156,6 +156,9 @@
             // Remove deleted nodes
             chain.then(function () {
                 aem.each(function (node) {
+                    if (!node.lastmod) {
+                        return warn(node, 'Migrated node needs republishing')
+                    }
                     return Boolean(node.lastmod)
                 })
             })
