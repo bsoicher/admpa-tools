@@ -8,7 +8,7 @@
     <title>CAF Mobile App Resources</title>
 
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
 
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -132,33 +132,7 @@
 
             var tree = ''
 
-            json.sections.forEach(function(section){
-                tree += '<ul>'
-                tree += '<li><span class="en">' + section.title.en + '</span><span class="fr">' + section.title.fr + '</span>'
-                tree += '<ul>'
-
-                section.list.forEach(function(item) {
-                    tree += '<li><span class="en">' + item.title.en + '</span><span class="fr">' + item.title.fr + '</span>'
-
-                    if (item.web) {
-                        tree += '<a class="badge badge-light en" href="' + item.web.en + '" target="_blank">🔗</a>'
-                        tree += '<a class="badge badge-light fr" href="' + item.web.fr + '" target="_blank">🔗</a>'
-                    }
-
-                    if (item.phone) {
-                        tree += '<abbr class="badge badge-light en" title="' + item.phone + '">📞</abbr>'
-                    }
-
-                    tree += '</li>'
-                })
-
-                tree += '</ul>'
-                tree += '</ul>'
-            })
-
-            $('main .container').append(tree)
-
-
+    
             var html = ''
             json.sections.forEach(function (section) {
                 html += '<tr>'
@@ -176,26 +150,8 @@
                 html += '</td>'
                 html += '</tr>'
 
-          /*
-                html += '<ul>'
-
-                section.list.forEach(function(item) {
-                    html += '<li>' + item.title.en + '</li>'
-                })
-
-                html += '</ul>'
-                */
-
-               // html += '<input type="text" class="form-control" value="' + section.title.en + '"/>'
-                //html += '<input type="text" class="form-control" value="' + section.title.fr + '"/></div><div class="col">Desc:'
-               // html += '<input type="text" class="form-control" value="' + section.description.en + '"/>'
-
-                //html += '<input type="text" class="form-control" value="' + section.description.fr + '"/>'
-
-
-               // html += '</div></div></section>'
-
-             
+          
+            
             })
 
           

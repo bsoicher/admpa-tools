@@ -16,7 +16,7 @@
     <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
 
     <!-- Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/canada-api@1.1.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canada-api@1.1.1"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
@@ -102,8 +102,8 @@
         // Configuration
         var config = {
             roots: [
-                'en/department-national-defence/maple-leaf/rcn',
-                'fr/ministere-defense-nationale/feuille-derable/mrc',
+                'en/department-national-defence/maple-leaf',
+                'fr/ministere-defense-nationale/feuille-derable',
             ],
             feeds: [
                 'content/dam/dnd-mdn/documents/json/maple-en.json',
@@ -137,20 +137,19 @@
             start = new Date().getTime()
             var type = $('input[name="type"]').prop('disabled', true).filter(':checked').val()
 
-            var nodes = []
-            var feeds = []
-
-            // Load child node lists
-            var roots = config.roots.map(root => {
-                return ca.children(root)
-            })
-
-            Promise.all(roots).then(lists => {
+            // Load list of child nodes
+            var roots = Promise.all(config.roots.map(root => {
+                return ca.children(root).then(node => node.children)
+            })).then(lists => {
                 let nodes = []
                 let paths = []
                 
-                // Merge lists, only adding unique nodes
+                // Merge lists, verifying unique nodes
                 lists.forEach(list => {
+                    if (typeof config.preFilter === 'function') {
+                        list = list.filter(config.preFilter)
+                    }
+
                     list.forEach(node => {
                         if (paths.indexOf(node.path) === -1) {
                             nodes.push(node)
@@ -159,12 +158,19 @@
                     })
                 })
 
-                // Identify article nodes
-                nodes = nodes.filter(node => /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path))
-
                 return nodes
-            }).then(console.log)
+            })
 
+            // Load existing feeds
+            var feeds = Promise.all(config.feeds.map(feed => {
+                return ca.content(feed).then(node => node.content.data).catch(e => [])
+            }))
+
+
+         
+            Promise.all([ roots, feeds ]).then(console.log)
+            
+            
 
 
             /*var roots = roots.filter((x, i) => {
