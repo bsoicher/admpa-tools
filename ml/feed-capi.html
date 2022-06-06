@@ -16,7 +16,8 @@
     <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
 
     <!-- Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/canada-api@1.1.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canada-api@1.1.6"></script>
+    <!--<script src="../../canada-api/dist/ca.js?_12312343"></script>-->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
@@ -35,9 +36,7 @@
                     <li class="breadcrumb-item" aria-current="page">Feed Generator v2</li>
                 </ol>
             </nav>
-            <p>Compiles a listing of Maple Leaf articles used in the <a
-                    href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html"
-                    target="_blank">search</a> table.</p>
+            <p>Compiles a listing of Maple Leaf articles used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
 
             <div class="row">
                 <div class="col-md-6">
@@ -53,11 +52,6 @@
                                 Modified in the past month</small></label>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="type" value="year">
-                        <label class="form-check-label" for="flexCheckDefault">Year <small class="text-muted"> -
-                                Modified in the past year</small></label>
-                    </div>
-                    <div class="form-check">
                         <input class="form-check-input" type="radio" name="type" value="all">
                         <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - Entire
                                 feed</small></label>
@@ -71,21 +65,21 @@
             </div>
 
             <h2 class="h5 mt-4 mb-3">Progress</h2>
-            <div id="progressbar" class="progress mb-2 mt-3" style="height: 5px">
-                <div id="complete" class="progress-bar" style="width:0%"></div>
-                <div id="active" class="progress-bar bg-warning" style="width:0%"></div>
+            <div id="progressbar" class="progress mb-2 mt-3" style="height: 6px">
+                <div id="DONE" class="progress-bar bg-success" style="width:0%"></div>
+                <div id="EXECUTING" class="progress-bar bg-warning" style="width:0%"></div>
+                <div id="RUNNING" class="progress-bar bg-warning" style="width:0%"></div>
+                <div id="QUEUED" class="progress-bar bg-info" style="width:0%"></div>
+                <div id="RECEIVED" class="progress-bar bg-light" style="width:0%"></div>
             </div>
             <p id="status"><a href="javascript:main()">Click here to start</a></p>
-            <div id="warnings" class="d-none">
-                <h2 class="h5 mt-4">Warnings</h2>
-                <ol></ol>
-            </div>
+
+            <ol id="warnings"></ol>
+       
             <h2 class="h5 mt-4">Instructions</h2>
             <ol class="pl-3">
                 <li>Run the tool above. Two JSON files will be generated and downloaded automatically</li>
-                <li>Upload both files to AEM (replacing existing files) in <a
-                        href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json"
-                        target="_blank">/content/dam/dnd-mdn/documents/json/</a></li>
+                <li>Upload both files to AEM (replacing existing files) in <a href="https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json" target="_blank">/content/dam/dnd-mdn/documents/json/</a></li>
                 <li>Select both files and publish them</li>
                 <li>Refresh this page to verify that the file status has changed</li>
             </ol>
@@ -109,9 +103,7 @@
                 'content/dam/dnd-mdn/documents/json/maple-en.json',
                 'content/dam/dnd-mdn/documents/json/maple-fr.json',
             ],
-            preFilter: function (node) {
-                return /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path)
-            },
+            preFilter: node => /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path),
         }
 
 
@@ -129,31 +121,47 @@
             })
         })
 
-        var start = 0
+
+        // Periodically update progress bar using request counts
+        setInterval(() => {
+            let counts = ca.limiter.counts()
+            let total = Object.values(counts).reduce((sum, val) => sum + val)
+
+            for (id in counts) {
+                document.getElementById(id).style.width = (counts[id] / total * 100) + '%'
+            }
+        }, 250)
 
 
+        // Log that a node that has been filtered out
+        function warn(node, message) {
+            let li = document.createElement('li')
+            li.innerHTML = `<a href="https://www.canada.ca${node.path}.html" target="_blank">${node.path}</a><br/>${message}`
+            document.getElementById('warnings').append(li)
+            return false
+        }
+
+     
         function main() {
 
-            start = new Date().getTime()
-            var type = $('input[name="type"]').prop('disabled', true).filter(':checked').val()
+            let type = $('input[name="type"]').prop('disabled', true).filter(':checked').val()
 
             // Load list of child nodes
-            var roots = Promise.all(config.roots.map(root => {
+            let children = Promise.all(config.roots.map(root => {
                 return ca.children(root).then(node => node.children)
             })).then(lists => {
                 let nodes = []
-                let paths = []
-                
-                // Merge lists, verifying unique nodes
+
                 lists.forEach(list => {
+                    // Apply pre filter if it is set
                     if (typeof config.preFilter === 'function') {
                         list = list.filter(config.preFilter)
                     }
 
+                    // Merge lists, preventing duplicates
                     list.forEach(node => {
-                        if (paths.indexOf(node.path) === -1) {
+                        if (nodes.findIndex(fnode => fnode.path === node.path) === -1) {
                             nodes.push(node)
-                            paths.push(node.path)
                         }
                     })
                 })
@@ -161,85 +169,122 @@
                 return nodes
             })
 
-            // Load existing feeds
-            var feeds = Promise.all(config.feeds.map(feed => {
-                return ca.content(feed).then(node => node.content.data).catch(e => [])
-            }))
+            let entries = null
 
+            if (type !== 'all') {
+                // Load existing feeds if needed
+                entries = Promise.all(config.feeds.map(feed => {
+                    return ca.content(feed).then(node => node.content.data).catch(e => [])
+                })).then(feeds => {
+                    let nodes = []
 
-         
-            Promise.all([ roots, feeds ]).then(console.log)
-            
-            
+                    // Merge lists, convert to nodes
+                    feeds.forEach(list => {
+                        list.forEach(entry => {
+                            let path = entry[1].match(/href="([^"]+)"/)[1]
+                            nodes.push({ path: ca.normalizePath(path), feed: entry })
+                        })
+                    })
 
+                    return nodes
+                })
+            } else {
+                // Skip loading existing feeds
+                entries = Promise.resolve([])
+            }
 
-            /*var roots = roots.filter((x, i) => {
-                return data[i].id.indexOf(x.id) === i
+            // Merge child nodes and live feeds
+            let nodes = Promise.all([children, entries]).then(data => {
+                let nodes = data[0]
+                let entries = data[1]
+
+                entries.forEach(node => {
+                    let i = nodes.findIndex(fnode => fnode.path === node.path)
+
+                    if (i !== -1) {
+                        nodes[i].feed = node.feed
+                    } else {
+                        // Node unpublished or moved
+                        console.log(`Node ${node.path} has been ignored`)
+                    }
+                })
+
+                return nodes
             })
 
-            var feeds = config.feeds.map(feed => {
-                return ca.content(feed).then(node => {
-                    feeds.push()
+            // Process the data
+            nodes.then(nodes => {
+                // Check lastmod exists
+                nodes = nodes.filter(node => {
+                    if (node.lastmod === null) {
+                        return warn('Date modified is missing, node needs republishing')
+                    }
+                    return true
                 })
-            })*/
+                
+                // Determine which nodes need new content
+                if (type === 'smart') {
+                    nodes.forEach(node => {
+                        if (node.feed && node.lastmod > (node.feed[6] - 86400) * 1000) {
+                            delete node.feed
+                        }
+                    })
+                } else if (type === 'month') {
+                    let cutoff = Date.now() - (2592000 * 1000)
+                    nodes.forEach(node => {
+                        if (node.feed && node.lastmod > cutoff) {
+                            delete node.feed
+                        }
+                    })
+                }
+
+                return nodes
+            }).then(nodes => {
+                let promises = []
+
+                // Load node data if no feed data exists
+                nodes.forEach(node => {
+                    if (!node.feed) {
+                        promises.push(ca.meta(node))
+                    }
+                })
+
+                // Wait for data to download
+                return new Promise((resolve,_) => {
+                    Promise.all(promises).then(() => {
+                        resolve(nodes)
+                    })
+                })
+            }).then(nodes => {
+
+                // Assign peer references
+                nodes.forEach(node => {
+                    if (node.meta) {
+                        let alt = ca.normalizePath(node.meta.gcAltLanguagePeer)
+                        let i = nodes.findIndex(fnode => fnode.path === alt)
+
+                        if (i) {
+                            
+                        }
+                        node.peer = nodes[i]
+                    }
+                })
+
+                console.log(nodes)
+
+            })
+
+
+
+
+
+
 
 
             /*
 
-            var chain = aem.addRoot(config.roots).addFeed(config.feeds).wait()
+            
 
-            // Remove deleted nodes
-            chain.then(function () {
-                aem.each(function (node) {
-                    if (!node.lastmod) {
-                        return warn(node, 'Migrated node needs republishing')
-                    }
-                    return Boolean(node.lastmod)
-                })
-            })
-
-            if (type === 'smart') {
-                // Option: clear data for modified nodes (and todays nodes just incase)
-                chain.then(function () {
-                    aem.each(function (node) {
-                        if (node.live) {
-                            var updated = typeof node.live[5] === 'number' ? node.live[5] : node.live[6]
-                            if (node.lastmod > updated - 86400) {
-                                delete node.live
-                            }
-                        }
-                    })
-                })
-            } else if (type === 'month') {
-                // Option: modified in last 30 days
-                chain.then(function () {
-                    var time = (Date.now() / 1000) - 2592000
-                    aem.each(function (node) {
-                        if (node.live && node.lastmod > time) {
-                            delete node.live
-                        }
-                    })
-                })
-            } else if (type === 'year') {
-                // Option: modified in last 365 days
-                chain.then(function () {
-                    var time = (Date.now() / 1000) - 31536000
-                    aem.each(function (node) {
-                        if (node.live && node.lastmod > time) {
-                            delete node.live
-                        }
-                    })
-                })
-            } else if (type === 'all') {
-                // Option: all nodes
-                chain.then(function () {
-                    aem.each(function (node) {
-                        if (node.live) {
-                            delete node.live
-                        }
-                    })
-                })
-            }
 
             // Load node data
             chain.then(function () {
