@@ -68,6 +68,7 @@
     ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12')
     var editor = ace.edit("editor");
     editor.session.setMode("ace/mode/javascript");
+    editor.setShowPrintMargin(false);
 
     $('#url-prefill a').click(function () {
       $('#url').val($(this).data('url'))
@@ -88,6 +89,22 @@
       bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
       exec: editor => download(utf8.encode(editor.session.getValue()), 'test.json', 'text/plain;charset=UTF-8;'),
     });
+
+    editor.commands.addCommand({
+      name: 'format',
+      bindKey: {win: 'Ctrl-Shift-F',  mac: 'Command-Shift-F'},
+      exec: editor => {
+        let v = editor.session.getValue()
+        try{
+          v = JSON.stringify(JSON.parse(v), null, '\t')
+          editor.setValue(v)
+        } catch(e) {
+
+        }
+      },
+
+  });
+
 
 
   </script>
