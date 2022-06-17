@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>Maple Leaf &gt; Feed Generator v2</title>
+    <title>Maple Leaf &gt; Feed Generator v3</title>
 
     <!-- Speed optimization -->
     <link rel="dns-prefetch" href="https://www.canada.ca">
@@ -33,7 +33,7 @@
                 <ol class="breadcrumb bg-transparent p-0 h5">
                     <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
                     <li class="breadcrumb-item"><a href="index.html">Maple Leaf</a></li>
-                    <li class="breadcrumb-item" aria-current="page">Feed Generator v2</li>
+                    <li class="breadcrumb-item" aria-current="page">Feed Generator v3</li>
                 </ol>
             </nav>
             <p>Compiles a listing of Maple Leaf articles used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
@@ -75,7 +75,7 @@
             <p id="status"><a href="javascript:main()">Click here to start</a></p>
 
             <ol id="warnings"></ol>
-       
+
             <h2 class="h5 mt-4">Instructions</h2>
             <ol class="pl-3">
                 <li>Run the tool above. Two JSON files will be generated and downloaded automatically</li>
@@ -114,8 +114,9 @@
 
             ca.meta(path).then(node => {
                 var time = $.timeago(new Date(node.meta['jcr:lastModified']))
+                var iso = new Date(node.meta['jcr:lastModified']).toISOString()
 
-                $(`[data-feed=${index}]`).html(`${node.meta['dam:assetState']} <abbr title="${node.meta['jcr:lastModified']}" class="text-primary">${time}</abbr> by ${node.meta['jcr:lastModifiedBy']}`)
+                $(`[data-feed=${index}]`).html(`${node.meta['dam:assetState']} <abbr title="${iso}" class="text-primary">${time}</abbr> by ${node.meta['jcr:lastModifiedBy']}`)
             }).catch(e => {
                 $(`[data-feed=${index}]`).html(`Error (${e.message})`)
             })
@@ -135,13 +136,35 @@
 
         // Log that a node that has been filtered out
         function warn(node, message) {
+            //console.log(node)
             let li = document.createElement('li')
             li.innerHTML = `<a href="https://www.canada.ca${node.path}.html" target="_blank">${node.path}</a><br/>${message}`
             document.getElementById('warnings').append(li)
             return false
         }
 
-     
+        // Combine foreach and filter functionality, to modify array in place
+        function filterEach(a, condition) {
+            let j = 0
+
+            a.forEach((e, i) => {
+                if (condition(e, i, a) !== false) {
+                    if (i !== j) {
+                        a[j] = e
+                    }
+                    j++
+                }
+            })
+
+            a.length = j
+            return a
+        }
+
+
+   
+
+
+
         function main() {
 
             let type = $('input[name="type"]').prop('disabled', true).filter(':checked').val()
@@ -154,16 +177,15 @@
 
                 lists.forEach(list => {
                     // Apply pre filter if it is set
-                    if (typeof config.preFilter === 'function') {
-                        list = list.filter(config.preFilter)
-                    }
-
-                    // Merge lists, preventing duplicates
-                    list.forEach(node => {
-                        if (nodes.findIndex(fnode => fnode.path === node.path) === -1) {
-                            nodes.push(node)
-                        }
+                    if (typeof config.preFilter === 'function') filterEach(list, config.preFilter)
+                    
+                    // Ignore duplicates
+                    filterEach(list, node => {
+                        return nodes.findIndex(fnode => fnode.path === node.path) === -1
                     })
+
+                    // Merge lists
+                    nodes.push.apply(nodes, list)
                 })
 
                 return nodes
@@ -213,63 +235,68 @@
             })
 
             // Process the data
-            nodes.then(nodes => {
-                // Check lastmod exists
-                nodes = nodes.filter(node => {
-                    if (node.lastmod === null) {
-                        return warn('Date modified is missing, node needs republishing')
-                    }
-                    return true
-                })
+            nodes.then(async nodes => {
                 
-                // Determine which nodes need new content
+                // Verify date modified (migration fix)
+                filterEach(nodes, node => {
+                    if (node.lastmod === null) return warn(node, 'Missing date modified, republish needed')
+                })
+
+                // Delete expired data based on the scan type
                 if (type === 'smart') {
                     nodes.forEach(node => {
-                        if (node.feed && node.lastmod > (node.feed[6] - 86400) * 1000) {
-                            delete node.feed
-                        }
+                        if (node.feed && node.lastmod > (node.feed[6] - 86400) * 1000) delete node.feed
                     })
                 } else if (type === 'month') {
                     let cutoff = Date.now() - (2592000 * 1000)
                     nodes.forEach(node => {
-                        if (node.feed && node.lastmod > cutoff) {
-                            delete node.feed
-                        }
+                        if (node.feed && node.lastmod > cutoff) delete node.feed
                     })
                 }
 
+                // Fill in data
+                for (let loop = 0; loop < 4; loop++) {
+                    let downloads = []
+
+                    filterEach(nodes, node => {
+                        if (node.meta) {
+                            if (!node.meta.gcAltLanguagePeer) return warn(node, 'peer not set')
+
+                            // Add reference to peer node
+                            if (!node.peer) {
+                                let alt = ca.normalizePath(node.meta.gcAltLanguagePeer)
+                                let index = nodes.findIndex(fnode => fnode.path === alt)
+
+                                if (index === -1) return warn(node, 'peer not found')
+                                node.peer = nodes[index]
+                            }
+                            
+                            // Load peer data if needed
+                            if (node.peer.feed) {
+                                delete node.peer.feed
+                                downloads.push(ca.meta(node.peer))
+                            }
+                        } else if (!node.feed) {
+                            downloads.push(ca.meta(node))
+                        }
+                    })
+
+                    // Wait for downloads to complete
+                    if (downloads.length) await Promise.all(downloads)
+                }
+
+                // Verify data
+                filterEach(nodes, node => {
+                    if (node.meta) {
+                        //if (!node.peer) return warn('problem with peer')
+                        if (node.peer && node !== node.peer.peer) return warn(node, 'links between peers do not match')
+                        if (!node.path.startsWith('/' + node.meta['jcr:language'])) return warn(node, 'language is inconsistent with URL')
+                    }
+                })
+
                 return nodes
             }).then(nodes => {
-                let promises = []
-
-                // Load node data if no feed data exists
-                nodes.forEach(node => {
-                    if (!node.feed) {
-                        promises.push(ca.meta(node))
-                    }
-                })
-
-                // Wait for data to download
-                return new Promise((resolve,_) => {
-                    Promise.all(promises).then(() => {
-                        resolve(nodes)
-                    })
-                })
-            }).then(nodes => {
-
-                // Assign peer references
-                nodes.forEach(node => {
-                    if (node.meta) {
-                        let alt = ca.normalizePath(node.meta.gcAltLanguagePeer)
-                        let i = nodes.findIndex(fnode => fnode.path === alt)
-
-                        if (i) {
-                            
-                        }
-                        node.peer = nodes[i]
-                    }
-                })
-
+               
                 console.log(nodes)
 
             })
@@ -283,46 +310,24 @@
 
             /*
 
-            
-
-
-            // Load node data
+        
             chain.then(function () {
-                status('Downloading nodes')
-
-                // Find nodes to load
-                var list = aem.nodes().filter(function (path) {
-                    return !aem.data[path].live
-                })
-
-                return aem.meta(list).wait()
-
-            }).then(function () {
-
-                // Verify peers are loaded
-                aem.each(function (node) {
-                    if (node.peer && aem.data[node.peer] && !aem.data[node.peer].peer) {
-                        aem.meta(node.peer)
-                    }
-                })
-
-                if (!aem.idle()) {
-                    return aem.wait()
-                }
-
-            }).then(function () {
 
                 // Check for content issues
                 aem.each(function (node) {
                     if (node && node.peer) {
-                        var peer = aem.data[node.peer]
+                     
+                        
 
-                        if (!peer) {
-                            return warn(node, 'peer not found')
-                        } else if (node.path !== peer.peer) {
-                            return warn(node, 'links between peers do not match')
+
                         } else if (node['jcr:language'] !== node.path.slice(0, 2)) {
                             return warn(node, 'page language is inconsistent with URL path')
+
+
+
+
+
+
                         } else if (!node.gcDescription || !node.gcKeywords) {
                             delete aem.data[node.peer]
                             return warn(node, 'missing description or keywords metadata')

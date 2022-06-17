@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>General &gt; JSON Editor</title>
+
+  <!-- Speed optimization -->
+  <link rel="dns-prefetch" href="https://www.canada.ca">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
+  <!-- Meta -->
+  <meta charset="utf-8" />
+
+  <!-- Style -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+  <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/canada-api@1.1.6"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
+
+</head>
+
+<body style="margin-top:50px">
+  <main>
+    <nav class="navbar fixed-top navbar-dark bg-dark">
+      <div class="container-fluid">
+        <div class="col-xs-2">
+          <span class="navbar-brand">JSON Editor</span>
+     </div>
+     <div class="col">
+          <div class="input-group">
+
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+            <ul id="url-prefill" class="dropdown-menu">
+              <li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/resources.json">CAF app - resources</a></li>
+              <li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/caf-config.json">CAF app - config</a></li>
+              <li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json">CAF app - config (staging)</a></li>
+              <li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/caf-subscriptions.json">CAF app - social media accounts</a></li>
+            
+            
+
+            
+            </ul>
+
+            <input id="url" type="text" class="form-control" placeholder="URL">
+
+            
+            <button id="open" class="btn btn-primary">Open</button>
+          </div>
+      
+        </div>
+     
+
+      </div>
+    </nav>
+
+    <div id="editor" style="position:absolute;top:60px;right:0;bottom:0;left:0"></div>
+  </main>
+  <script>
+
+    // Ace editor setup
+    ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12')
+    var editor = ace.edit("editor");
+    editor.session.setMode("ace/mode/javascript");
+
+    $('#url-prefill a').click(function () {
+      $('#url').val($(this).data('url'))
+    })
+
+    $('#open').click(function () {
+
+      fetch($('#url').val())
+        .then(response => response.text())
+
+        .then(json => editor.session.setValue(json))
+
+    })
+
+
+    editor.commands.addCommand({
+      name: 'save',
+      bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
+      exec: editor => download(utf8.encode(editor.session.getValue()), 'test.json', 'text/plain;charset=UTF-8;'),
+    });
+
+
+  </script>
+</body>
