@@ -22,7 +22,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-language_tools.js"></script>
 
 </head>
 
@@ -30,39 +32,47 @@
   <main>
     <nav class="navbar fixed-top navbar-dark bg-dark">
       <div class="container-fluid">
-        <div class="col-xs-2">
+        <div class="col-1">
           <span class="navbar-brand">JSON Editor</span>
-     </div>
-     <div class="col">
+        </div>
+        <div class="col">
           <div class="input-group">
 
             <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
             <ul id="url-prefill" class="dropdown-menu">
-              <li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/resources.json">CAF app - resources</a></li>
-              <li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/caf-config.json">CAF app - config</a></li>
-              <li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json">CAF app - config (staging)</a></li>
-              <li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/caf-subscriptions.json">CAF app - social media accounts</a></li>
-            
-            
-
-            
+              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/resources.json">CAF app - resources</a></li>
+              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/caf-config.json">CAF app - config</a></li>
+              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json">CAF app - config (staging)</a></li>
+              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/caf-subscriptions.json">CAF app - social media accounts</a></li>
             </ul>
 
             <input id="url" type="text" class="form-control" placeholder="URL">
 
-            
             <button id="open" class="btn btn-primary">Open</button>
           </div>
-      
         </div>
-     
-
       </div>
     </nav>
 
-    <div id="editor" style="position:absolute;top:60px;right:0;bottom:0;left:0"></div>
+    <div id="editor" style="position:absolute;top:54px;right:0;bottom:0;left:0"></div>
+
   </main>
   <script>
+
+    const params = new URLSearchParams(window.location.search)
+
+    $('#open').click(function () {
+      window.history.replaceState("", "", "?url=" + url());
+      fetch(url())
+        .then(response => response.text())
+        .then(json => editor.session.setValue(json))
+    })
+
+    if (params.has('url')) {
+      $('#url').val(params.get('url'))
+      $('#open').click()
+    }
+
 
     // Ace editor setup
     ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12')
@@ -70,41 +80,53 @@
     editor.session.setMode("ace/mode/javascript");
     editor.setShowPrintMargin(false);
 
+    function url() {
+      return new URL($('#url').val(), 'https://www.canada.ca')
+    }
+
+
     $('#url-prefill a').click(function () {
       $('#url').val($(this).data('url'))
+      $('#open').click()
     })
 
-    $('#open').click(function () {
-
-      fetch($('#url').val())
-        .then(response => response.text())
-
-        .then(json => editor.session.setValue(json))
-
-    })
+    
 
 
     editor.commands.addCommand({
       name: 'save',
       bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
       exec: editor => download(utf8.encode(editor.session.getValue()), 'test.json', 'text/plain;charset=UTF-8;'),
-    });
+    })
 
     editor.commands.addCommand({
       name: 'format',
-      bindKey: {win: 'Ctrl-Shift-F',  mac: 'Command-Shift-F'},
+      bindKey: { win: 'Ctrl-Shift-F', mac: 'Command-Shift-F' },
       exec: editor => {
         let v = editor.session.getValue()
-        try{
+        try {
           v = JSON.stringify(JSON.parse(v), null, '\t')
           editor.setValue(v)
-        } catch(e) {
+        } catch (e) {
 
         }
       },
+    })
 
-  });
 
+
+
+    function folder() {
+      let u = url()
+
+      console.log(u)
+
+      if (!u.host === 'www.canada.ca') {
+        return null
+      }
+
+      return 'https://author-canada-prod.adobecqms.net/assets.html/content/dam/dnd-mdn/documents/json'
+    }
 
 
   </script>
