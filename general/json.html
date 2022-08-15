@@ -37,33 +37,89 @@
         </div>
         <div class="col">
           <div class="input-group">
-
             <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
             <ul id="url-prefill" class="dropdown-menu">
               <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/resources.json">CAF app - resources</a></li>
+              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/caf-subscriptions.json">CAF app - social media accounts</a></li>
               <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/caf-config.json">CAF app - config</a></li>
               <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json">CAF app - config (staging)</a></li>
-              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/caf-subscriptions.json">CAF app - social media accounts</a></li>
+              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/canada-video.json">Maple Leaf - Video Gallery</a></li>
             </ul>
-
             <input id="url" type="text" class="form-control" placeholder="URL">
-
             <button id="open" class="btn btn-primary">Open</button>
           </div>
+        </div>
+        <div class="col-1">
+          <button type="button" class="btn btn-info float-end" data-bs-toggle="modal" data-bs-target="#shortcuts">Shortcuts</button>
         </div>
       </div>
     </nav>
 
     <div id="editor" style="position:absolute;top:54px;right:0;bottom:0;left:0"></div>
 
+    <div class="modal" id="shortcuts" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <h6>Custom</h6>
+            <ul>
+              <li>Ctrl + Shift + F: Format JSON</li>
+              <li>Ctrl + S: Save to Downloads</li>
+            </ul>
+            <h6>Find/Replace</h6>
+            <ul>
+              <li>Ctrl + F: Find</li>
+              <li>Ctrl + H: Replace </li>
+              <li>Ctrl + K: Find next </li>
+              <li>Ctrl + Shift + K: Find previous</li>
+            </ul>
+            <h6>Other</h6>
+            <ul>
+              <li>Tab: Indent </li>
+              <li>Shift + Tab: Outdent</li>
+              <li>Ctrl + Z: Undo</li>
+              <li>Ctrl + Y: Redo</li>
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <a href="https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts" target="_blank">Advanced List</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
   <script>
 
     const params = new URLSearchParams(window.location.search)
 
+    // Ace editor setup
+    ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12')
+    var editor = ace.edit("editor");
+    editor.session.setMode("ace/mode/javascript");
+    editor.setShowPrintMargin(false);
+
     $('#open').click(function () {
-      window.history.replaceState("", "", "?url=" + url());
-      fetch(url())
+
+      var url = url()
+
+      if (!url || url.href === 'https://www.canada.ca') {
+        return alert('URL field is empty')
+      }
+
+      if (editor.session.getUndoManager().hasUndo()) {
+        if (!confirm('Changes have been made, are you sure you want to continue')) {
+          return
+        }
+      }
+
+      window.history.replaceState("", "", "?url=" + url);
+
+      fetch(url)
         .then(response => response.text())
         .then(json => editor.session.setValue(json))
     })
@@ -74,14 +130,10 @@
     }
 
 
-    // Ace editor setup
-    ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12')
-    var editor = ace.edit("editor");
-    editor.session.setMode("ace/mode/javascript");
-    editor.setShowPrintMargin(false);
-
     function url() {
-      return new URL($('#url').val(), 'https://www.canada.ca')
+      var url = new URL($('#url').val(), 'https://www.canada.ca')
+      url.searchParams.set('_', Date.now())
+      return url
     }
 
 
@@ -90,7 +142,7 @@
       $('#open').click()
     })
 
-    
+
 
 
     editor.commands.addCommand({

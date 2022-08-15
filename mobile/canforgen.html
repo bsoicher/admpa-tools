@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>CANFORGEN</title>
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+    <meta charset="utf-8" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+
+<body>
+    <main>
+        <div class="container my-5">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 h5">
+                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
+                    <li class="breadcrumb-item current" aria-current="page">CANFORGEN</li>
+                </ol>
+            </nav>
+
+            <div class="form-group row">
+                <div class="col-md-2">
+                    <label for="root" class="col-form-label">Select <code>.zip</code> file</label>
+                </div>
+                <div class="col-md-10">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="file" accept=".zip" value="" />
+                        <label class="custom-file-label" for="file" id="file-label"></label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+
+        let zip = null
+
+
+        $('#file').change(function () {
+            var i = $(this).removeClass('is-valid is-invalid')
+
+            var file = $(this).prop('files')[0]
+
+
+            get_zip_content(file).then(async data => {
+
+                console.log(data)
+
+                var t = await get_zip_entry(data, 'pubs$/canforgen/1988/021-88_e324.asp')
+
+                console.log(t)
+
+            })
+
+
+            $('#file-label').html(file.name)
+
+
+
+        })
+
+
+        function get_zip_content(zipfile) {
+            let read = new FileReader()
+            read.readAsBinaryString(zipfile)
+
+            return new Promise((resolve, reject) => {
+                read.onload = function () {
+                    try {
+                        JSZip.loadAsync(read.result).then(resolve)
+                    } catch (e) {
+                        reject(e)
+                    }
+                }
+            })
+        }
+
+
+        async function get_zip_entry(zip, name) {
+            if (!name in zip.files) {
+                throw new Error('File not found in zip file')
+            }
+
+            return zip.file(name)['async']('string')
+
+
+        }
+
+
+
+        function sort_by_year(data) {
+            var years = []
+
+
+            var years = Object.keys(data.files).forEach(name => {
+
+
+
+
+            })
+        }
+
+
+        function status(message, percent) {
+            if (message) {
+                $('#status').html(message)
+            }
+            $('#complete').width(percent + '%')
+        }
+
+    </script>
+
+</body>
+
+</html>
