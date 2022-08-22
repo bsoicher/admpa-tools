@@ -105,16 +105,19 @@
         }
 
         function nameInfo(path) {
-            return path
+            let info = path
                 .toLowerCase()
                 .match(/\/(?<year>\d{4})\/(?<id>[^_]+)_(?<lang>[ef])\./)
                 .groups
+
+            info.id = info.id.replace('-', '/')
+            return info
         }
 
         function processData(data) {
 
             // Process table of contents files
-            for (year in data) {
+            /*for (year in data) {
                 let e = data[year]['t-of-c'].e
                 let f = data[year]['t-of-c'].f
 
@@ -122,7 +125,9 @@
                 f.lines = parseTOC(f.text, year, 'f')
 
                 console.log(e.lines)
-            }
+            }*/
+            console.log(data)
+            parsePage(data['1985']['021/85'].e.text, '1985', 'e')
 
             return data
         }
@@ -251,12 +256,45 @@
                     id: a[0],
                     date: a[1],
                     opi: a[2],
-                    title: a[3]
+                    subject: a[3]
                 }
             })
 
             // Filter out null values
             return lines.filter(x => x)
+        }
+
+
+        function parsePage(text, year, lang) {
+            let body = text.match(/<\s*body[^>]*>(.*)<\s*\/\s*body>/is)
+
+            if (body) {
+                body = S(body[1])
+            } else {
+                console.warn('Failed to locate <body> tag')
+            }
+
+            // Remove html comments
+            body = body.replace(/<!--[\s\S]*?-->/g, '')
+            // Remove whitespace
+            body = body.replace(/\s+/g, ' ').replace(/>\s+</g, '><')
+            // Remove tags
+            body = body.stripTags('font')
+            // Convert empty p tags to br
+            body = body.replace(/<p>\s*(&#160;|&#9;)?\s*<\/p>/gi, '<br>')
+
+
+            // Links
+            body = body.replace(/<a\s[^>]*href=\"([^\"]*)\"[^>]*>/i, (match, b) => {
+                return '<AAAAAAAAAA>'
+            })
+
+            
+            //console.log(text)
+            console.log(body.s)
+          
+            
+            return body.s
         }
 
 
