@@ -103,9 +103,16 @@
     editor.session.setMode("ace/mode/javascript");
     editor.setShowPrintMargin(false);
 
+    function iurl() {
+      var url = new URL($('#url').val(), 'https://www.canada.ca')
+      url.searchParams.set('_', Date.now())
+      return url
+    }
+
+
     $('#open').click(function () {
 
-      var url = url()
+      var url = iurl()
 
       if (!url || url.href === 'https://www.canada.ca') {
         return alert('URL field is empty')
@@ -130,12 +137,7 @@
     }
 
 
-    function url() {
-      var url = new URL($('#url').val(), 'https://www.canada.ca')
-      url.searchParams.set('_', Date.now())
-      return url
-    }
-
+   
 
     $('#url-prefill a').click(function () {
       $('#url').val($(this).data('url'))

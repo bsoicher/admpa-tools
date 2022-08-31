@@ -1,52 +1,162 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-    <title>ADMPA Web Tools</title>
+    <title>Tools</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
 </head>
 
 <body>
+    <header>
+        <nav class="navbar bg-dark shadow-sm">
+            <div class="container-fluid px-4">
+                <div class="navbar-brand">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a href="https://github.com/dnd-mdn" class="text-white">dnd-mdn</a></li>
+                        <li class="breadcrumb-item active">Tools</li>
+                    </ol>
+                </div>
+            </div>
+        </nav>
+    </header>
     <main>
-        <div class="container my-5">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb bg-transparent p-0 h5">
-                    <li class="breadcrumb-item" aria-current="page">ADMPA Web Tools</li>
-                </ol>
-            </nav>
-            <p>Collection of small web applications for generating and formatting content.</p>
+        <div class="container mt-5">
+            <h1 class="visually-hidden">Applications</h1>
             <table class="table">
                 <thead>
                     <tr>
-                        <th class="col-4 col-md-3 border-top-0">Name</th>
-                        <th class="col-8 col-md-9 border-top-0">Description</th>
+                        <th class="col-2">Name</th>
+                        <th class="col-2">Category</th>
+                        <th class="col-7">Description</th>
+                        <th class="col-1">Status</th>
                     </tr>
                 </thead>
                 <tbody>
+
+                    <!-- AEM -->
                     <tr>
-                        <td><a href="ml/index.html">Maple Leaf</a></td>
-                        <td>Compiles JSON feed of corporate videos</td>
+                        <td><a href="aem/bookmarklets.html">Bookmarklets</a></td>
+                        <td>AEM</td>
+                        <td>Helpful AEM scripts run from a bookmarks</td>
+                        <td>Stable</td>
                     </tr>
                     <tr>
-                        <td><a href="ws/index.html">Western Sentinel</a></td>
+                        <td><a href="aem/snapshot.html">Snapshot</a></td>
+                        <td>AEM</td>
+                        <td>Save the current state of a section of canada.ca for analysis</td>
+                        <td>Beta</td>
+                    </tr>
+                    <tr>
+                        <td><a href="aem/snapshot-search.html">Snapshot search</a></td>
+                        <td>AEM</td>
+                        <td>Search meta fields of AEM nodes</td>
+                        <td>Beta</td>
+                    </tr>
+                    <tr>
+                        <td><a href="aem/snapshot-html.html">Snapshot HTML search</a></td>
+                        <td>AEM</td>
+                        <td>Search raw HTML of AEM nodes using jQuery</td>
+                        <td>Beta</td>
+                    </tr>
+                    <tr>
+                        <td><a href="aem/snapshot-count.html">Snapshot match count</a></td>
+                        <td>AEM</td>
+                        <td>Count text or regular expression matches in AEM nodes</td>
+                        <td>Beta</td>
+                    </tr>
+
+                    <!-- Maple Leaf-->
+                    <tr>
+                        <td><a href="ml/feed.html">Feed Generator</a></td>
+                        <td>Maple Leaf</td>
+                        <td>Compiles JSON feed of articles</td>
+                        <td>Stable</td>
+                    </tr>
+                    <tr>
+                        <td><a href="ml/carousel.html">Carousel</a></td>
+                        <td>Maple Leaf</td>
+                        <td>Generate carousel HTML</td>
+                        <td>Beta</td>
+                    </tr>
+                    <tr>
+                        <td><a href="ml/tags.html">Tags</a></td>
+                        <td>Maple Leaf</td>
+                        <td>Search the full list of tags used on the Maple Leaf</td>
+                        <td>Stable</td>
+                    </tr>
+                    <tr>
+                        <td><a href="ml/gallery.html">Gallery</a></td>
+                        <td>Maple Leaf</td>
+                        <td>Generate image gallery HTML</td>
+                        <td>Stable</td>
+                    </tr>
+                    <tr>
+                        <td><a href="qa/index.html">Article QA</a></td>
+                        <td>Maple Leaf</td>
+                        <td>Analyze an article for common issues</td>
+                        <td>Stable</td>
+                    </tr>
+
+                    <!-- Mobile app -->
+                    <tr>
+                        <td><a href="mobile/canforgens.html">CANFORGENS</a></td>
+                        <td>Mobile App</td>
+                        <td>Process raw canforgens to JSON</td>
+                        <td>Beta</td>
+                    </tr>
+                    <tr>
+                        <td><a href="mobile/json.html">JSON editor</a></td>
+                        <td>Mobile App</td>
+                        <td>Text editor for static JSON content</td>
+                        <td>Beta</td>
+                    </tr>
+
+                    <!-- Western Sentinal -->
+                    <tr>
+                        <td><a href="ws/feed.html">Feed Generator</a></td>
+                        <td>Western Sentinel</td>
                         <td>Compiles JSON feed of articles from AEM</td>
+                        <td>Stable</td>
                     </tr>
-                    <tr>
-                        <td><a href="mobile/index.html" class="text-warning">Mobile App</a></td>
-                        <td> Canadian Armed Forces mobile app</td>
-                    </tr>
-                    <tr>
-                        <td><a href="aem/index.html">AEM tools</a></td>
-                        <td>Other tools related to AEM</td>
-                    </tr>
+
                 </tbody>
             </table>
         </div>
     </main>
+
+    <script>
+        $(function () {
+            $('table').DataTable({
+                paging: false,
+                order: [[1, 'asc']],
+                columns: [
+                    null,
+                    {
+                        render: function (data) {
+                            return `<a href="?category=${data}">${data}</a>`
+                        }
+                    },
+                    null,
+                    {
+                        render: function (data) {
+                            let type = data === 'Stable' ? 'success' : 'warning'
+                            return `<span class="text-${type}">${data}</span>`
+                        },
+                    }
+                ]
+            })
+        })
+    </script>
 </body>
 
 </html>
