@@ -19,9 +19,9 @@
         <nav class="navbar bg-dark shadow-sm">
             <div class="container-fluid px-4">
                 <div class="navbar-brand">
-                    <ol class="breadcrumb mb-1">
+                    <ol class="breadcrumb mb-1" id="bc">
                         <li class="breadcrumb-item"><a href="https://github.com/dnd-mdn" class="text-muted">dnd-mdn</a></li>
-                        <li class="breadcrumb-item active text-light">Tools</li>
+                        <li class="breadcrumb-item active text-light" id="bc-tools">Tools</li>
                     </ol>
                 </div>
             </div>
@@ -137,19 +137,20 @@
     <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
     <script>
-        var types = {
+        
+        let types = {
             'Alpha': 'text-danger',
             'Beta': 'text-warning',
             'Stable': 'text-success'
         }
 
-        $('table').DataTable({
+        let table = $('table').DataTable({
             paging: false,
             order: [[1, 'asc']],
             columns: [
                 null,
                 {
-                    render: data => `<a href="?category=${data}">${data}</a>`
+                    render: data => `<a href="?c=${data}">${data}</a>`
                 },
                 null,
                 {
@@ -157,6 +158,18 @@
                 }
             ]
         })
+
+        let category = new URL(window.location).searchParams.get('c')
+
+        if (category) {
+            // Add category breadcrumb
+            $('#bc').append(`<li class="breadcrumb-item active text-light">${category}</li>`)
+            $('#bc-tools').wrapInner(`<a href="index.html" class="text-muted"></a>`)
+
+            // Filter table
+            table.column(1).search(category).draw()
+        }
+        
     </script>
 
 </body>

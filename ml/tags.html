@@ -25,7 +25,7 @@
                     <ol class="breadcrumb mb-1">
                         <li class="breadcrumb-item"><a href="https://github.com/dnd-mdn" class="text-muted">dnd-mdn</a></li>
                         <li class="breadcrumb-item"><a href="../index.html" class="text-muted">Tools</a></li>
-                        <li class="breadcrumb-item"><a href="../index.html" class="text-muted">Maple Leaf</a></li>
+                        <li class="breadcrumb-item"><a href="../index.html?c=Maple Leaf" class="text-muted">Maple Leaf</a></li>
                         <li class="breadcrumb-item active text-white">Tags</li>
                     </ol>
                 </div>
@@ -96,7 +96,12 @@
                     obj[3].split(',').forEach(function (tag) {
                         if (tag) {
                             var tag = tag.toLowerCase()
-                            data[lang][tag] = data[lang][tag] ? data[lang][tag] + 1 : 1
+
+                            if (!data[lang][tag]) {
+                                data[lang][tag] = 0
+                            }
+
+                            data[lang][tag]++
                         }
                     })
                 })
