@@ -1,49 +1,53 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <title>Maple Leaf &gt; Tags</title>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-    <!-- Speed optimization -->
+    <title>Maple Leaf - Tags</title>
+
+    <!-- Optimization -->
     <link rel="dns-prefetch" href="https://www.canada.ca">
 
-    <!-- Meta -->
-    <meta charset="utf-8" />
-
     <!-- Style -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/css/dataTables.bootstrap4.min.css">
-
-    <!-- Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/dataTables.bootstrap4.min.js"></script>
-
+    <link rel="icon" href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css">
 </head>
 
 <body>
+    <header>
+        <nav class="navbar bg-dark shadow-sm">
+            <div class="container-fluid px-4">
+                <div class="navbar-brand">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a href="https://github.com/dnd-mdn" class="text-white">dnd-mdn</a></li>
+                        <li class="breadcrumb-item"><a href="../index.html" class="text-white">Tools</a></li>
+                        <li class="breadcrumb-item"><a href="../index.html" class="text-white">Maple Leaf</a></li>
+                        <li class="breadcrumb-item active">Tags</li>
+                    </ol>
+                </div>
+            </div>
+        </nav>
+    </header>
     <main>
         <div class="container my-5">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb bg-transparent p-0 h5">
-                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
-                    <li class="breadcrumb-item"><a href="index.html">Maple Leaf</a></li>
-                    <li class="breadcrumb-item" aria-current="page">Tags</li>
-                </ol>
-            </nav>
+            <h1 class="visually-hidden">Tags</h1>
             <p>Search the full list of tags used on the Maple Leaf.</p>
             <table class="table">
                 <thead>
                     <tr>
-                        <th width="55%" class="border-top-0 align-middle">Name</th>
-                        <th width="30%" class="border-top-0 align-middle">Language
+                        <th class="col-8">Name</th>
+                        <th class="col-3">Language
                             <div class="btn-group float-right" role="group" id="filter">
                                 <button type="button" class="btn btn-sm btn-outline-primary active" data-lang="">ALL</button>
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-lang="en">EN</button>
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-lang="fr">FR</button>
                             </div>
                         </th>
-                        <th width="15%" class="border-top-0 align-middle">Count</th>
+                        <th class="col-1">Count</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -51,6 +55,10 @@
         </div>
     </main>
 
+    <!-- Scripting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
     <script>
 
         // Configure data sources
@@ -69,7 +77,9 @@
         $.ajaxSetup({ cache: false })
 
         // Datatable setup
-        var table = $('table').DataTable({ order: [[0, 'asc']] })
+        var table = $('table').DataTable({
+            order: [[0, 'asc']]
+        })
 
         $.when(
             $.get(config.json.en),

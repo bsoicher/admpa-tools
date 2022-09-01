@@ -8,12 +8,10 @@
 
     <title>Tools</title>
 
+    <!-- Style -->
+    <link rel="icon" href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css">
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
-    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
 </head>
 
 <body>
@@ -60,7 +58,7 @@
                         <td><a href="aem/snapshot-search.html">Snapshot search</a></td>
                         <td>AEM</td>
                         <td>Search meta fields of AEM nodes</td>
-                        <td>Beta</td>
+                        <td>Alpha</td>
                     </tr>
                     <tr>
                         <td><a href="aem/snapshot-html.html">Snapshot HTML search</a></td>
@@ -77,7 +75,7 @@
 
                     <!-- Maple Leaf-->
                     <tr>
-                        <td><a href="ml/feed.html">Feed Generator</a></td>
+                        <td><a href="ml/feed.html">Feed Generator 2</a></td>
                         <td>Maple Leaf</td>
                         <td>Compiles JSON feed of articles</td>
                         <td>Stable</td>
@@ -86,7 +84,7 @@
                         <td><a href="ml/carousel.html">Carousel</a></td>
                         <td>Maple Leaf</td>
                         <td>Generate carousel HTML</td>
-                        <td>Beta</td>
+                        <td>Alpha</td>
                     </tr>
                     <tr>
                         <td><a href="ml/tags.html">Tags</a></td>
@@ -112,7 +110,7 @@
                         <td><a href="mobile/canforgens.html">CANFORGENS</a></td>
                         <td>Mobile App</td>
                         <td>Process raw canforgens to JSON</td>
-                        <td>Beta</td>
+                        <td>Alpha</td>
                     </tr>
                     <tr>
                         <td><a href="mobile/json.html">JSON editor</a></td>
@@ -123,7 +121,7 @@
 
                     <!-- Western Sentinal -->
                     <tr>
-                        <td><a href="ws/feed.html">Feed Generator</a></td>
+                        <td><a href="ws/feed.html">Feed Generator 2</a></td>
                         <td>Western Sentinel</td>
                         <td>Compiles JSON feed of articles from AEM</td>
                         <td>Stable</td>
@@ -134,29 +132,33 @@
         </div>
     </main>
 
+    <!-- Scripting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
     <script>
-        $(function () {
-            $('table').DataTable({
-                paging: false,
-                order: [[1, 'asc']],
-                columns: [
-                    null,
-                    {
-                        render: function (data) {
-                            return `<a href="?category=${data}">${data}</a>`
-                        }
-                    },
-                    null,
-                    {
-                        render: function (data) {
-                            let type = data === 'Stable' ? 'success' : 'warning'
-                            return `<span class="text-${type}">${data}</span>`
-                        },
-                    }
-                ]
-            })
+        var types = {
+            'Alpha': 'text-danger',
+            'Beta': 'text-warning',
+            'Stable': 'text-success'
+        }
+
+        $('table').DataTable({
+            paging: false,
+            order: [[1, 'asc']],
+            columns: [
+                null,
+                {
+                    render: data => `<a href="?category=${data}">${data}</a>`
+                },
+                null,
+                {
+                    render: data => `<span class="${types[data]}">${data}</span>`,
+                }
+            ]
         })
     </script>
+
 </body>
 
 </html>

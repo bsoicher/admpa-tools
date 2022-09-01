@@ -1,18 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-	<title>Maple Leaf &gt; Carousel</title>
-
-    <!-- Speed optimization -->
-    <link rel="dns-prefetch" href="https://www.canada.ca">
-
-	<!-- Meta -->
 	<meta charset="utf-8" />
 	<meta name="robots" content="noindex" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
 
-	<!-- Styles -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css" />
+	<title>Maple Leaf - Carousel</title>
+
+	<!-- Optimization -->
+	<link rel="dns-prefetch" href="https://www.canada.ca">
+
+	<!-- Style -->
+	<link rel="icon" href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" type="image/x-icon" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" />
 	<style>
 		.table-striped>tbody>tr>td:last-child {
@@ -24,76 +25,82 @@
 			left: -999em;
 		}
 	</style>
+</head>
 
-	<!-- Libraries -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<body>
+	<header>
+		<nav class="navbar bg-dark shadow-sm">
+			<div class="container-fluid px-4">
+				<div class="navbar-brand">
+					<ol class="breadcrumb mb-1">
+						<li class="breadcrumb-item"><a href="https://github.com/dnd-mdn" class="text-white">dnd-mdn</a></li>
+						<li class="breadcrumb-item"><a href="../index.html" class="text-white">Tools</a></li>
+						<li class="breadcrumb-item"><a href="../index.html" class="text-white">Maple Leaf</a></li>
+						<li class="breadcrumb-item active">Carousel</li>
+					</ol>
+				</div>
+			</div>
+		</nav>
+	</header>
+	<main>
+		<div class="container my-5">
+			<h1 class="visually-hidden">Carousel</h1>
+
+			<p>Generate the HTML of a carousel.</p>
+			<p>Images must first be published to canada.ca DAM in the folder (
+				<code>dam/dnd-mdn/images/maple-leaf/articles/</code> )
+			</p>
+
+			<div class="mt-4">
+				<h2 class="h6">Usage</h2>
+				<ul>
+					<li>Drag rows up or down to re-order images</li>
+					<li>Removed a row by clicking the X on right side of the row</li>
+				</ul>
+			</div>
+
+			<!-- Carousel images -->
+			<table class="table table-striped ">
+				<thead>
+					<tr>
+						<th width="150px">Image</th>
+						<th>English</th>
+						<th>French</th>
+						<th width="5px">&nbsp;</th>
+					</tr>
+				</thead>
+				<tbody id="tbody"></tbody>
+			</table>
+
+			<button id="add" type="button" class="btn btn-primary">Add Row</button>
+
+			<!-- List of files affected -->
+			<table id="files" class="table my-5">
+				<thead>
+					<tr>
+						<th class="border-top-0">Path</th>
+						<th class="border-top-0" width="120px">Clipboard</th>
+						<th class="border-top-0" width="120px">Editor</th>
+					</tr>
+				</thead>
+				<tbody class="border"></tbody>
+			</table>
+
+			<!-- Hidden fields for clipboard -->
+			<div id="hidden">
+				<textarea id="en">Clipboard Error</textarea>
+				<textarea id="fr">Clipboard Error</textarea>
+			</div>
+
+		</div>
+	</main>
+
+	<!-- Scripting -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
-
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js"></script>
-
-</head>
-
-<body id="body">
-	<div class="container my-5">
-		<nav aria-label="breadcrumb">
-			<ol class="breadcrumb bg-transparent p-0 h5">
-				<li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
-				<li class="breadcrumb-item"><a href="index.html">Maple Leaf</a></li>
-				<li class="breadcrumb-item" aria-current="page">Carousel &nbsp;<span class="badge badge-warning badge-pill">In Development</span></li>
-			</ol>
-		</nav>
-
-		<!-- Description -->
-		<p>Use this page to generate the HTML of an image gallery.</p>
-		<p>Images must first be published to canada.ca DAM in the folder (
-			<code>dam/dnd-mdn/images/maple-leaf/articles/</code> )</p>
-
-		<div class="mt-4">
-			<h2 class="h6">Usage</h2>
-			<ul>
-				<li>Drag rows up or down to re-order images</li>
-				<li>Removed a row by clicking the X on right side of the row</li>
-			</ul>
-		</div>
-
-		<!-- Carousel images -->
-		<table class="table table-striped ">
-			<thead>
-				<tr>
-					<th width="150px">Image</th>
-					<th>English</th>
-					<th>French</th>
-					<th width="5px">&nbsp;</th>
-				</tr>
-			</thead>
-			<tbody id="tbody"></tbody>
-		</table>
-
-		<button id="add" type="button" class="btn btn-primary">Add Row</button>
-
-		<!-- List of files affected -->
-		<table id="files" class="table my-5">
-			<thead>
-				<tr>
-					<th class="border-top-0">Path</th>
-					<th class="border-top-0" width="120px">Clipboard</th>
-					<th class="border-top-0" width="120px">Editor</th>
-				</tr>
-			</thead>
-			<tbody class="border"></tbody>
-		</table>
-
-		<!-- Hidden fields for clipboard -->
-		<div id="hidden">
-			<textarea id="en">Clipboard Error</textarea>
-			<textarea id="fr">Clipboard Error</textarea>
-		</div>
-
-	</div>
-
-
 	<script>
 
 		var aem = {
@@ -102,7 +109,6 @@
 				en: '/en/department-national-defence/maple-leaf/03-08-women.html',
 				fr: '/fr/ministere-defense-nationale/feuille-derable/03-08-femmes.html'
 			},
-
 
 			// Set value to be coppied
 			setClipboard: function (id, value) {
