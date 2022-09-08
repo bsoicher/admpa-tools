@@ -137,7 +137,15 @@
     <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
     <script>
-        
+
+        let category = new URL(window.location).searchParams.get('c')
+
+        // Modify breadcrumbs
+        if (category) {
+            $('#bc').append(`<li class="breadcrumb-item active text-light">${category}</li>`)
+            $('#bc-tools').wrapInner('<a href="index.html" class="text-muted"></a>')
+        }
+
         let types = {
             'Alpha': 'text-danger',
             'Beta': 'text-warning',
@@ -156,20 +164,10 @@
                 {
                     render: data => `<span class="${types[data]}">${data}</span>`,
                 }
-            ]
+            ],
+            searchCols: [null, { search: category }, null, null]
         })
 
-        let category = new URL(window.location).searchParams.get('c')
-
-        if (category) {
-            // Add category breadcrumb
-            $('#bc').append(`<li class="breadcrumb-item active text-light">${category}</li>`)
-            $('#bc-tools').wrapInner(`<a href="index.html" class="text-muted"></a>`)
-
-            // Filter table
-            table.column(1).search(category).draw()
-        }
-        
     </script>
 
 </body>

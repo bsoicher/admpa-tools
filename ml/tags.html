@@ -39,7 +39,7 @@
             <table class="table">
                 <thead>
                     <tr>
-                        <th class="col-8">Name</th>
+                        <th class="col-4">Name</th>
                         <th class="col-3">Language
                             <div class="btn-group float-right" role="group" id="filter">
                                 <button type="button" class="btn btn-sm btn-outline-primary active" data-lang="">ALL</button>
@@ -47,7 +47,11 @@
                                 <button type="button" class="btn btn-sm btn-outline-primary" data-lang="fr">FR</button>
                             </div>
                         </th>
-                        <th class="col-1">Count</th>
+                        <th class="col-1">Total</th>
+                        <th class="col-1">Defence</th>
+                        <th class="col-1">Army</th>
+                        <th class="col-1">Navy</th>
+                        <th class="col-1">Air</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -81,6 +85,26 @@
             order: [[0, 'asc']]
         })
 
+        function folder(url) {
+            var match = url.match(/\/maple-leaf\/(\w+)/)
+            match = match ? match[1] : null
+
+            switch(match) {
+                case 'rcn':
+                case 'mrc':
+                    return 'navy'
+                case 'arc':
+                case 'rcaf':
+                    return 'air'
+                case 'army':
+                case 'ca':
+                    return 'army'
+                default:
+                    return 'defence'
+            }
+        }
+
+
         $.when(
             $.get(config.json.en),
             $.get(config.json.fr)
@@ -93,15 +117,24 @@
 
                 // Count occurances
                 json[lang].forEach(function (obj) {
+                    var f = folder(obj[1])
+
+                  
+
                     obj[3].split(',').forEach(function (tag) {
                         if (tag) {
                             var tag = tag.toLowerCase()
 
                             if (!data[lang][tag]) {
-                                data[lang][tag] = 0
+                                data[lang][tag] = { total: 0 }
                             }
 
-                            data[lang][tag]++
+                            if (!data[lang][tag][f]) {
+                                data[lang][tag][f] = 0
+                            }
+
+                            data[lang][tag].total++
+                            data[lang][tag][f]++
                         }
                     })
                 })
@@ -111,7 +144,11 @@
                     table.row.add([
                         '<a href="' + config.search[lang] + tag + '" target="_blank">' + tag + '</a>',
                         lang === 'en' ? 'EN' : 'FR',
-                        data[lang][tag]
+                        data[lang][tag].total || 0,
+                        data[lang][tag].defence || 0,
+                        data[lang][tag].army || 0,
+                        data[lang][tag].navy || 0,
+                        data[lang][tag].air || 0,
                     ])
                 })
 
@@ -131,6 +168,7 @@
             }
         })
 
+        
     </script>
 </body>
 
