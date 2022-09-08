@@ -152,7 +152,7 @@
             'Stable': 'text-success'
         }
 
-        let table = $('table').DataTable({
+        $('table').DataTable({
             paging: false,
             order: [[1, 'asc']],
             columns: [
@@ -165,7 +165,7 @@
                     render: data => `<span class="${types[data]}">${data}</span>`,
                 }
             ],
-            searchCols: [null, { search: category }, null, null]
+            searchCols: [null, { search: category || '' }, null, null]
         })
 
     </script>
