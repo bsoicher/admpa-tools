@@ -2,189 +2,178 @@
 <html lang="en">
 
 <head>
-  <title>General &gt; JSON Editor</title>
+	<title>General &gt; JSON Editor</title>
 
-  <!-- Speed optimization -->
-  <link rel="dns-prefetch" href="https://www.canada.ca">
-  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+	<!-- Speed optimization -->
+	<link rel="dns-prefetch" href="https://www.canada.ca">
+	<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
-  <!-- Meta -->
-  <meta charset="utf-8" />
+	<!-- Meta -->
+	<meta charset="utf-8" />
 
-  <!-- Style -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
-  <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
+	<!-- Style -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
+	<link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
 
-  <!-- Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/canada-api@1.1.6"></script>
+	<!-- Libraries -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/js/bootstrap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-language_tools.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-language_tools.js"></script>
 
 </head>
 
 <body style="margin-top:50px">
-  <main>
-    <nav class="navbar fixed-top navbar-dark bg-dark">
-      <div class="container-fluid">
-        <div class="col-1">
-          <span class="navbar-brand">JSON Editor</span>
-        </div>
-        <div class="col">
-          <div class="input-group">
-            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
-              aria-expanded="false"></button>
-            <ul id="url-prefill" class="dropdown-menu">
-              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/resources.json">CAF app
-                  - resources</a></li>
-              <li><a class="dropdown-item"
-                  data-url="/content/dam/dnd-mdn/documents/json/mobile/caf-subscriptions.json">CAF app - social media
-                  accounts</a></li>
-              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/caf-config.json">CAF app
-                  - config</a></li>
-              <li><a class="dropdown-item"
-                  data-url="/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json">CAF app - config
-                  (staging)</a></li>
-              <li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/canada-video.json">Maple Leaf -
-                  Video Gallery</a></li>
-            </ul>
-            <input id="url" type="text" class="form-control" placeholder="URL">
-            <button id="open" class="btn btn-primary">Open</button>
-          </div>
-        </div>
-        <div class="col-1">
-          <button type="button" class="btn btn-info float-end" data-bs-toggle="modal"
-            data-bs-target="#shortcuts">Shortcuts</button>
-        </div>
-      </div>
-    </nav>
+	<main>
+		<nav class="navbar fixed-top navbar-dark bg-dark">
+			<div class="container-fluid">
+				<div class="col-1">
+					<span class="navbar-brand">JSON Editor</span>
+				</div>
+				<div class="col">
+					<div class="input-group">
+						<button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+						<ul id="url-prefill" class="dropdown-menu">
+							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/resources.json">CAF app - resources</a></li>
+							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/caf-subscriptions.json">CAF app - social media accounts</a></li>
+							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/caf-config.json">CAF app - config</a></li>
+							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json">CAF app - config (staging)</a></li>
+							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/canada-video.json">Maple Leaf - Video Gallery</a></li>
+						</ul>
+						<input id="url" type="text" class="form-control" placeholder="URL">
+						<button id="open" class="btn btn-primary">Open</button>
+					</div>
+				</div>
+				<div class="col-1">
+					<button type="button" class="btn btn-info float-end" data-bs-toggle="modal" data-bs-target="#shortcuts">Shortcuts</button>
+				</div>
+			</div>
+		</nav>
 
-    <div id="editor" style="position:absolute;top:54px;right:0;bottom:0;left:0"></div>
+		<div id="editor" style="position:absolute;top:54px;right:0;bottom:0;left:0"></div>
 
-    <div class="modal" id="shortcuts" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <h6>Custom</h6>
-            <ul>
-              <li>Ctrl + Shift + F: Format JSON</li>
-              <li>Ctrl + S: Save to Downloads</li>
-              <li>Ctrl + E: Open in AEM (network depending)</li>
-            </ul>
-            <h6>Find/Replace</h6>
-            <ul>
-              <li>Ctrl + F: Find</li>
-              <li>Ctrl + H: Replace </li>
-              <li>Ctrl + K: Find next </li>
-              <li>Ctrl + Shift + K: Find previous</li>
-            </ul>
-            <h6>Other</h6>
-            <ul>
-              <li>Tab: Indent </li>
-              <li>Shift + Tab: Outdent</li>
-              <li>Ctrl + Z: Undo</li>
-              <li>Ctrl + Y: Redo</li>
-            </ul>
-          </div>
-          <div class="modal-footer">
-            <a href="https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts" target="_blank">Advanced List</a>
-          </div>
-        </div>
-      </div>
-    </div>
+		<div class="modal" id="shortcuts" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<h6>Custom</h6>
+						<ul>
+							<li>Ctrl + Shift + F: Format JSON</li>
+							<li>Ctrl + S: Save to Downloads</li>
+							<li>Ctrl + Shift + A: Open AEM folder</li>
+						</ul>
+						<h6>Find/Replace</h6>
+						<ul>
+							<li>Ctrl + F: Find</li>
+							<li>Ctrl + H: Replace </li>
+							<li>Ctrl + K: Find next </li>
+							<li>Ctrl + Shift + K: Find previous</li>
+						</ul>
+						<h6>Other</h6>
+						<ul>
+							<li>Tab: Indent </li>
+							<li>Shift + Tab: Outdent</li>
+							<li>Ctrl + Z: Undo</li>
+							<li>Ctrl + Y: Redo</li>
+						</ul>
+					</div>
+					<div class="modal-footer">
+						<a href="https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts" target="_blank">Advanced List</a>
+					</div>
+				</div>
+			</div>
+		</div>
 
-  </main>
-  <script>
+	</main>
+	<script>
 
-    const params = new URLSearchParams(window.location.search)
+		const params = new URLSearchParams(window.location.search)
 
-    // Ace editor setup
-    ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12')
-    var editor = ace.edit("editor");
-    editor.session.setMode("ace/mode/javascript");
-    editor.setShowPrintMargin(false);
+		// Ace editor setup
+		ace.config.set('basePath', 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12')
+		var editor = ace.edit("editor");
+		editor.session.setMode("ace/mode/javascript");
+		editor.setShowPrintMargin(false);
 
-    function iurl() {
-      var url = new URL($('#url').val(), 'https://www.canada.ca')
-      url.searchParams.set('_', Date.now())
-      return url
-    }
+		function iurl() {
+			var url = new URL($('#url').val(), 'https://www.canada.ca')
+			url.searchParams.set('_', Date.now())
+			return url
+		}
 
-    function fname() {
-      const url = new URL($('#url').val(), 'https://www.canada.ca')
-      return url.pathname.split('/').pop()
-    }
+		function fname() {
+			const url = new URL($('#url').val(), 'https://www.canada.ca')
+			return url.pathname.split('/').pop()
+		}
 
-    function folder() {
-      const url = new URL($('#url').val(), 'https://www.canada.ca')
-      return url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1)
-    }
+		function folder() {
+			const url = new URL($('#url').val(), 'https://www.canada.ca')
+			return url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1)
+		}
 
-    $('#open').click(function () {
+		$('#open').click(function () {
 
-      var url = iurl()
+			var url = iurl()
 
-      if (!url || url.href === 'https://www.canada.ca') {
-        return alert('URL field is empty')
-      }
+			if (!url || url.href === 'https://www.canada.ca') {
+				return alert('URL field is empty')
+			}
 
-      if (editor.session.getUndoManager().hasUndo()) {
-        if (!confirm('Changes have been made, are you sure you want to continue')) {
-          return
-        }
-      }
+			if (editor.session.getUndoManager().hasUndo()) {
+				if (!confirm('Changes have been made, are you sure you want to continue')) {
+					return
+				}
+			}
 
-      window.history.replaceState("", "", "?url=" + url);
+			window.history.replaceState("", "", "?url=" + url);
 
-      fetch(url)
-        .then(response => response.text())
-        .then(json => editor.session.setValue(json))
-    })
+			fetch(url)
+				.then(response => response.text())
+				.then(json => editor.session.setValue(json))
+		})
 
-    if (params.has('url')) {
-      $('#url').val(params.get('url'))
-      $('#open').click()
-    }
+		if (params.has('url')) {
+			$('#url').val(params.get('url'))
+			$('#open').click()
+		}
 
-    $('#url-prefill a').click(function () {
-      $('#url').val($(this).data('url'))
-      $('#open').click()
-    })
+		$('#url-prefill a').click(function () {
+			$('#url').val($(this).data('url'))
+			$('#open').click()
+		})
 
-    editor.commands.addCommand({
-      name: 'save',
-      bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
-      exec: editor => download(utf8.encode(editor.session.getValue()), fname(), 'text/plain;charset=UTF-8;'),
-    })
+		editor.commands.addCommand({
+			name: 'save',
+			bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
+			exec: editor => download(utf8.encode(editor.session.getValue()), fname(), 'text/plain;charset=UTF-8;'),
+		})
 
-    editor.commands.addCommand({
-      name: 'aem',
-      bindKey: { win: 'Ctrl-E', mac: 'Command-E' },
-      exec: editor => window.open('https://author-canada-prod.adobecqms.net/assets.html' + folder(), '_blank'),
-    })
+		editor.commands.addCommand({
+			name: 'aem',
+			bindKey: { win: 'Ctrl-Shift-A', mac: 'Command-Shift-A' },
+			exec: editor => window.open('https://author-canada-prod.adobecqms.net/assets.html' + folder(), '_blank'),
+		})
 
-    editor.commands.addCommand({
-      name: 'format',
-      bindKey: { win: 'Ctrl-Shift-F', mac: 'Command-Shift-F' },
-      exec: editor => {
-        let v = editor.session.getValue()
-        try {
-          v = JSON.stringify(JSON.parse(v), null, '\t')
-          editor.setValue(v)
-        } catch (e) {
-          console.error(e)
-        }
-      },
-    })
+		editor.commands.addCommand({
+			name: 'format',
+			bindKey: { win: 'Ctrl-Shift-F', mac: 'Command-Shift-F' },
+			exec: editor => {
+				let v = editor.session.getValue()
+				try {
+					v = JSON.stringify(JSON.parse(v), null, '\t')
+					editor.setValue(v)
+				} catch (e) {
+					console.error(e)
+				}
+			},
+		})
 
-  </script>
+	</script>
 </body>
