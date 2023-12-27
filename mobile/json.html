@@ -38,7 +38,6 @@
 						<button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
 						<ul id="url-prefill" class="dropdown-menu">
 							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/resources.json">CAF app - resources</a></li>
-							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/caf-subscriptions.json">CAF app - social media accounts</a></li>
 							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/caf-config.json">CAF app - config</a></li>
 							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json">CAF app - config (staging)</a></li>
 							<li><a class="dropdown-item" data-url="/content/dam/dnd-mdn/documents/json/canada-video.json">Maple Leaf - Video Gallery</a></li>
@@ -65,8 +64,9 @@
 					<div class="modal-body">
 						<h6>Custom</h6>
 						<ul>
-							<li>Ctrl + Shift + F: Format JSON</li>
 							<li>Ctrl + S: Save to Downloads</li>
+							<li>Ctrl + Shift + F: Format JSON</li>
+							<li>Ctrl + Shift + M: Minify JSON</li>
 							<li>Ctrl + Shift + A: Open AEM folder</li>
 						</ul>
 						<h6>Find/Replace</h6>
@@ -168,6 +168,20 @@
 				let v = editor.session.getValue()
 				try {
 					v = JSON.stringify(JSON.parse(v), null, '\t')
+					editor.setValue(v)
+				} catch (e) {
+					console.error(e)
+				}
+			},
+		})
+
+		editor.commands.addCommand({
+			name: 'minify',
+			bindKey: { win: 'Ctrl-Shift-M', mac: 'Command-Shift-M' },
+			exec: editor => {
+				let v = editor.session.getValue()
+				try {
+					v = JSON.stringify(JSON.parse(v))
 					editor.setValue(v)
 				} catch (e) {
 					console.error(e)
