@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>General &gt; JSON Editor & Validator</title>
+
+	<!-- Speed optimization -->
+	<link rel="dns-prefetch" href="https://www.canada.ca">
+
+	<!-- Style -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ace-builds@1.32.2/css/ace.min.css" integrity="sha384-9KYZr/N3dGpfeEpWpYgRk4lf2gHw7Eors4XcyzTke2a6XButJm4CDM/giYswluTP" crossorigin="anonymous">
+	<link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
+
+	<!-- Libraries -->
+	<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.slim.min.js" integrity="sha384-5AkRS45j4ukf+JbWAfHL8P4onPA9p0KwwP7pUdjSQA3ss9edbJUJc/XcYAiheSSz" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/ace-builds@1.32/src-min-noconflict/ace.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/utf8@3.0.0/utf8.min.js" integrity="sha384-4BkAeY2QDjo1LG1HYnQqB3nAE2CF0u+6kJn871CjgUt6CQJ4VGodTen7tagxcRvv" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/downloadjs@1.4.7/download.min.js" integrity="sha384-fcq+FmM9tqGUeb2KuKl26ktwu/FxKAe200X+jtjXtbF3oCgVdr2GHQrC/+hZJJXg" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/z-schema@6.0.1/dist/ZSchema-browser-min.min.js"></script>
+
+</head>
+
+<body>
+	<header id="header">
+		<nav class="navbar navbar-expand-md border-bottom">
+			<div class="container-fluid">
+				<a class="navbar-brand" href="https://github.com/dnd-mdn">DND Tools</a>
+
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Open</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/resources.json" data-schema="https://cdn.jsdelivr.net/gh/dnd-mdn/cdn@latest/mobile/resources.schema.json">CAF app - resources</a></li>
+								<li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/caf-config.json" data-schema="https://cdn.jsdelivr.net/gh/dnd-mdn/cdn@latest/mobile/config.schema.json">CAF app - config</a></li>
+								<li><a class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json" data-schema="https://cdn.jsdelivr.net/gh/dnd-mdn/cdn@latest/mobile/config.schema.json">CAF app - config (staging)</a></li>
+							</ul>
+						</li>
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Format</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#" id="format">Beutify</a></li>
+								<li><a class="dropdown-item" href="#" id="minify">Minify</a></li>
+							</ul>
+						</li>
+						<!--<li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#shortcuts" title="Keyboard Shortcuts">Shortcuts</a></li>-->
+
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">AEM</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#" id="aem" title="Open AEM folder">Open folder</a></li>
+
+							</ul>
+						</li>
+
+						<li class="nav-item"><a class="nav-link" href="#" id="validate" title="Validate">Validate</a></li>
+						<li class="nav-item"><a class="nav-link" href="#" id="save" title="Save to Downloads">Save</a></li>
+						<li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#shortcuts">Shortcuts</a></li>
+
+					</ul>
+				</div>
+			</div>
+		</nav>
+		<!--<div class="container-fluid py-2 border-bottom" style="background-color:#f0f0f0">
+			<div class="input-group">
+				<input type="text" class="form-control form-control-sm" placeholder="JSON file URL" id="url" title="JSON file URL">
+				<input type="text" class="form-control form-control-sm" placeholder="Validation schema URL (optional)" id="schema" title="Validation schema URL (optional)">
+				<button class="btn btn-sm btn-primary" type="button" id="open">Open</button>
+			</div>
+		</div>-->
+	</header>
+
+	<main>
+
+		<div id="step1" class="container">
+			<h2 class="h4 my-4">Step 1 of 4: Data source</h2>
+
+			<p>Enter the URL of the JSON file you want to edit</p>
+			<p>A JSON schema is a contract for your JSON data that defines the expected data types and format of each field in the JSON data, and is used to validate and guide the structure of JSON data.</p>
+
+			<div class="dropdown mb-4">
+				Select from
+				<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+					Presets
+				</button>
+				<ul id="url-prefill" class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+					<li><a href="#" class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/resources.json" data-schema="https://cdn.jsdelivr.net/gh/dnd-mdn/cdn@latest/mobile/resources.schema.json">CAF app - resources</a></li>
+					<li><a href="#" class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/caf-config.json" data-schema="https://cdn.jsdelivr.net/gh/dnd-mdn/cdn@latest/mobile/config.schema.json">CAF app - config</a></li>
+					<li><a href="#" class="dropdown-item" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json" data-schema="https://cdn.jsdelivr.net/gh/dnd-mdn/cdn@latest/mobile/config.schema.json">CAF app - config (staging)</a></li>
+				</ul>
+			</div>
+
+			<!--<ul>
+				<li><a href="#" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/resources.json" data-schema="https://cdn.jsdelivr.net/gh/dnd-mdn/cdn@latest/mobile/resources.schema.json">CAF app - resources</a></li>
+				<li><a href="#" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/caf-config.json" data-schema="https://cdn.jsdelivr.net/gh/dnd-mdn/cdn@latest/mobile/config.schema.json">CAF app - config</a></li>
+				<li><a href="#" data-url="https://www.canada.ca/content/dam/dnd-mdn/documents/json/mobile/staging/caf-config.json" data-schema="https://cdn.jsdelivr.net/gh/dnd-mdn/cdn@latest/mobile/config.schema.json">CAF app - config (staging)</a></li>
+			</ul>-->
+			<div class="mb-3">
+				<label for="url" class="form-label">🌐 JSON file URL</label>
+				<input type="text" class="form-control" id="url" aria-describedby="urlHelp">
+			</div>
+			<div class="mb-3">
+				<label for="schema" class="form-label">🌐 JSON schema URL (optional)</label>
+				<input type="text" class="form-control" id="schema" aria-describedby="schemaHelp">
+			</div>
+
+
+
+			<p>Once validated you can continue on to the </p>
+			<button class="btn btn-primary" type="button" id="open">Continue</button>
+		</div>
+
+
+		<div class="invisible">
+			<div id="editor" style="height:400px"></div>
+		</div>
+
+
+
+
+
+
+	</main>
+	<script>
+
+		const params = new URLSearchParams(window.location.search)
+
+		// Prefil params
+		$('#url').val(params.get('url'))
+		$('#url').val(params.get('schema'))
+
+		// Update params
+		$('#url,#schema').val('').change(function () {
+			const url = $('#url').val();
+			const schema = $('#schema').val();
+			window.history.replaceState('', '', `?url=${url}&schema=${schema}`);
+		})
+
+		
+
+
+
+
+		const $window = $(window);
+
+
+
+		const $editor = $("#editor");
+		const editor = ace.edit("editor");
+
+
+
+
+
+		editor.session.setMode("ace/mode/javascript");
+		editor.setShowPrintMargin(false);
+
+		// Keep editor height in sync with window height
+		$window.on("load resize", function () {
+			$editor.css("height", ($window.height() - $('#header').height()) + "px");
+			editor.resize();
+		});
+
+
+		const validator = new ZSchema({
+			noEmptyStrings: true,
+			noExtraKeywords: true
+		});
+
+		let schema = { "$ref": "http://json-schema.org/draft-04/schema#" };
+
+		// Fix for URI reference validation
+		ZSchema.registerFormat("uri-reference", function (str) {
+			try {
+				return Boolean(new URL(str, 'https://www.canada.ca'));
+			} catch (e) {
+				return false;
+			}
+		});
+
+		editor.session.on('change', function () {
+			console.log('change', schema);
+			if (schema.description) {
+				validator.validate(JSON.parse(editor.session.getValue()), schema, function (err, valid) {
+					console.log(err)
+				});
+			}
+		});
+
+		function iurl() {
+			var url = new URL($('#url').val(), 'https://www.canada.ca')
+
+			url.searchParams.set('_', Date.now())
+			return url
+		}
+
+		function fname() {
+			const url = new URL($('#url').val(), 'https://www.canada.ca')
+			return url.pathname.split('/').pop()
+		}
+
+
+		function folder() {
+			const url = new URL($('#url').val(), 'https://www.canada.ca')
+			return url.pathname.substring(0, url.pathname.lastIndexOf('/') + 1)
+		}
+
+		function updateLocation() {
+
+			try {
+				const url = new URL($('#url').val(), 'https://www.canada.ca');
+			} catch (e) {
+				const url = ''
+			}
+
+			try {
+				const schema = new URL($('#schema').val());
+			} catch (e) {
+				const schema = ''
+			}
+
+			window.history.replaceState('', '', `?url=${url}&schema=${schema}`);
+		}
+
+		$('#open').click(function () {
+			$('#url,#schema').removeClass('is-valid is-invalid')
+			var url = iurl()
+
+			if (!url || url.href === 'https://www.canada.ca') {
+				return alert('URL field is empty')
+			}
+
+			if (editor.session.getUndoManager().hasUndo()) {
+				if (!confirm('Changes have been made, are you sure you want to continue')) {
+					return
+				}
+			}
+
+			//updateLocation()
+
+			fetch($('#url').val())
+				.then(response => response.text())
+				.then(text => editor.session.setValue(text))
+				.then(() => {
+					$('#url').addClass('is-valid')
+				}).catch(e => {
+					$('#url').addClass('is-invalid')
+				})
+
+			fetch($('#schema').val())
+				.then(response => response.json())
+				.then(json => schema = json)
+				.then(() => {
+					$('#schema').addClass('is-valid')
+				}).catch(e => {
+					$('#schema').addClass('is-invalid')
+				})
+		})
+
+
+
+
+		if (params.has('url')) {
+			$('#url').val(params.get('url'))
+			$('#schema').val(params.get('schema'))
+			$('#open').click()
+		}
+
+		$('#url-prefill a').click(function () {
+			$('#url').val($(this).data('url'))
+			$('#schema').val($(this).data('schema'))
+			$('#open').click()
+		})
+
+
+		function save() {
+			download(utf8.encode(editor.session.getValue()), fname(), 'text/plain;charset=UTF-8;');
+		}
+
+		function format() {
+			const text = editor.session.getValue();
+			try {
+				editor.setValue(JSON.stringify(JSON.parse(text), null, '\t'));
+				editor.session.selection.clearSelection();
+			} catch (e) {
+				console.error(e);
+			}
+		}
+
+		function minify() {
+			const text = editor.session.getValue();
+			try {
+				editor.setValue(JSON.stringify(JSON.parse(text)));
+				editor.session.selection.clearSelection();
+			} catch (e) {
+				console.error(e);
+			}
+		}
+
+		function validate() {
+
+		}
+
+		function aem() {
+			window.open('https://author-canada-prod.adobecqms.net/assets.html' + folder(), '_blank')
+		}
+
+		// Custom function event listeners
+		$('#save').click(save)
+		$('#format').click(format)
+		$('#minify').click(minify)
+		$('#aem').click(aem)
+
+		// Custom function keyboard shortcuts
+		editor.commands.addCommand({ name: 'save', bindKey: { win: 'Ctrl-S', mac: 'Command-S' }, exec: save })
+		editor.commands.addCommand({ name: 'format', bindKey: { win: 'Ctrl-Shift-F', mac: 'Command-Shift-F' }, exec: format })
+		editor.commands.addCommand({ name: 'minify', bindKey: { win: 'Ctrl-Shift-M', mac: 'Command-Shift-M' }, exec: minify })
+		editor.commands.addCommand({ name: 'aem', bindKey: { win: 'Ctrl-Shift-A', mac: 'Command-Shift-A' }, exec: aem })
+
+	</script>
+</body>
