@@ -3,39 +3,23 @@
 
 <head>
     <title>Maple Leaf &gt; Feed Generator v3</title>
-
-    <!-- Speed optimization -->
-    <link rel="dns-prefetch" href="https://www.canada.ca">
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-
-    <!-- Meta -->
     <meta charset="utf-8" />
 
-    <!-- Style -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css">
-    <link href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" rel="icon" type="image/x-icon" />
-
-    <!-- Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/canada-api@1.1.6"></script>
-    <!--<script src="../../canada-api/dist/ca.js?_12312343"></script>-->
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.7/jquery.timeago.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/utf8/3.0.0/utf8.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-
+    <link rel="dns-prefetch" href="https://www.canada.ca">
+    <link rel="icon" href="https://www.canada.ca/etc/designs/canada/wet-boew/assets/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha256-MBffSnbbXwHCuZtgPYiwMQbfE7z+GOZ7fBPCNB06Z98=" crossorigin="anonymous">
+    
+    <script src="https://cdn.jsdelivr.net/npm/canada-api@3.0.4/dist/ca.min.js" integrity="sha256-scdTZlk3WWeTELxqXxcHQ4s+Fi4qFC6d1p5MzArl+iU=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/utf8@3.0.0/utf8.min.js" integrity="sha256-B7st1D1JgNuhlW5BkeyyekcMLcaBCjhaQxAcQ/+/lT0=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/timeago.js@4.0.2/dist/timeago.min.js" integrity="sha256-sTurDi2etLN9CpnUIoCC9y5iynb2qr/uo6QJqzoO7mA=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/downloadjs@1.4.7/download.min.js" integrity="sha256-jO7zIwKMJTUQkptQfQMhu+uL4erqSzAd0wUfueDCuNI=" crossorigin="anonymous"></script>
 </head>
 
 <body>
     <main>
         <div class="container my-5">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb bg-transparent p-0 h5">
-                    <li class="breadcrumb-item"><a href="../index.html">ADMPA Web Tools</a></li>
-                    <li class="breadcrumb-item"><a href="index.html">Maple Leaf</a></li>
-                    <li class="breadcrumb-item" aria-current="page">Feed Generator v3</li>
-                </ol>
-            </nav>
+           
             <p>Compiles a listing of Maple Leaf articles used in the <a href="https://www.canada.ca/en/department-national-defence/maple-leaf/search.html" target="_blank">search</a> table.</p>
 
             <div class="row">
@@ -43,34 +27,23 @@
                     <h2 class="h5 mt-3">Type of update</h2>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="type" value="smart" checked="checked">
-                        <label class="form-check-label" for="flexCheckDefault">Smart <small class="text-muted"> - New &
-                                modified (recommended)</small></label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="type" value="month">
-                        <label class="form-check-label" for="flexCheckDefault">Month <small class="text-muted"> -
-                                Modified in the past month</small></label>
+                        <label class="form-check-label" for="flexCheckDefault">Smart <small class="text-muted"> - New & modified (recommended)</small></label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="type" value="all">
-                        <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - Entire
-                                feed</small></label>
+                        <label class="form-check-label" for="flexCheckDefault">All <small class="text-muted"> - Entire feed</small></label>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <h2 class="h5 mt-3">File status</h2>
                     <ul id="feedstatus"></ul>
                 </div>
-
             </div>
 
             <h2 class="h5 mt-4 mb-3">Progress</h2>
             <div id="progressbar" class="progress mb-2 mt-3" style="height: 6px">
-                <div id="DONE" class="progress-bar bg-success" style="width:0%"></div>
-                <div id="EXECUTING" class="progress-bar bg-warning" style="width:0%"></div>
-                <div id="RUNNING" class="progress-bar bg-warning" style="width:0%"></div>
-                <div id="QUEUED" class="progress-bar bg-info" style="width:0%"></div>
-                <div id="RECEIVED" class="progress-bar bg-light" style="width:0%"></div>
+                <div id="done" class="progress-bar bg-success" style="width:0%"></div>
+                <div id="active" class="progress-bar bg-warning" style="width:0%"></div>
             </div>
             <p id="status"><a href="javascript:main()">Click here to start</a></p>
 
@@ -84,164 +57,172 @@
                 <li>Refresh this page to verify that the file status has changed</li>
             </ol>
 
-
         </div>
     </main>
 
     <script>
 
+        // Disable limiter
+        ca.limiter = null
+
         // Force select default option
         $('input[value="smart"]').click()
 
         // Configuration
-        var config = {
+        const config = {
             roots: [
-                'en/department-national-defence/maple-leaf',
-                'fr/ministere-defense-nationale/feuille-derable',
+                '/en/department-national-defence/maple-leaf',
+                //'/fr/ministere-defense-nationale/feuille-derable',
             ],
             feeds: [
-                'content/dam/dnd-mdn/documents/json/maple-en.json',
-                'content/dam/dnd-mdn/documents/json/maple-fr.json',
+                '/content/dam/dnd-mdn/documents/json/maple-en.json',
+                //'/content/dam/dnd-mdn/documents/json/maple-fr.json',
             ],
-            preFilter: node => /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path),
+            preFilter: node => /\/\d{4}\/\d{2}\/[^/]+$/.test(node.path)
         }
 
-
+        /*
         config.feeds.forEach((path, index) => {
-            let name = path.split('/').pop()
+            const name = path.split('/').pop()
 
             $('#feedstatus').append(`<li><a href="https://www.canada.ca${path}" target="_blank">${name}</a> - <span data-feed="${index}">...</span></li>`)
 
-            ca.meta(path).then(node => {
-                var time = $.timeago(new Date(node.meta['jcr:lastModified']))
-                var iso = new Date(node.meta['jcr:lastModified']).toISOString()
+            ca.meta(path).then(response => {
+                const meta = response.data
+              
+                var time = timeago.format(new Date(meta['jcr:lastModified']))
+                var iso = new Date(meta['jcr:lastModified']).toISOString()
 
-                $(`[data-feed=${index}]`).html(`${node.meta['dam:assetState']} <abbr title="${iso}" class="text-primary">${time}</abbr> by ${node.meta['jcr:lastModifiedBy']}`)
+                $(`[data-feed=${index}]`).html(`${meta['dam:assetState']} <abbr title="${iso}" class="text-primary">${time}</abbr>`)
             }).catch(e => {
                 $(`[data-feed=${index}]`).html(`Error (${e.message})`)
             })
-        })
+        })*/
 
+        const app = {
 
-        // Periodically update progress bar using request counts
-        setInterval(() => {
-            let counts = ca.limiter.counts()
-            let total = Object.values(counts).reduce((sum, val) => sum + val)
+            // Progress tracking
+            active: 0,
+            complete: 0,
+            total: 0,
 
-            for (id in counts) {
-                document.getElementById(id).style.width = (counts[id] / total * 100) + '%'
-            }
-        }, 250)
+            // Preselect elements
+            el: {
+                status: $('#status'),
+                done: $('#done'),
+                active: $('#active'),
+                warnings: $('#warnings')
+            },
 
-
-        // Log that a node that has been filtered out
-        function warn(node, message) {
-            //console.log(node)
-            let li = document.createElement('li')
-            li.innerHTML = `<a href="https://www.canada.ca${node.path}.html" target="_blank">${node.path}</a><br/>${message}`
-            document.getElementById('warnings').append(li)
-            return false
-        }
-
-        // Combine foreach and filter functionality, to modify array in place
-        function filterEach(a, condition) {
-            let j = 0
-
-            a.forEach((e, i) => {
-                if (condition(e, i, a) !== false) {
-                    if (i !== j) {
-                        a[j] = e
-                    }
-                    j++
+            log(message) {
+                if (message) {
+                    this.el.status.html(message);
                 }
-            })
+                this.el.done.width(((this.complete / this.total) * 100) + '%');
+                this.el.active.width(((this.active / this.total) * 100) + '%');
+            },
 
-            a.length = j
-            return a
+            start(message) {
+                this.active++;
+                this.log(message);
+            },
+
+            end(message) {
+                this.active--;
+                this.complete++;
+                this.log(message);
+            },
+
+            warn(node, message) {
+                this.el.warnings.append(`<li><a href="https://www.canada.ca${node.path}.html" target="_blank">${node.path}</a><br/>${message}</li>`);
+            }
         }
+        
 
+  
 
-   
+        async function main() {
+            const nodes = {}
 
+            app.log('Loading feeds')
+            app.total += config.feeds.length
 
+            for (feed of config.feeds) {
+                app.start(`Loading feed <code>${feed}</code>`)
 
-        function main() {
+                const response = await ca.request(feed)
 
-            let type = $('input[name="type"]').prop('disabled', true).filter(':checked').val()
+                for (entry of response.data.data) {
+                    const path = ca.normalize(entry[1].match(/href="([^"]+)"/)[1]).pathname
 
-            // Load list of child nodes
-            let children = Promise.all(config.roots.map(root => {
-                return ca.children(root).then(node => node.children)
-            })).then(lists => {
-                let nodes = []
+                    if (nodes[path]) {
+                        nodes[path].entry = entry
+                        nodes[path].listed = new Date(entry[4] * 1000)
+                    } else {
+                        nodes[path] = {
+                            path,
+                            entry,
+                            listed: new Date(entry[4] * 1000)
+                        }
+                    }
+                }
 
-                lists.forEach(list => {
-                    // Apply pre filter if it is set
-                    if (typeof config.preFilter === 'function') filterEach(list, config.preFilter)
-                    
-                    // Ignore duplicates
-                    filterEach(list, node => {
-                        return nodes.findIndex(fnode => fnode.path === node.path) === -1
-                    })
-
-                    // Merge lists
-                    nodes.push.apply(nodes, list)
-                })
-
-                return nodes
-            })
-
-            let entries = null
-
-            if (type !== 'all') {
-                // Load existing feeds if needed
-                entries = Promise.all(config.feeds.map(feed => {
-                    return ca.content(feed).then(node => node.content.data).catch(e => [])
-                })).then(feeds => {
-                    let nodes = []
-
-                    // Merge lists, convert to nodes
-                    feeds.forEach(list => {
-                        list.forEach(entry => {
-                            let path = entry[1].match(/href="([^"]+)"/)[1]
-                            nodes.push({ path: ca.normalizePath(path), feed: entry })
-                        })
-                    })
-
-                    return nodes
-                })
-            } else {
-                // Skip loading existing feeds
-                entries = Promise.resolve([])
+                app.end()
             }
 
-            // Merge child nodes and live feeds
-            let nodes = Promise.all([children, entries]).then(data => {
-                let nodes = data[0]
-                let entries = data[1]
+            app.log('Loading sitemaps')
+            app.total += config.roots.length
 
-                entries.forEach(node => {
-                    let i = nodes.findIndex(fnode => fnode.path === node.path)
+            for (root of config.roots) {
+                app.start(`Loading sitemap <code>${root}</code>`)
+                const response = await ca.children(root)
 
-                    if (i !== -1) {
-                        nodes[i].feed = node.feed
+                for (node of response.data) {
+                    node.lastmod = new Date(node.lastmod)
+                    if (nodes[node.path]) {
+                        nodes[node.path].lastmod = node.lastmod
                     } else {
-                        // Node unpublished or moved
-                        console.log(`Node ${node.path} has been ignored`)
+                        nodes[node.path] = node
                     }
-                })
+                }
 
-                return nodes
-            })
+                app.end()
+            }
+
+            app.log('Verifying data')
+
+            for (path in nodes) {
+
+                // Remove nodes not in the sitemaps
+                if (!nodes[path].lastmod) {
+                    delete nodes[path]
+                    continue
+                }
+
+                // Apply pre-filter
+                if (config.preFilter && !config.preFilter(nodes[path])) {
+                    delete nodes[path]
+                    continue
+                }
+
+                if (nodes[path].entry && nodes[path].entry[4] !== Math.floor(nodes[path].lastmod / 1000) {
+                    app.warn(nodes[path], 'missing from feed')
+                    delete nodes[path]
+                    continue
+                }
+            }
+
+            
+            console.log(nodes)
+
+            return
+
+
 
             // Process the data
             nodes.then(async nodes => {
-                
-                // Verify date modified (migration fix)
-                filterEach(nodes, node => {
-                    if (node.lastmod === null) return warn(node, 'Missing date modified, republish needed')
-                })
 
+                
                 // Delete expired data based on the scan type
                 if (type === 'smart') {
                     nodes.forEach(node => {
@@ -270,7 +251,7 @@
                                 if (index === -1) return warn(node, 'peer not found')
                                 node.peer = nodes[index]
                             }
-                            
+
                             // Load peer data if needed
                             if (node.peer.feed) {
                                 delete node.peer.feed
@@ -296,7 +277,7 @@
 
                 return nodes
             }).then(nodes => {
-               
+
                 console.log(nodes)
 
             })
@@ -399,8 +380,7 @@
             */
         }
 
-
-
+    
     </script>
 
 </body>
